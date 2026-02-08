@@ -1,66 +1,80 @@
 # Deploy Production Script - Tử Vi Tool
-# Usage: .\deploy.ps1
+# Usage: .\deploy.ps1 [-Message "commit message"]
+
+param(
+    [string]$Message = "Update: Deploy to production"
+)
 
 $SERVER = "root@15.235.210.4"
 $PROJECT_PATH = "/home/tuvitool"
-$LOCAL_ENV = "d:\Project\tu-vi-la-so\.env"
 
 Write-Host "🚀 Starting deployment to tuvi.demowebest.site..." -ForegroundColor Cyan
 
-# Step 1: Test connection
-Write-Host "`n📡 Step 1: Testing server connection..." -ForegroundColor Yellow
-ssh $SERVER "echo 'Connected successfully'"
-if ($LASTEXITCODE -ne 0) {
-    Write-Host "❌ Cannot connect to server!" -ForegroundColor Red
-    exit 1
-}
-
-# Step 2: Clone or update repository
-Write-Host "`n📦 Step 2: Updating code from Git..." -ForegroundColor Yellow
-ssh $SERVER "cd /home && git clone git@github.com:toanndmarketing/tuvitool.git 2>/dev/null || (cd $PROJECT_PATH && git pull origin master)"
-
-# Step 3: Copy .env file
-Write-Host "`n🔐 Step 3: Uploading .env file..." -ForegroundColor Yellow
-if (Test-Path $LOCAL_ENV) {
-    scp $LOCAL_ENV "${SERVER}:${PROJECT_PATH}/.env"
+# Step 1: Check git status
+Write-Host "`n📊 Step 1: Checking Git status..." -ForegroundColor Yellow
+$gitStatus = git status --porcelain
+if ($gitStatus) {
+    Write-Host "📝 Changes detected:" -ForegroundColor Yellow
+    git status --short
+    
+    # Step 2: Add changes
+    Write-Host "`n➕ Step 2: Adding changes..." -ForegroundColor Yellow
+    git add .
+    
+    # Step 3: Commit
+    Write-Host "`n💾 Step 3: Committing changes..." -ForegroundColor Yellow
+    git commit -m $Message
+    
+    # Step 4: Push
+    Write-Host "`n⬆️  Step 4: Pushing to GitHub..." -ForegroundColor Yellow
+    git push origin master
+    
+    if ($LASTEXITCODE -ne 0) {
+        Write-Host "❌ Failed to push to GitHub!" -ForegroundColor Red
+        exit 1
+    }
 } else {
-    Write-Host "⚠️  Warning: .env file not found at $LOCAL_ENV" -ForegroundColor Yellow
+    Write-Host "✅ No local changes to commit" -ForegroundColor Green
 }
 
-# Step 4: Stop old containers
-Write-Host "`n🛑 Step 4: Stopping old containers..." -ForegroundColor Yellow
-ssh $SERVER "cd $PROJECT_PATH && docker compose down"
+# Step 5: Pull on server
+Write-Host "`n⬇️  Step 5: Pulling latest code on server..." -ForegroundColor Yellow
+ssh $SERVER "cd $PROJECT_PATH && git pull origin master"
 
-# Step 5: Build and start new containers
-Write-Host "`n🏗️  Step 5: Building and starting containers..." -ForegroundColor Yellow
+# Step 6: Rebuild containers
+Write-Host "`n🏗️  Step 6: Rebuilding containers..." -ForegroundColor Yellow
 ssh $SERVER "cd $PROJECT_PATH && docker compose up -d --build"
 
-# Step 6: Wait for containers to be healthy
-Write-Host "`n⏳ Step 6: Waiting for containers to be ready..." -ForegroundColor Yellow
+# Step 7: Wait for containers
+Write-Host "`n⏳ Step 7: Waiting for containers..." -ForegroundColor Yellow
 Start-Sleep -Seconds 5
 
-# Step 7: Check container status
-Write-Host "`n📊 Step 7: Checking container status..." -ForegroundColor Yellow
+# Step 8: Check status
+Write-Host "`n📊 Step 8: Checking container status..." -ForegroundColor Yellow
 ssh $SERVER "cd $PROJECT_PATH && docker compose ps"
 
-# Step 8: Show logs
-Write-Host "`n📝 Step 8: Recent logs..." -ForegroundColor Yellow
-ssh $SERVER "cd $PROJECT_PATH && docker compose logs --tail=30"
+# Step 9: Show logs
+Write-Host "`n📝 Step 9: Recent logs..." -ForegroundColor Yellow
+ssh $SERVER "cd $PROJECT_PATH && docker compose logs --tail=20"
 
-# Step 9: Test health endpoint
-Write-Host "`n🏥 Step 9: Testing health endpoint..." -ForegroundColor Yellow
-ssh $SERVER "curl -s http://localhost:8900/ | head -n 5 || echo 'Service starting...'"
+# Step 10: Health check
+Write-Host "`n🏥 Step 10: Testing API health..." -ForegroundColor Yellow
+$healthCheck = ssh $SERVER "curl -s http://localhost:8950/api/health"
+Write-Host $healthCheck -ForegroundColor White
 
-# Step 10: Test domain
-Write-Host "`n🌐 Step 10: Testing domain..." -ForegroundColor Yellow
-$response = curl -I https://tuvi.demowebest.site 2>&1
-if ($response -match "200|301|302") {
-    Write-Host "✅ Domain is accessible!" -ForegroundColor Green
-} else {
-    Write-Host "⚠️  Domain check: $response" -ForegroundColor Yellow
+# Step 11: Domain check
+Write-Host "`n🌐 Step 11: Testing domain..." -ForegroundColor Yellow
+try {
+    $response = Invoke-WebRequest -Uri "https://tuvi.demowebest.site" -Method Head -UseBasicParsing -TimeoutSec 10
+    if ($response.StatusCode -eq 200) {
+        Write-Host "✅ Domain is accessible! (Status: $($response.StatusCode))" -ForegroundColor Green
+    }
+} catch {
+    Write-Host "⚠️  Domain check failed: $_" -ForegroundColor Yellow
 }
 
 Write-Host "`n✅ Deployment completed!" -ForegroundColor Green
 Write-Host "🔗 Visit: https://tuvi.demowebest.site" -ForegroundColor Cyan
 Write-Host "`n📊 To view live logs, run:" -ForegroundColor Yellow
 Write-Host "   ssh $SERVER 'cd $PROJECT_PATH && docker compose logs -f'" -ForegroundColor White
+

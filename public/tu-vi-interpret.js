@@ -203,23 +203,19 @@ const TuViInterpret = (function () {
 
     /**
      * Gọi API để lấy AI interpretation
-     * Yêu cầu auth trước khi gọi
+     * Không tự động show modal, chỉ check auth status
      */
     async function getAiInterpretation(interpretation) {
-        return new Promise((resolve) => {
-            // Check auth trước
-            if (!AUTH.isAuthenticated()) {
-                // Hiển thị modal login
-                AUTH.showLoginModal(async () => {
-                    // Sau khi login thành công, gọi AI
-                    const result = await callAiApi(interpretation);
-                    resolve(result);
-                });
-            } else {
-                // Đã login, gọi trực tiếp
-                callAiApi(interpretation).then(resolve);
-            }
-        });
+        // Check auth - nếu chưa login, return placeholder
+        if (!AUTH.isAuthenticated()) {
+            return {
+                requiresAuth: true,
+                message: 'Vui lòng đăng nhập để xem phân tích AI chuyên sâu'
+            };
+        }
+
+        // Đã login, gọi AI API
+        return await callAiApi(interpretation);
     }
 
     /**
@@ -381,6 +377,24 @@ const TuViInterpret = (function () {
         const container = document.getElementById('aiAnalysisBody');
         if (!container) return;
 
+        // Nếu cần auth, hiển thị nút login
+        if (aiResult.requiresAuth) {
+            container.innerHTML = `<div class="ai-auth-required">
+                <p class="ai-auth-message">🔐 ${aiResult.message || 'Vui lòng đăng nhập để xem phân tích AI chuyên sâu'}</p>
+                <button class="btn-ai-login" id="btnAiLogin">
+                    <span class="btn-icon">🔓</span>
+                    <span>Đăng Nhập Để Xem Phân Tích</span>
+                </button>
+            </div>`;
+
+            // Attach event listener
+            const btnLogin = document.getElementById('btnAiLogin');
+            if (btnLogin) {
+                btnLogin.addEventListener('click', handleAiLoginClick);
+            }
+            return;
+        }
+
         if (aiResult.error || aiResult.fallback) {
             container.innerHTML = `<div class="ai-error">
                 <p>⚠️ ${aiResult.error || 'Phân tích chuyên sâu không khả dụng'}</p>
@@ -402,6 +416,50 @@ const TuViInterpret = (function () {
         }
 
         container.innerHTML = html;
+    }
+
+    /**
+     * Handle AI login button click
+     */
+    function handleAiLoginClick() {
+        // Lấy interpretation data từ global hoặc re-generate
+        const container = document.getElementById('aiAnalysisBody');
+
+        // Show loading
+        container.innerHTML = `<div class="ai-loading">
+            <div class="ai-spinner"></div>
+            <p>Đang xác thực...</p>
+        </div>`;
+
+        // Show login modal
+        AUTH.showLoginModal(
+            // onSuccess callback
+            async () => {
+                // Sau khi login thành công, reload AI analysis
+                container.innerHTML = `<div class="ai-loading">
+                    <div class="ai-spinner"></div>
+                    <p>Đang phân tích lá số...</p>
+                </div>`;
+
+                // Re-trigger AI analysis
+                if (window._currentInterpretation) {
+                    const aiResult = await callAiApi(window._currentInterpretation);
+                    renderAiAnalysis(aiResult);
+                } else {
+                    container.innerHTML = `<div class="ai-error">
+                        <p>⚠️ Vui lòng lập lại lá số để xem phân tích AI</p>
+                    </div>`;
+                }
+            },
+            // onCancel callback
+            () => {
+                // Restore lại nút login khi user hủy
+                renderAiAnalysis({
+                    requiresAuth: true,
+                    message: 'Vui lòng đăng nhập để xem phân tích AI chuyên sâu'
+                });
+            }
+        );
     }
 
     return {

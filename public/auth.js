@@ -90,7 +90,7 @@ const AUTH = (function () {
     /**
      * Hiển thị modal login
      */
-    function showLoginModal(onSuccess) {
+    function showLoginModal(onSuccess, onCancel) {
         // Tạo modal HTML
         const modalHtml = `
             <div class="auth-modal-overlay" id="authModalOverlay">
@@ -132,13 +132,16 @@ const AUTH = (function () {
         const btnSubmit = document.getElementById('authBtnSubmit');
         const errorDiv = document.getElementById('authError');
 
-        function closeModal() {
+        function closeModal(cancelled = false) {
             overlay.remove();
+            if (cancelled && onCancel) {
+                onCancel();
+            }
         }
 
-        btnCancel.addEventListener('click', closeModal);
+        btnCancel.addEventListener('click', () => closeModal(true));
         overlay.addEventListener('click', (e) => {
-            if (e.target === overlay) closeModal();
+            if (e.target === overlay) closeModal(true);
         });
 
         form.addEventListener('submit', async (e) => {
@@ -161,7 +164,7 @@ const AUTH = (function () {
             const result = await login(username, password);
 
             if (result.success) {
-                closeModal();
+                closeModal(false);
                 if (onSuccess) onSuccess();
             } else {
                 errorDiv.textContent = result.error || 'Sai tên đăng nhập hoặc mật khẩu';

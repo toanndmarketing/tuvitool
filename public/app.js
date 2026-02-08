@@ -124,6 +124,10 @@
                 hour: metadata.gioSinh,
                 yearView: metadata.namXem
             };
+
+            // Lưu vào global để dùng lại sau khi login
+            window._currentInterpretation = payload;
+
             const aiResult = await TuViInterpret.getAiInterpretation(payload);
             TuViInterpret.renderAiAnalysis(aiResult);
         } catch (err) {

@@ -708,6 +708,53 @@ body {
     color: var(--text-muted);
 }
 
+/* AI Auth Required */
+.ai-auth-required {
+    text-align: center;
+    padding: 2rem 1.5rem;
+    background: rgba(226, 176, 66, 0.05);
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(226, 176, 66, 0.2);
+}
+
+.ai-auth-message {
+    font-size: 1rem;
+    color: var(--text-secondary);
+    margin-bottom: 1.5rem;
+    line-height: 1.6;
+}
+
+.btn-ai-login {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6rem;
+    padding: 0.9rem 2rem;
+    background: linear-gradient(135deg, var(--accent-gold), #b08830);
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #1a1a1a;
+    font-size: 1rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(226, 176, 66, 0.2);
+}
+
+.btn-ai-login:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(226, 176, 66, 0.35);
+}
+
+.btn-ai-login:active {
+    transform: translateY(0);
+}
+
+.btn-ai-login .btn-icon {
+    font-size: 1.2rem;
+}
+
 /* =====================
    RESPONSIVE
    ===================== */

@@ -48,15 +48,23 @@ const TuViInterpret = (function () {
     // PHÂN TÍCH TỔNG HỢP
     // =====================
 
-    function analyzeCung(cungName, saoList) {
+    function analyzeCung(cungName, saoList, pos, lasoData) {
         const cungInfo = _cungData[cungName] || {};
         const chinhTinh = saoList.filter(s => s.type === 'chinh');
         const phuTinh = saoList.filter(s => s.type !== 'chinh');
         const catTinh = saoList.filter(s => s.nature === 'cat');
         const hungTinh = saoList.filter(s => s.nature === 'hung');
 
+        // Xác định độ phụ thuộc vào giờ sinh
+        const hourStars = ['Văn Xương', 'Văn Khúc', 'Địa Không', 'Địa Kiếp', 'Hoả Tinh', 'Linh Tinh'];
+        const hasHourStars = saoList.some(s => hourStars.includes(s.name));
+        const isMenhThan = (pos === lasoData.cungMenhPos || pos === lasoData.cungThanPos);
+
         let analysis = {
             cungName,
+            pos,
+            isHourDependent: isMenhThan || hasHourStars,
+            hourDependentReason: isMenhThan ? 'Cung Mệnh/Thân' : (hasHourStars ? 'Chứa sao an theo giờ' : ''),
             icon: cungInfo.icon || '🔮',
             desc: cungInfo.desc || '',
             chinhTinh: [],
@@ -132,20 +140,22 @@ const TuViInterpret = (function () {
 
         if (lasoData.amDuongNghichLy && _specialData.am_duong_nghich_ly) {
             const s = _specialData.am_duong_nghich_ly;
-            specials.push({ icon: s.icon, title: s.title, content: s.description });
+            specials.push({ icon: s.icon, title: s.title, content: s.description, dep: '📅 Năm sinh' });
         }
 
         if (lasoData.cucKhacMenh && _specialData.cuc_khac_menh) {
             const s = _specialData.cuc_khac_menh;
             specials.push({
                 icon: s.icon, title: s.title,
-                content: `${s.description} (Cục ${lasoData.hanhCuc} khắc Mệnh ${lasoData.hanhMenh})`
+                content: `${s.description} (Cục ${lasoData.hanhCuc} khắc Mệnh ${lasoData.hanhMenh})`,
+                dep: '⏰ Giờ sinh',
+                isHour: true
             });
         }
 
         if (lasoData.thanMenhDongCung && _specialData.than_menh_dong_cung) {
             const s = _specialData.than_menh_dong_cung;
-            specials.push({ icon: s.icon, title: s.title, content: s.description });
+            specials.push({ icon: s.icon, title: s.title, content: s.description, dep: '⏰ Giờ sinh', isHour: true });
         }
 
         // Tứ Hoá
@@ -154,7 +164,8 @@ const TuViInterpret = (function () {
             const s = _specialData.tu_hoa;
             specials.push({
                 icon: s.icon, title: s.title,
-                content: `${s.description}\n\nHoá Lộc: ${tuHoa['Hoá Lộc']} → Tăng tài lộc, may mắn.\nHoá Quyền: ${tuHoa['Hoá Quyền']} → Tăng quyền lực, uy tín.\nHoá Khoa: ${tuHoa['Hoá Khoa']} → Tăng học vấn, danh tiếng.\nHoá Kỵ: ${tuHoa['Hoá Kỵ']} → Gây trở ngại, thị phi.`
+                content: `${s.description}\n\nHoá Lộc: ${tuHoa['Hoá Lộc']} → Tăng tài lộc, may mắn.\nHoá Quyền: ${tuHoa['Hoá Quyền']} → Tăng quyền lực, uy tín.\nHoá Khoa: ${tuHoa['Hoá Khoa']} → Tăng học vấn, danh tiếng.\nHoá Kỵ: ${tuHoa['Hoá Kỵ']} → Gây trở ngại, thị phi.`,
+                dep: '📅 Năm sinh'
             });
         }
 
@@ -186,7 +197,7 @@ const TuViInterpret = (function () {
             const pos = (lasoData.cungMenhPos + i) % 12;
             const cungName = lasoData.cungMap[pos];
             const saoList = lasoData.saoMap[pos] || [];
-            const analysis = analyzeCung(cungName, saoList);
+            const analysis = analyzeCung(cungName, saoList, pos, lasoData);
             analysis.chiIndex = pos;
             analysis.chiName = AmLich.DIA_CHI[pos];
             result.palaces.push(analysis);
@@ -304,10 +315,13 @@ const TuViInterpret = (function () {
 
         // Special cards
         interpretation.specials.forEach((s, idx) => {
-            html += `<div class="interp-card" style="--index: ${idx + 2}">
+            html += `<div class="interp-card ${s.isHour ? 'is-hour-card' : ''}" style="--index: ${idx + 2}">
                 <div class="interp-header">
                     <span class="interp-icon">${s.icon}</span>
-                    <span class="interp-title">${s.title}</span>
+                    <div class="interp-title-group">
+                        <span class="interp-title">${s.title}</span>
+                        <span class="badge-hour ${s.isHour ? 'important' : 'lite'}">${s.dep}</span>
+                    </div>
                     <span class="interp-toggle">▼</span>
                 </div>
                 <div class="interp-body">
@@ -325,10 +339,13 @@ const TuViInterpret = (function () {
                     p.rating >= 1 ? '⭐⭐⭐' :
                         p.rating >= 0 ? '⭐⭐' : '⭐';
 
-            html += `<div class="interp-card" style="--index: ${index}">
+            html += `<div class="interp-card ${p.isHourDependent ? 'is-hour-card' : ''}" style="--index: ${index}">
                 <div class="interp-header">
                     <span class="interp-icon">${p.icon}</span>
-                    <span class="interp-title">${p.cungName} (${p.chiName}) <span class="${ratingColor}">${ratingText}</span></span>
+                    <div class="interp-title-group">
+                        <span class="interp-title">${p.cungName} (${p.chiName}) <span class="${ratingColor}">${ratingText}</span></span>
+                        <span class="badge-hour ${p.isHourDependent ? 'important' : 'lite'}">${p.isHourDependent ? '⏰ Giờ sinh' : '📅 Năm/Tháng'}</span>
+                    </div>
                     <span class="interp-toggle">▼</span>
                 </div>
                 <div class="interp-body">
@@ -396,6 +413,14 @@ const TuViInterpret = (function () {
         }
 
         if (aiResult.error || aiResult.fallback) {
+            // Nếu lỗi do hết hạn token hoặc server restart, hiển thị lại nút login
+            if (aiResult.error && (aiResult.error.includes('Unauthorized') || aiResult.error.includes('expired token'))) {
+                return renderAiAnalysis({
+                    requiresAuth: true,
+                    message: 'Phiên đăng nhập đã hết hạn do server vừa khởi động lại. Vui lòng đăng nhập lại.'
+                });
+            }
+
             container.innerHTML = `<div class="ai-error">
                 <p>⚠️ ${aiResult.error || 'Phân tích chuyên sâu không khả dụng'}</p>
                 <p><small>Bạn vẫn có thể xem diễn giải chi tiết từng cung bên dưới.</small></p>
@@ -406,9 +431,11 @@ const TuViInterpret = (function () {
         let html = '';
         if (aiResult.sections && aiResult.sections.length > 0) {
             aiResult.sections.forEach(section => {
-                html += `<div class="ai-section">
+                const isBirthHour = section.title.includes('Giờ Sinh');
+                html += `<div class="ai-section ${isBirthHour ? 'ai-section-highlight' : ''}">
                     <h4 class="ai-section-title">${section.icon} ${section.title}</h4>
                     <p>${section.content}</p>
+                    ${isBirthHour ? `<small class="ai-note">⚠️ Phần này phụ thuộc hoàn toàn vào chính xác của giờ sinh.</small>` : ''}
                 </div>`;
             });
         } else if (aiResult.raw) {

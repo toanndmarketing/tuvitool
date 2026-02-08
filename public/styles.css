@@ -617,11 +617,43 @@ body {
     border-radius: var(--radius-sm);
 }
 
-.interp-title {
+.interp-title-group {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.interp-title {
     font-family: var(--font-serif);
     font-size: 1.05rem;
     color: var(--accent-gold);
+}
+
+.badge-hour {
+    font-size: 0.65rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    width: fit-content;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.badge-hour.important {
+    background: rgba(226, 176, 66, 0.2);
+    color: var(--accent-gold);
+    border: 1px solid rgba(226, 176, 66, 0.4);
+}
+
+.badge-hour.lite {
+    background: rgba(255, 255, 255, 0.05);
+    color: var(--text-muted);
+    border: 1px solid var(--border-color);
+}
+
+.is-hour-card {
+    border-left: 4px solid var(--accent-gold) !important;
 }
 
 .interp-toggle {
@@ -709,6 +741,23 @@ body {
     margin-bottom: 1.2rem;
     padding-bottom: 1rem;
     border-bottom: 1px solid var(--border-color);
+}
+
+.ai-section-highlight {
+    background: rgba(226, 176, 66, 0.08);
+    padding: 1rem;
+    border-radius: var(--radius-sm);
+    border: 1px solid rgba(226, 176, 66, 0.2);
+    margin: 1rem 0;
+}
+
+.ai-note {
+    display: block;
+    margin-top: 0.5rem;
+    color: var(--accent-gold);
+    font-size: 0.8rem;
+    font-style: italic;
+    font-weight: 500;
 }
 
 .ai-section:last-child {

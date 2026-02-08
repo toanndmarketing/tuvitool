@@ -162,7 +162,8 @@ function buildPrompt(data) {
             })
         ].join('; ');
         const overall = p.overall || '';
-        return `- ${p.cungName} (${p.chiName}) [Rating: ${p.rating}/5]: ${stars || 'Không có chính tinh'}. ${overall}`;
+        const hourDep = p.isHourDependent ? `[PHỤ THUỘC GIỜ SINH: ${p.hourDependentReason}]` : '';
+        return `- ${p.cungName} (${p.chiName}) [Rating: ${p.rating}/5] ${hourDep}: ${stars || 'Không có chính tinh'}. ${overall}`;
     }).join('\n');
 
     let specialInfo = specials.map(s => `- ${s.title}: ${s.content}`).join('\n');
@@ -172,6 +173,7 @@ LƯU Ý QUAN TRỌNG: Hãy sử dụng danh xưng "Đương số" xuyên suốt 
 
 ## THÔNG TIN LÁ SỐ:
 - Giới tính: ${ov.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}
+- Giờ sinh: ${data.hour || 'Không xác định'}
 - Âm Dương: ${ov.amDuong} (${ov.thuan ? 'Thuận hành' : 'Nghịch hành'})
 - Mệnh: ${ov.menhNapAm} (Hành ${ov.hanhMenh})
 - Cục: ${ov.cucName} (Hành ${ov.hanhCuc})
@@ -187,11 +189,12 @@ ${specialInfo || 'Không có điều kiện đặc biệt'}
 Dựa trên thông tin chi tiết từng sao trong từng cung ở trên, hãy viết bài phân tích tổng hợp chuyên sâu. Giải thích ý nghĩa thực tiễn, không dùng thuật ngữ khó hiểu. Cấu trúc:
 
 1. **TỔNG QUAN VẬN MỆNH** (3-5 câu): Nhận xét tổng quát, điểm mạnh/yếu nổi bật
-2. **TÍNH CÁCH & CON NGƯỜI** (3-5 câu): Tính cách, phong thái, điểm đặc biệt
-3. **SỰ NGHIỆP & TÀI CHÍNH** (3-5 câu): Hướng nghề nghiệp phù hợp, tiềm năng tài chính
-4. **TÌNH DUYÊN & GIA ĐÌNH** (3-5 câu): Đường tình cảm, gia đình, con cái
-5. **SỨC KHỎE** (2-3 câu): Điểm cần lưu ý về sức khỏe
-6. **LỜI KHUYÊN** (3-4 câu): Lời khuyên thiết thực, cụ thể
+2. **LUẬN GIẢI GIỜ SINH** (3-4 câu): Phân tích tầm quan trọng của giờ sinh đối với lá số này. Nêu rõ các đặc điểm tính cách hoặc vận hạn bị ảnh hưởng mạnh bởi giờ sinh (như vị trí Mệnh/Thân). Lưu ý người xem nếu giờ sinh không chính xác thì phần này và toàn bộ lá số sẽ thay đổi.
+3. **TÍNH CÁCH & CON NGƯỜI** (3-5 câu): Tính cách, phong thái, điểm đặc biệt
+4. **SỰ NGHIỆP & TÀI CHÍNH** (3-5 câu): Hướng nghề nghiệp phù hợp, tiềm năng tài chính
+5. **TÌNH DUYÊN & GIA ĐÌNH** (3-5 câu): Đường tình cảm, gia đình, con cái
+6. **SỨC KHỎE** (2-3 câu): Điểm cần lưu ý về sức khỏe
+7. **LỜI KHUYÊN** (3-4 câu): Lời khuyên thiết thực, cụ thể
 
 Mỗi phần viết chi tiết, dễ hiểu. KHÔNG dùng markdown header. Mỗi phần cách nhau bởi "---".
 Viết bằng Tiếng Việt.`;
@@ -205,6 +208,7 @@ function parseAiResponse(text) {
 
     const titles = [
         'Tổng Quan Vận Mệnh',
+        'Luận Giải Giờ Sinh',
         'Tính Cách & Con Người',
         'Sự Nghiệp & Tài Chính',
         'Tình Duyên & Gia Đình',
@@ -212,7 +216,7 @@ function parseAiResponse(text) {
         'Lời Khuyên'
     ];
 
-    const icons = ['🌟', '👤', '💼', '💕', '🏥', '💡'];
+    const icons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '💡'];
 
     const result = {
         sections: [],
@@ -224,7 +228,7 @@ function parseAiResponse(text) {
         let content = section
             .replace(/\*\*/g, '')
             .replace(/^\d+\.\s*/gm, '')
-            .replace(/^(TỔNG QUAN VẬN MỆNH|TÍNH CÁCH.*|SỰ NGHIỆP.*|TÌNH DUYÊN.*|SỨC KHỎE|LỜI KHUYÊN):?\s*/i, '')
+            .replace(/^(TỔNG QUAN VẬN MỆNH|LUẬN GIẢI GIỜ SINH|TÍNH CÁCH.*|SỰ NGHIỆP.*|TÌNH DUYÊN.*|SỨC KHỎE|LỜI KHUYÊN):?\s*/i, '')
             .trim();
 
         result.sections.push({

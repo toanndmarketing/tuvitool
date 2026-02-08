@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Lá Số Tử Vi - Diễn Giải Đầy Đủ</title>
+    <meta name="description" content="Công cụ lập lá số Tử Vi trực tuyến với diễn giải chi tiết. Nhập ngày giờ sinh để xem lá số Tử Vi của bạn.">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+    <div class="app-container">
+        <!-- Header -->
+        <header class="app-header">
+            <div class="header-glow"></div>
+            <h1 class="header-title">
+                <span class="title-icon">紫微</span>
+                <span class="title-text">Lá Số Tử Vi</span>
+            </h1>
+            <p class="header-subtitle">Công cụ lập lá số & diễn giải Tử Vi đẩy đủ</p>
+        </header>
+
+        <!-- Input Form -->
+        <section class="input-section" id="inputSection">
+            <div class="form-container">
+                <h2 class="form-title">Thông Tin Lập Lá Số</h2>
+                <form id="tuViForm" class="tuvi-form">
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="hoTen">Họ và Tên</label>
+                            <input type="text" id="hoTen" placeholder="Nhập họ tên..." value="Group FB Tử Vi Việt Nam">
+                        </div>
+                        <div class="form-group">
+                            <label for="gioiTinh">Giới Tính</label>
+                            <select id="gioiTinh">
+                                <option value="nam">Nam</option>
+                                <option value="nu" selected>Nữ</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="ngaySinh">Ngày Sinh (Dương lịch)</label>
+                            <input type="date" id="ngaySinh" value="2003-11-27">
+                        </div>
+                        <div class="form-group">
+                            <label for="gioSinh">Giờ Sinh (Canh giờ)</label>
+                            <select id="gioSinh">
+                                <option value="0">Tý (23h-1h)</option>
+                                <option value="1">Sửu (1h-3h)</option>
+                                <option value="2">Dần (3h-5h)</option>
+                                <option value="3">Mão (5h-7h)</option>
+                                <option value="4">Thìn (7h-9h)</option>
+                                <option value="5">Tỵ (9h-11h)</option>
+                                <option value="6">Ngọ (11h-13h)</option>
+                                <option value="7">Mùi (13h-15h)</option>
+                                <option value="8">Thân (15h-17h)</option>
+                                <option value="9">Dậu (17h-19h)</option>
+                                <option value="10">Tuất (19h-21h)</option>
+                                <option value="11">Hợi (21h-23h)</option>
+                            </select>
+                        </div>
+                    </div>
+                    <div class="form-row">
+                        <div class="form-group">
+                            <label for="namXem">Năm Xem (Lưu niên)</label>
+                            <input type="number" id="namXem" value="2026" min="1900" max="2100">
+                        </div>
+                    </div>
+                    <button type="submit" class="btn-submit" id="btnSubmit">
+                        <span class="btn-icon">✨</span>
+                        <span>Lập Lá Số</span>
+                    </button>
+                </form>
+            </div>
+        </section>
+
+        <!-- Chart Display -->
+        <section class="chart-section" id="chartSection" style="display:none;">
+            <div class="chart-actions">
+                <button class="btn-back" id="btnBack">← Nhập lại</button>
+                <button class="btn-print" id="btnPrint">🖨️ In lá số</button>
+            </div>
+            <div class="chart-wrapper" id="chartWrapper">
+                <!-- The 4x4 grid chart will be rendered here by JS -->
+            </div>
+        </section>
+
+        <!-- Interpretation Section -->
+        <section class="interpretation-section" id="interpretationSection" style="display:none;">
+            <h2 class="section-title">📖 Diễn Giải Lá Số</h2>
+            <div id="interpretationContent" class="interpretation-content">
+                <!-- Rendered by JS -->
+            </div>
+        </section>
+    </div>
+
+    <script src="auth.js"></script>
+    <script src="am-lich.js"></script>
+    <script src="tu-vi-calc.js"></script>
+    <script src="tu-vi-sao.js"></script>
+    <script src="tu-vi-render.js"></script>
+    <script src="tu-vi-interpret.js"></script>
+    <script src="app.js"></script>
+</body>
+</html>

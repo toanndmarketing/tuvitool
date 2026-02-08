@@ -2,6 +2,7 @@
  * ============================================
  * APP.JS - Điều phối chính
  * Kết nối form → API → render → AI
+ * Hỗ trợ 2 tab: Tử Vi + Thần Số Học
  * ============================================
  */
 
@@ -10,13 +11,39 @@
 
     const form = document.getElementById('tuViForm');
     const inputSection = document.getElementById('inputSection');
-    const chartSection = document.getElementById('chartSection');
+    const resultsSection = document.getElementById('resultsSection');
     const chartWrapper = document.getElementById('chartWrapper');
-    const interpretationSection = document.getElementById('interpretationSection');
     const interpretationContent = document.getElementById('interpretationContent');
+    const tshContainer = document.getElementById('tshContainer');
     const btnBack = document.getElementById('btnBack');
     const btnPrint = document.getElementById('btnPrint');
     const btnSubmit = document.getElementById('btnSubmit');
+
+    // Tab elements
+    const tabBtns = document.querySelectorAll('.tab-btn');
+    const tabContents = document.querySelectorAll('.tab-content');
+
+    // =====================
+    // TAB SWITCHING
+    // =====================
+    tabBtns.forEach(btn => {
+        btn.addEventListener('click', function () {
+            const targetTab = this.dataset.tab;
+
+            // Update active button
+            tabBtns.forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+
+            // Update active content
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            const targetContent = document.querySelector(`[data-tab-content="${targetTab}"]`);
+            if (targetContent) {
+                targetContent.classList.add('active');
+                // Smooth scroll to top of results
+                targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+            }
+        });
+    });
 
     // =====================
     // EVENT HANDLERS
@@ -28,8 +55,7 @@
     });
 
     btnBack.addEventListener('click', function () {
-        chartSection.style.display = 'none';
-        interpretationSection.style.display = 'none';
+        resultsSection.style.display = 'none';
         inputSection.style.display = 'block';
         window.scrollTo({ top: 0, behavior: 'smooth' });
     });
@@ -68,26 +94,52 @@
             const thang = parseInt(parts[1]);
             const ngay = parseInt(parts[2]);
 
-            // 2. Calculate
+            // =====================
+            // TỬ VI CALCULATION
+            // =====================
             const params = { ngay, thang, nam, gioSinh, gioiTinh, namXem };
             const lasoData = TuViCalc.calculate(params);
 
-            // 3. An sao
+            // An sao
             TuViSao.anSao(lasoData);
 
-            // 4. Render chart
+            // Render chart
             const chartHtml = TuViRender.render(lasoData, hoTen);
             chartWrapper.innerHTML = chartHtml;
 
-            // 5. Generate interpretation (từ API data)
+            // Generate interpretation (từ API data)
             const interpretation = TuViInterpret.interpret(lasoData);
             const interpHtml = TuViInterpret.renderInterpretation(interpretation);
             interpretationContent.innerHTML = interpHtml;
 
-            // 6. Show sections
+            // =====================
+            // THẦN SỐ HỌC CALCULATION
+            // =====================
+            const tshResult = ThanSoHoc.calculate({
+                day: ngay,
+                month: thang,
+                year: nam,
+                fullName: hoTen,
+                currentYear: namXem
+            });
+
+            // Render Thần Số Học
+            const tshHtml = ThanSoHocRender.render(tshResult);
+            tshContainer.innerHTML = tshHtml;
+
+            console.log('Thần Số Học data:', tshResult);
+
+            // =====================
+            // SHOW RESULTS
+            // =====================
             inputSection.style.display = 'none';
-            chartSection.style.display = 'block';
-            interpretationSection.style.display = 'block';
+            resultsSection.style.display = 'block';
+
+            // Ensure first tab is active
+            tabBtns.forEach(b => b.classList.remove('active'));
+            tabContents.forEach(tc => tc.classList.remove('active'));
+            document.getElementById('tabTuVi').classList.add('active');
+            document.getElementById('tabContentTuVi').classList.add('active');
 
             // Scroll + animation
             window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -99,7 +151,7 @@
                 chartWrapper.style.transform = 'translateY(0)';
             });
 
-            // 7. Async: Gọi AI interpretation (không block UI)
+            // Async: Gọi AI interpretation (không block UI)
             loadAiAnalysis(interpretation, { hoTen, ngaySinhStr, gioSinh, namXem });
 
             console.log('Lá số data:', lasoData);

@@ -1,15 +1,20 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Lá Số Tử Vi - Diễn Giải Đầy Đủ</title>
-    <meta name="description" content="Công cụ lập lá số Tử Vi trực tuyến với diễn giải chi tiết. Nhập ngày giờ sinh để xem lá số Tử Vi của bạn.">
+    <title>Tử Vi & Thần Số Học - Luận Giải Đầy Đủ</title>
+    <meta name="description"
+        content="Công cụ lập lá số Tử Vi và luận giải Thần Số Học trực tuyến. Phân tích vận mệnh, tính cách, sứ mệnh cuộc đời theo phương pháp Pythagoras.">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
+        rel="stylesheet">
     <link rel="stylesheet" href="styles.css">
 </head>
+
 <body>
     <div class="app-container">
         <!-- Header -->
@@ -17,9 +22,9 @@
             <div class="header-glow"></div>
             <h1 class="header-title">
                 <span class="title-icon">紫微</span>
-                <span class="title-text">Lá Số Tử Vi</span>
+                <span class="title-text">Tử Vi & Thần Số Học</span>
             </h1>
-            <p class="header-subtitle">Công cụ lập lá số & diễn giải Tử Vi đẩy đủ</p>
+            <p class="header-subtitle">Công cụ lập lá số Tử Vi & luận giải Thần Số Học đầy đủ</p>
         </header>
 
         <!-- Input Form -->
@@ -30,20 +35,20 @@
                     <div class="form-row">
                         <div class="form-group">
                             <label for="hoTen">Họ và Tên</label>
-                            <input type="text" id="hoTen" placeholder="Nhập họ tên..." value="Group FB Tử Vi Việt Nam">
+                            <input type="text" id="hoTen" placeholder="Nhập họ tên..." value="Nguyễn Đình Bắc">
                         </div>
                         <div class="form-group">
                             <label for="gioiTinh">Giới Tính</label>
                             <select id="gioiTinh">
-                                <option value="nam">Nam</option>
-                                <option value="nu" selected>Nữ</option>
+                                <option value="nam" selected>Nam</option>
+                                <option value="nu">Nữ</option>
                             </select>
                         </div>
                     </div>
                     <div class="form-row">
                         <div class="form-group">
                             <label for="ngaySinh">Ngày Sinh (Dương lịch)</label>
-                            <input type="date" id="ngaySinh" value="2003-11-27">
+                            <input type="date" id="ngaySinh" value="2004-08-19">
                         </div>
                         <div class="form-group">
                             <label for="gioSinh">Giờ Sinh (Canh giờ)</label>
@@ -51,7 +56,7 @@
                                 <option value="0">Tý (23h-1h)</option>
                                 <option value="1">Sửu (1h-3h)</option>
                                 <option value="2">Dần (3h-5h)</option>
-                                <option value="3">Mão (5h-7h)</option>
+                                <option value="3" selected>Mão (5h-7h)</option>
                                 <option value="4">Thìn (7h-9h)</option>
                                 <option value="5">Tỵ (9h-11h)</option>
                                 <option value="6">Ngọ (11h-13h)</option>
@@ -77,22 +82,45 @@
             </div>
         </section>
 
-        <!-- Chart Display -->
-        <section class="chart-section" id="chartSection" style="display:none;">
+        <!-- Results Section with Tabs -->
+        <section class="results-section" id="resultsSection" style="display:none;">
+            <!-- Tab Navigation -->
+            <div class="results-tabs">
+                <button class="tab-btn active" id="tabTuVi" data-tab="tuvi">
+                    <span class="tab-icon">🔮</span>
+                    <span class="tab-label">Tử Vi</span>
+                </button>
+                <button class="tab-btn" id="tabTSH" data-tab="thanSoHoc">
+                    <span class="tab-icon">🔢</span>
+                    <span class="tab-label">Thần Số Học</span>
+                </button>
+            </div>
+
+            <!-- Back/Print Actions -->
             <div class="chart-actions">
                 <button class="btn-back" id="btnBack">← Nhập lại</button>
-                <button class="btn-print" id="btnPrint">🖨️ In lá số</button>
+                <button class="btn-print" id="btnPrint">🖨️ In kết quả</button>
             </div>
-            <div class="chart-wrapper" id="chartWrapper">
-                <!-- The 4x4 grid chart will be rendered here by JS -->
-            </div>
-        </section>
 
-        <!-- Interpretation Section -->
-        <section class="interpretation-section" id="interpretationSection" style="display:none;">
-            <h2 class="section-title">📖 Diễn Giải Lá Số</h2>
-            <div id="interpretationContent" class="interpretation-content">
-                <!-- Rendered by JS -->
+            <!-- Tab: Tử Vi -->
+            <div class="tab-content active" id="tabContentTuVi" data-tab-content="tuvi">
+                <div class="chart-wrapper" id="chartWrapper">
+                    <!-- The 4x4 grid chart will be rendered here by JS -->
+                </div>
+                <!-- Interpretation Section -->
+                <div class="interpretation-section" id="interpretationSection">
+                    <h2 class="section-title">📖 Diễn Giải Lá Số</h2>
+                    <div id="interpretationContent" class="interpretation-content">
+                        <!-- Rendered by JS -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Tab: Thần Số Học -->
+            <div class="tab-content" id="tabContentTSH" data-tab-content="thanSoHoc">
+                <div class="tsh-container" id="tshContainer">
+                    <!-- Rendered by ThanSoHocRender.render() -->
+                </div>
             </div>
         </section>
     </div>
@@ -103,6 +131,10 @@
     <script src="tu-vi-sao.js"></script>
     <script src="tu-vi-render.js"></script>
     <script src="tu-vi-interpret.js"></script>
+    <script src="than-so-hoc.js"></script>
+    <script src="than-so-hoc-data.js"></script>
+    <script src="than-so-hoc-render.js"></script>
     <script src="app.js"></script>
 </body>
+
 </html>

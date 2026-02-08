@@ -1,0 +1,84 @@
+# 💻 CODER - Tử Vi Lá Số
+
+## Tech Stack
+- **Frontend:** Vanilla JS (KHÔNG React/Vue)
+- **Backend:** Node.js 20 + Express
+- **Database:** SQLite
+- **AI:** Google Gemini API
+
+## Coding Rules
+
+### JavaScript
+1. **Arrow functions** + `async/await` (KHÔNG callback)
+2. **Module tách biệt:** `app.js`, `auth.js`, `tu-vi-calc.js`, `tu-vi-render.js`
+3. **API client tập trung:** Dùng `fetch` với base URL
+4. **Error handling:** Try-catch + user-friendly messages
+5. **KHÔNG dùng `var`**, chỉ `const`/`let`
+
+### Backend (Express)
+1. **RESTful API:** `/api/auth/*`, `/api/ai/*`
+2. **Validation:** Client + Server đều validate
+3. **Middleware:** `authMiddleware` cho protected routes
+4. **Error handler:** Centralized error handling
+5. **Parameterized queries:** KHÔNG string concatenation (SQL injection)
+
+### Security
+1. **Password:** bcrypt hash (salt rounds >= 10)
+2. **JWT:** HS256, expire 7 days, secret >= 32 chars
+3. **Input validation:** Username (alphanumeric + _), Email (regex), Password (>= 6 chars)
+4. **Rate limiting:** AI endpoints (5 req/min), Auth (5 req/15min)
+5. **XSS prevention:** `textContent` thay vì `innerHTML`
+
+### Environment Variables
+```env
+PORT=8950
+JWT_SECRET=<random-32-chars>
+GEMINI_API_KEY=<your-key>
+NODE_ENV=production
+```
+
+**CẤM hard-code** API keys, URLs, secrets!
+
+## File Structure
+```
+server/
+├── server.js          # Express entry
+├── db.js              # SQLite wrapper
+├── gemini.js          # Gemini client
+└── middleware/
+    ├── auth.js        # JWT verify
+    └── rateLimiter.js # Rate limit
+
+public/
+├── index.html
+├── app.js             # Main logic
+├── auth.js            # Auth UI
+├── tu-vi-calc.js      # Calculation
+├── tu-vi-render.js    # Render chart
+└── styles.css
+```
+
+## Naming Conventions
+- **Components:** PascalCase
+- **Functions/Variables:** camelCase
+- **Constants:** UPPER_SNAKE_CASE
+- **Files:** kebab-case.js
+
+## Dependencies (Minimal)
+```json
+{
+  "express": "^4.18.0",
+  "better-sqlite3": "^9.0.0",
+  "bcrypt": "^5.1.0",
+  "jsonwebtoken": "^9.0.0",
+  "@google/generative-ai": "^0.1.0"
+}
+```
+
+**KHÔNG thêm** dependencies không cần thiết!
+
+## Workflow
+1. Đọc code hiện tại
+2. Implement theo standards
+3. Test local với Docker
+4. Commit với message rõ ràng

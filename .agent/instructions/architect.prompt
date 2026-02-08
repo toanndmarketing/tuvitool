@@ -1,0 +1,136 @@
+# 🏗️ ARCHITECT - Tử Vi Lá Số
+
+## Kiến trúc Tổng quan
+
+**Single Container Architecture** - Tất cả trong 1 Docker container.
+
+```
+Browser (HTML/JS)
+    ↓ HTTP
+Express Server (Port 8950)
+    ├─ Static files (/public)
+    ├─ API routes (/api/*)
+    └─ Middleware (auth, rate limit)
+    ↓
+SQLite (data/tuvi.db)
+    ↓
+Gemini API (external)
+```
+
+## Cấu trúc Thư mục
+
+```
+tu-vi-la-so/
+├── .agent/              # Agent instructions
+├── server/              # Backend (Express)
+├── public/              # Frontend (static)
+├── data/                # SQLite database (volume)
+├── docker-compose.yml
+├── Dockerfile
+└── .env
+```
+
+## Database Schema
+
+```sql
+-- users
+CREATE TABLE users (
+  id INTEGER PRIMARY KEY,
+  username TEXT UNIQUE,
+  email TEXT UNIQUE,
+  password TEXT,  -- bcrypt hash
+  created_at DATETIME
+);
+
+-- analysis_history (future)
+CREATE TABLE analysis_history (
+  id INTEGER PRIMARY KEY,
+  user_id INTEGER,
+  birth_data TEXT,  -- JSON
+  analysis_result TEXT,  -- JSON
+  created_at DATETIME
+);
+```
+
+## API Design
+
+```
+POST /api/auth/register   # Đăng ký
+POST /api/auth/login      # Đăng nhập
+GET  /api/auth/me         # Current user (protected)
+POST /api/ai/analyze      # Phân tích AI (protected)
+GET  /api/health          # Healthcheck
+```
+
+## Data Flow
+
+### 1. Registration/Login
+```
+Browser → POST /api/auth/register
+        → Validate → Hash password → Insert DB
+        → Return JWT → Store localStorage
+```
+
+### 2. Tử Vi Calculation
+```
+Browser → Input birth data
+        → tu-vi-calc.js (client-side)
+        → Render chart (no API call)
+```
+
+### 3. AI Analysis
+```
+Browser → POST /api/ai/analyze + JWT
+        → authMiddleware verify
+        → Call Gemini API
+        → Return result
+```
+
+## Security Architecture
+
+1. **Auth:** JWT (7 days expire) + bcrypt (10 rounds)
+2. **Validation:** Client + Server
+3. **Rate Limiting:** 5 req/min (AI), 5 req/15min (Auth)
+4. **HTTPS:** Production only (Nginx reverse proxy)
+
+## Performance
+
+- **Calculation:** Client-side (không tốn server)
+- **Static files:** Express.static với cache 1 day
+- **AI caching:** Future enhancement
+
+## Deployment
+
+```
+Nginx (tuvi.demowebest.site)
+  ↓ proxy_pass
+Docker Container (localhost:8950)
+  ↓ volume mount
+SQLite (./data/tuvi.db)
+```
+
+## Constraints
+
+### DO's ✅
+- Single container
+- Client-side calculation
+- SQLite database
+- JWT authentication
+- Port 8950 (KHÔNG đổi)
+
+### DON'Ts ❌
+- KHÔNG microservices
+- KHÔNG PostgreSQL/MySQL
+- KHÔNG Redis (chưa cần)
+- KHÔNG React/Vue
+- KHÔNG thay đổi port
+
+## Decision Log
+
+| Decision | Rationale |
+|----------|-----------|
+| Single container | Dự án nhỏ, đơn giản |
+| SQLite | File-based, đủ performance |
+| Vanilla JS | Không cần build step |
+| JWT | Stateless auth |
+| Port 8950 | Production đã deploy |

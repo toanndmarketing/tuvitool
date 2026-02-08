@@ -1,0 +1,181 @@
+# 🛡️ SECURITY - Tử Vi Lá Số
+
+## Security Layers
+
+```
+1. Input Validation (Client + Server)
+2. Authentication (JWT + bcrypt)
+3. Authorization (Protected routes)
+4. Rate Limiting (API throttling)
+5. Secure Communication (HTTPS)
+```
+
+## Authentication Security
+
+### Password
+- **Hash:** bcrypt, salt rounds >= 10
+- **Policy:** Min 6 chars, max 128 chars
+- **Storage:** NEVER plaintext, NEVER MD5/SHA1
+
+### JWT
+- **Algorithm:** HS256
+- **Expire:** 7 days
+- **Secret:** >= 32 chars, random, in `.env`
+- **Payload:** `{userId, iat}` (NO sensitive data)
+
+### Token Flow
+```
+Register/Login → Generate JWT → Return to client
+Client → Store in localStorage
+API calls → Send via Authorization: Bearer <token>
+Server → Verify JWT → Grant/Deny access
+```
+
+## Input Validation
+
+### Username
+- Length: 3-30 chars
+- Allowed: `a-zA-Z0-9_` only
+- Block: SQL patterns (`--`, `;`, `DROP`, `SELECT`)
+
+### Email
+- Regex: `/^[^\s@]+@[^\s@]+\.[^\s@]+$/`
+- Max length: 254 chars
+- Normalize: lowercase + trim
+
+### Birth Data
+- Year: 1900-2100
+- Month: 1-12
+- Day: 1-31
+- Hour: 0-23
+- Minute: 0-59
+
+## XSS Prevention
+
+1. **Output Encoding:** Escape HTML (`<`, `>`, `&`, `"`, `'`)
+2. **Use `textContent`** thay vì `innerHTML`
+3. **CSP Headers:** Restrict script sources
+4. **NO `eval()`** hoặc `Function()` với user input
+
+## SQL Injection Prevention
+
+**LUÔN dùng Parameterized Queries:**
+```javascript
+// ✅ ĐÚNG
+db.prepare('SELECT * FROM users WHERE username = ?').get(username);
+
+// ❌ SAI
+db.query(`SELECT * FROM users WHERE username = '${username}'`);
+```
+
+## Rate Limiting
+
+```javascript
+// General API: 100 req/15min
+// AI endpoints: 5 req/min
+// Auth endpoints: 5 req/15min (brute force protection)
+```
+
+## Secure Headers
+
+```javascript
+// Helmet.js
+app.use(helmet({
+  contentSecurityPolicy: true,
+  hsts: { maxAge: 31536000 }
+}));
+```
+
+## CORS Configuration
+
+```javascript
+// Development: Allow all
+// Production: Only tuvi.demowebest.site
+```
+
+## Environment Security
+
+### .env File
+```env
+JWT_SECRET=<random-32-chars>  # NEVER commit!
+GEMINI_API_KEY=<your-key>     # NEVER commit!
+```
+
+### File Permissions
+```powershell
+# Linux/Mac
+chmod 600 .env
+
+# Windows
+icacls .env /inheritance:r /grant:r "$env:USERNAME:(R)"
+```
+
+## Security Checklist
+
+### Authentication
+- [ ] Passwords hashed (bcrypt >= 10 rounds)
+- [ ] JWT_SECRET strong (>= 32 chars)
+- [ ] JWT expires (7 days max)
+- [ ] Protected routes verify JWT
+- [ ] No sensitive data in JWT
+
+### Input Validation
+- [ ] All inputs validated (client + server)
+- [ ] Username: alphanumeric + underscore
+- [ ] Email: valid format
+- [ ] Password: >= 6 chars
+- [ ] No SQL injection
+
+### XSS Prevention
+- [ ] Output encoding
+- [ ] CSP headers
+- [ ] No `innerHTML` with user input
+- [ ] Use `textContent`
+
+### Rate Limiting
+- [ ] General API: 100/15min
+- [ ] AI: 5/min
+- [ ] Auth: 5/15min
+
+### Environment
+- [ ] `.env` NOT in Git
+- [ ] `.env.example` provided
+- [ ] No hard-coded secrets
+
+### Database
+- [ ] Parameterized queries
+- [ ] DB file permissions (600)
+- [ ] Regular backups
+
+## Security Testing
+
+```powershell
+# SQL Injection
+curl -X POST http://localhost:8950/api/auth/login \
+  -d '{"username":"admin'\'' OR 1=1--","password":"test"}'
+# Expected: Fail
+
+# XSS
+curl -X POST http://localhost:8950/api/auth/register \
+  -d '{"username":"<script>alert(1)</script>","email":"test@test.com","password":"test123"}'
+# Expected: Sanitize or reject
+
+# Rate Limiting
+for i in {1..20}; do curl http://localhost:8950/api/ai/analyze; done
+# Expected: Block after 5 requests
+```
+
+## Incident Response
+
+### Password Leak
+1. Rotate JWT_SECRET
+2. Invalidate all tokens
+3. Force password reset
+4. Notify users
+
+### API Key Compromised
+1. Revoke old GEMINI_API_KEY
+2. Generate new key
+3. Update `.env`
+4. Restart container
+5. Monitor usage

@@ -1,0 +1,168 @@
+# 🚀 DEVOPS - Tử Vi Lá Số
+
+## Docker Configuration
+
+### Dockerfile
+```dockerfile
+FROM node:20-alpine
+WORKDIR /app
+COPY server/package*.json ./
+RUN npm ci --only=production
+COPY server/ ./
+COPY public/ ./public/
+RUN mkdir -p /app/data
+EXPOSE 8950
+CMD ["node", "server.js"]
+```
+
+### docker-compose.yml
+```yaml
+services:
+  tuvi-app:
+    build: .
+    container_name: tuvi-la-so
+    ports: ["8950:8950"]
+    env_file: [.env]
+    volumes: ["./data:/app/data"]
+    restart: unless-stopped
+```
+
+## Environment Variables
+
+```env
+PORT=8950
+NODE_ENV=production
+JWT_SECRET=<random-32-chars>
+GEMINI_API_KEY=<your-key>
+DB_PATH=/app/data/tuvi.db
+```
+
+**KHÔNG commit `.env` vào Git!**
+
+## Deployment Workflow
+
+### Local Development
+```powershell
+git clone git@github.com:toanndmarketing/tuvitool.git
+cd tuvitool
+cp .env.example .env
+# Edit .env
+docker compose up -d
+docker compose logs -f
+```
+
+### Production Deployment
+```powershell
+ssh root@tuvi.demowebest.site
+cd /root/tuvitool
+git pull origin main
+docker compose down
+docker compose up -d --build
+docker compose ps
+curl http://localhost:8950/api/health
+```
+
+## Common Operations
+
+```powershell
+# Restart
+docker compose restart
+
+# Rebuild
+docker compose up -d --build
+
+# Logs
+docker compose logs -f --tail=50
+
+# Shell access
+docker compose exec tuvi-app sh
+
+# Database backup
+docker cp tuvi-la-so:/app/data/tuvi.db ./backup/
+```
+
+## Troubleshooting
+
+### Container won't start
+```powershell
+docker compose logs
+# Check: Port conflict, missing .env, invalid API key
+```
+
+### Port 8950 conflict
+```powershell
+netstat -ano | findstr 8950
+taskkill /PID <PID> /F
+```
+
+### Database locked
+```powershell
+docker compose down
+docker compose up -d
+```
+
+## Monitoring
+
+```powershell
+# Container status
+docker compose ps
+
+# Resources
+docker stats tuvi-la-so
+
+# Disk usage
+docker compose exec tuvi-app du -sh /app/data/tuvi.db
+```
+
+## Production Infrastructure
+
+- **Domain:** tuvi.demowebest.site
+- **Server:** VPS (Ubuntu/Debian)
+- **Nginx:** Reverse proxy + SSL
+- **Port:** 8950 (internal), 80/443 (external)
+
+### Nginx Config
+```nginx
+server {
+  listen 80;
+  server_name tuvi.demowebest.site;
+  location / {
+    proxy_pass http://localhost:8950;
+    proxy_set_header Host $host;
+  }
+}
+```
+
+## Deployment Checklist
+
+### Pre-deployment
+- [ ] Code tested locally
+- [ ] `.env` updated
+- [ ] Database backup
+- [ ] Git committed
+
+### Deployment
+- [ ] `git pull`
+- [ ] `docker compose down`
+- [ ] `docker compose up -d --build`
+- [ ] Check logs
+
+### Post-deployment
+- [ ] Container healthy
+- [ ] Health check OK
+- [ ] Test login/AI
+- [ ] Domain accessible
+
+## Rollback
+```powershell
+git log --oneline -5
+git checkout <previous-commit>
+docker compose down
+docker compose up -d --build
+```
+
+## Maintenance
+
+- **Weekly:** Check health, review logs
+- **Monthly:** Backup database, update deps
+- **As needed:** Update Node.js, renew SSL

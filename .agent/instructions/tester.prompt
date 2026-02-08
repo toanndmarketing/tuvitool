@@ -1,0 +1,109 @@
+# 🧪 TESTER - Tử Vi Lá Số
+
+## Testing Strategy
+
+**Manual Testing** là chính (dự án đơn giản, không cần automation phức tạp).
+
+## Test Cases (Critical)
+
+### A. Authentication (7 cases)
+
+1. **TC-AUTH-01:** Đăng ký thành công → ✅ Tạo user, return JWT
+2. **TC-AUTH-02:** Username đã tồn tại → ❌ Error message
+3. **TC-AUTH-03:** Email không hợp lệ → ❌ Validation error
+4. **TC-AUTH-04:** Password < 6 chars → ❌ Validation error
+5. **TC-AUTH-05:** Đăng nhập thành công → ✅ Return JWT, save localStorage
+6. **TC-AUTH-06:** Sai password → ❌ "Sai thông tin đăng nhập"
+7. **TC-AUTH-07:** Đăng xuất → ✅ Clear localStorage, redirect
+
+### B. Tử Vi Calculation (4 cases)
+
+1. **TC-CALC-01:** Ngày sinh hợp lệ → ✅ Hiển thị 12 cung + sao
+2. **TC-CALC-02:** Ngày không hợp lệ (32/13) → ❌ Validation error
+3. **TC-CALC-03:** Chuyển Âm Dương lịch → ✅ Convert chính xác
+4. **TC-CALC-04:** Tính nhiều lần → ✅ Kết quả update đúng
+
+### C. AI Analysis (4 cases)
+
+1. **TC-AI-01:** Chưa đăng nhập → ⚠️ Popup "Vui lòng đăng nhập"
+2. **TC-AI-02:** Đã đăng nhập → ✅ Phân tích thành công (5-10s)
+3. **TC-AI-03:** Token hết hạn → ❌ "Phiên hết hạn", redirect login
+4. **TC-AI-04:** API lỗi → ❌ "Không thể phân tích", KHÔNG crash
+
+### D. UI/UX (4 cases)
+
+1. **TC-UI-01:** Mobile (375px) → ✅ Layout không vỡ, buttons dễ click
+2. **TC-UI-02:** Tablet (768px) → ✅ Layout tối ưu
+3. **TC-UI-03:** Loading states → ✅ Spinner + disabled button
+4. **TC-UI-04:** Error messages → ✅ Rõ ràng, tiếng Việt, tự ẩn sau 5s
+
+## API Testing (PowerShell)
+
+### Register
+```powershell
+$body = @{username="test";email="test@test.com";password="Test@123"} | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:8950/api/auth/register" -Method POST -Body $body -ContentType "application/json"
+```
+
+### Login
+```powershell
+$body = @{username="test";password="Test@123"} | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:8950/api/auth/login" -Method POST -Body $body -ContentType "application/json"
+```
+
+### AI Analysis (Protected)
+```powershell
+$token = "YOUR_JWT"
+$body = @{chartData=@{};birthInfo=@{}} | ConvertTo-Json
+Invoke-RestMethod -Uri "http://localhost:8950/api/ai/analyze" -Method POST -Body $body -ContentType "application/json" -Headers @{Authorization="Bearer $token"}
+```
+
+## Testing Checklist
+
+### Pre-deployment
+- [ ] Auth: Register, Login, Logout
+- [ ] Calculation: Valid/Invalid dates, Âm Dương conversion
+- [ ] AI: Auth required, Analysis success, Error handling
+- [ ] UI: Responsive (375px, 768px, 1920px)
+- [ ] Security: Password hashed, JWT valid, Protected routes
+- [ ] Performance: Page load < 3s, AI < 15s
+
+### Browser Compatibility
+- [ ] Chrome (latest)
+- [ ] Firefox (latest)
+- [ ] Safari (latest)
+- [ ] Mobile Safari (iOS)
+- [ ] Chrome Mobile (Android)
+
+## Bug Report Template
+
+```markdown
+**Bug ID:** BUG-001
+**Title:** [Mô tả ngắn gọn]
+**Severity:** High/Medium/Low
+
+**Steps:**
+1. ...
+2. ...
+
+**Expected:** ...
+**Actual:** ...
+
+**Environment:** Chrome 120, Windows 11
+**Screenshot:** [Attach]
+```
+
+## Test Report Template
+
+```markdown
+**Date:** 2026-02-08
+**Total:** 25 cases
+**Passed:** 23 ✅
+**Failed:** 2 ❌
+
+**Failed Cases:**
+- TC-AUTH-02: Username validation
+- TC-AI-04: Error handling
+
+**Ready for deployment:** Yes/No
+```

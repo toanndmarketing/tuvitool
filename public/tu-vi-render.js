@@ -159,7 +159,15 @@ const TuViRender = (function () {
         // Center cell spans columns 2-3 and rows 2-3
         let html = `<div class="center-cell" style="grid-column: 2 / 4; grid-row: 2 / 4;">`;
 
-        // Watermark
+        // Watermark trung tâm - 3 dòng lặp lại kéo dài
+        const wmLong = "Webest.asia - Nguyễn Đức Toàn - Lập trình WEB, APP, AI  •  ".repeat(5);
+        html += `<div class="center-content-watermark">
+            <div class="wm-line">${wmLong}</div>
+            <div class="wm-line">${wmLong}</div>
+            <div class="wm-line">${wmLong}</div>
+        </div>`;
+
+        // Watermark Hán tự cũ (giữ lại hoặc thay thế)
         html += `<div class="center-watermark">紫微趣南</div>`;
 
         // Title

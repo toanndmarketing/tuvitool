@@ -440,15 +440,55 @@ body {
     font-weight: 700;
 }
 
-.center-watermark {
+.center-content-watermark {
     position: absolute;
-    bottom: 10px;
-    right: 10px;
-    font-size: 2rem;
-    color: rgba(180, 100, 30, 0.12);
+    top: 55%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-25deg);
+    width: 250%;
+    text-align: center;
+    pointer-events: none;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 40px;
+    /* Tăng khoảng cách giữa các dòng */
+}
+
+.wm-line {
+    font-size: 1.4rem;
+    /* Tăng kích thước chữ */
+    color: rgba(0, 0, 0, 0.04);
     font-weight: 700;
-    letter-spacing: 5px;
-    writing-mode: vertical-rl;
+    white-space: nowrap;
+    letter-spacing: 2px;
+}
+
+/* Watermark cho các box diễn giải / Thần số học */
+.tsh-intro-body {
+    position: relative;
+    overflow: hidden;
+}
+
+.tsh-card-watermark {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%) rotate(-15deg);
+    width: 200%;
+    pointer-events: none;
+    z-index: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+.tsh-card-watermark .wm-line {
+    font-size: 1.6rem;
+    color: rgba(255, 255, 255, 0.015);
+    font-weight: 800;
+    white-space: nowrap;
+    text-align: center;
 }
 
 /* Triet / Tuan marker */
@@ -1504,6 +1544,66 @@ body {
     line-height: 1.7;
 }
 
+/* =====================
+   NUMEROLOGY INTRO CARD
+   ===================== */
+.tsh-intro-card {
+    background: linear-gradient(135deg, rgba(22, 22, 45, 0.9), rgba(30, 30, 60, 0.7)) !important;
+    border-left: 4px solid var(--accent-gold) !important;
+}
+
+.tsh-user-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 2rem;
+    padding: 1rem;
+    background: rgba(255, 255, 255, 0.03);
+    border-radius: var(--radius-sm);
+    margin-bottom: 1rem;
+}
+
+.tsh-meta-item {
+    display: flex;
+    flex-direction: column;
+    gap: 0.2rem;
+}
+
+.tsh-meta-label {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tsh-meta-value {
+    font-size: 1.1rem;
+    font-weight: 700;
+    color: var(--accent-gold-light);
+    font-family: var(--font-serif);
+}
+
+.tsh-welcome-text {
+    font-size: 0.92rem;
+    color: var(--text-secondary);
+    line-height: 1.8;
+}
+
+.tsh-welcome-text p {
+    margin-bottom: 0.8rem;
+}
+
+.tsh-welcome-text strong {
+    color: var(--accent-gold);
+}
+
+.accent-gold-light {
+    color: var(--accent-gold-light);
+}
+
+.accent-gold {
+    color: var(--accent-gold);
+}
+
 /* Color variations for number circles */
 .tsh-color-soul {
     border-color: #c084fc;
@@ -2049,44 +2149,227 @@ body {
 
 /* Print styles */
 
+/* =====================
+   PRINT STYLES
+   ===================== */
+.print-watermark,
+.print-watermark-middle {
+    display: none;
+}
+
 @media print {
+    @page {
+        margin: 1cm;
+        size: auto;
+    }
+
+    * {
+        -webkit-print-color-adjust: exact !important;
+        print-color-adjust: exact !important;
+        animation: none !important;
+        transition: none !important;
+    }
+
     body {
-        background: white;
-        color: black;
+        background-color: #050510 !important;
+        /* --bg-primary */
+        color: #f0f0f5 !important;
+        /* --text-primary */
+    }
+
+    /* Watermark chuyên nghiệp */
+    .print-watermark {
+        display: flex !important;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: center;
+        padding-bottom: 0.8cm;
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100vw;
+        height: 100vh;
+        z-index: 999999;
+        pointer-events: none;
+        color: rgba(255, 255, 255, 0.2) !important;
+        font-size: 9pt !important;
+        font-weight: normal !important;
+    }
+
+    /* Watermark nghiêng số 1 (Phía trên) */
+    .print-watermark::before {
+        content: "Webest.asia\A Nguyễn Đức Toàn\A Lập trình WEB, APP, AI";
+        position: absolute;
+        top: 15%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-35deg);
+        font-size: 28pt;
+        color: rgba(255, 255, 255, 0.05) !important;
+        white-space: pre-wrap;
+        line-height: 1.4;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* Watermark nghiêng số 2 (Phía dưới) */
+    .print-watermark::after {
+        content: "Webest.asia\A Nguyễn Đức Toàn\A Lập trình WEB, APP, AI";
+        position: absolute;
+        top: 75%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-35deg);
+        font-size: 28pt;
+        color: rgba(255, 255, 255, 0.05) !important;
+        white-space: pre-wrap;
+        line-height: 1.4;
+        text-align: center;
+        font-weight: bold;
+    }
+
+    /* Bổ sung một nhãn ở giữa cho chắc chắn */
+    .print-watermark-middle {
+        content: "Webest.asia\A Nguyễn Đức Toàn\A Lập trình WEB, APP, AI";
+        position: absolute;
+        top: 45%;
+        left: 50%;
+        transform: translate(-50%, -50%) rotate(-35deg);
+        font-size: 28pt;
+        color: rgba(255, 255, 255, 0.04) !important;
+        white-space: pre-wrap;
+        line-height: 1.4;
+        text-align: center;
+        font-weight: bold;
+        display: block;
+    }
+
+    /* Ẩn diagonal body::before cũ */
+    body::before {
+        display: none !important;
     }
 
     .app-header,
     .input-section,
     .chart-actions,
-    .results-tabs {
+    .results-tabs,
+    .btn-ai-login,
+    .interp-toggle,
+    .auth-modal-overlay {
         display: none !important;
     }
 
     .results-section {
         display: block !important;
-        max-width: 100%;
-        margin: 0;
-        padding: 0;
+        max-width: 100% !important;
+        margin: 0 !important;
+        padding: 0 !important;
     }
 
     .tab-content {
+        display: none !important;
+    }
+
+    .tab-content.active {
         display: block !important;
+        opacity: 1 !important;
+        visibility: visible !important;
     }
 
     .chart-wrapper {
-        border: 2px solid #333;
+        border: 2px solid #e2b042 !important;
+        background: #fffcf2 !important;
+        /* Giữ nền sáng cho lá số để dễ đọc */
+        page-break-after: always;
+        max-width: 95% !important;
+        margin: 0 auto 20px !important;
     }
 
     .palace-cell {
-        -webkit-print-color-adjust: exact;
-        print-color-adjust: exact;
+        background: #fffef8 !important;
+        border: 1px solid #5d4037 !important;
+        color: #3e2723 !important;
+        /* Chữ tối trên nền lá số sáng */
+        min-height: 120px !important;
     }
 
-    .tsh-card {
-        break-inside: avoid;
+    /* Interpretation Cards - Dark Style giống Web */
+    .interp-card {
+        background-color: rgba(22, 22, 45, 0.9) !important;
+        /* --bg-card */
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f0f0f5 !important;
         opacity: 1 !important;
-        border: 1px solid #ccc;
-        background: white;
-        color: #333;
+        visibility: visible !important;
+        margin-bottom: 20px !important;
+        page-break-inside: avoid;
+        display: block !important;
+        transform: none !important;
+    }
+
+    .interp-header {
+        background: rgba(30, 30, 60, 0.6) !important;
+        border-bottom: 1px solid rgba(255, 255, 255, 0.1) !important;
+        padding: 10px 15px !important;
+    }
+
+    .interp-title {
+        color: #e2b042 !important;
+        /* --accent-gold */
+        font-weight: 700 !important;
+    }
+
+    .interp-body {
+        display: block !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        height: auto !important;
+        max-height: none !important;
+        overflow: visible !important;
+        padding: 15px 20px !important;
+        color: #b0b0d0 !important;
+        /* --text-secondary */
+        line-height: 1.8 !important;
+        font-size: 11pt !important;
+    }
+
+    .interp-star-name {
+        color: #f7d780 !important;
+        /* --accent-gold-light */
+    }
+
+    .interp-summary {
+        background: rgba(13, 13, 33, 0.8) !important;
+        border-left: 4px solid #e2b042 !important;
+        margin-top: 15px !important;
+        color: #f0f0f5 !important;
+    }
+
+    /* Thần Số Học - Dark Style */
+    .tsh-card {
+        background: rgba(22, 22, 45, 0.9) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        color: #f0f0f5 !important;
+        opacity: 1 !important;
+        margin-bottom: 30px !important;
+        page-break-inside: avoid;
+    }
+
+    .tsh-section-title,
+    .tsh-hero-title,
+    .tsh-mini-title {
+        color: #e2b042 !important;
+    }
+
+    .tsh-number-circle {
+        background: rgba(226, 176, 66, 0.1) !important;
+        border: 2px solid #e2b042 !important;
+        color: #e2b042 !important;
+    }
+
+    .tsh-detail-item,
+    .tsh-mini-card,
+    .tsh-timeline-item {
+        background: rgba(255, 255, 255, 0.05) !important;
+        border: 1px solid rgba(255, 255, 255, 0.1) !important;
+        opacity: 1 !important;
     }
 }

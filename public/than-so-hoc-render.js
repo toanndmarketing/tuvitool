@@ -16,6 +16,9 @@ const ThanSoHocRender = (function () {
 
         let html = '';
 
+        // 0. Thông tin cá nhân & Giới thiệu
+        html += renderIntroHeader(result);
+
         // 1. Tổng quan - Số Chủ Đạo (Life Path)
         html += renderLifePath(result, data);
 
@@ -41,6 +44,39 @@ const ThanSoHocRender = (function () {
     }
 
     // =====================
+    // 0. THÔNG TIN CÁ NHÂN & GIỚI THIỆU
+    // =====================
+    function renderIntroHeader(result) {
+        return `
+        <div class="tsh-card tsh-intro-card" style="--index:0">
+            <div class="tsh-section-header">
+                <span class="tsh-section-icon">👤</span>
+                <h3 class="tsh-section-title">Luận Giải Thần Số Học Pythagoras</h3>
+            </div>
+            <div class="tsh-intro-body">
+                <div class="tsh-card-watermark">
+                    <div class="wm-line">${"Webest.asia - Nguyễn Đức Toàn - Lập trình WEB, APP, AI  •  ".repeat(5)}</div>
+                    <div class="wm-line">${"Webest.asia - Nguyễn Đức Toàn - Lập trình WEB, APP, AI  •  ".repeat(5)}</div>
+                    <div class="wm-line">${"Webest.asia - Nguyễn Đức Toàn - Lập trình WEB, APP, AI  •  ".repeat(5)}</div>
+                </div>
+                <div class="tsh-user-meta">
+                    <div class="tsh-meta-item">
+                        <span class="tsh-meta-label">Họ và tên:</span>
+                        <span class="tsh-meta-value">${result.fullName}</span>
+                    </div>
+                    <div class="tsh-meta-item">
+                        <span class="tsh-meta-label">Ngày sinh:</span>
+                        <span class="tsh-meta-value">${result.day}/${result.month}/${result.year} (Dương lịch)</span>
+                    </div>
+                </div>
+                <div class="tsh-welcome-text">
+                    <p>Thần Số Học là bộ môn khoa học về các con số giúp chúng ta thấu hiểu bản thân thông qua tần số rung động của họ tên và ngày sinh. Bản báo cáo chuyên sâu này sẽ giúp bạn khám phá <strong>sứ mệnh, tiềm năng và các giai đoạn quan trọng</strong> trong cuộc đời mình.</p>
+                </div>
+            </div>
+        </div>`;
+    }
+
+    // =====================
     // 1. SỐ CHỦ ĐẠO
     // =====================
     function renderLifePath(result, data) {
@@ -51,7 +87,7 @@ const ThanSoHocRender = (function () {
         const attData = data.ATTITUDE[result.attitude] || '';
 
         return `
-        <div class="tsh-card tsh-card-hero" style="--index:0">
+        <div class="tsh-card tsh-card-hero" style="--index:1">
             <div class="tsh-hero-number">
                 <div class="tsh-number-circle tsh-number-large">${result.lifePath}</div>
                 <div class="tsh-hero-info">

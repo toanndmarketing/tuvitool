@@ -9,11 +9,10 @@
 const TuViInterpret = (function () {
     'use strict';
 
-    // Cache data từ API
+    // Data từ DB (không cache - luôn lấy mới từ DB mỗi lần)
     let _saoData = null;
     let _cungData = null;
     let _specialData = null;
-    let _dataLoaded = false;
 
     // =====================
     // LOAD DATA TỪ API
@@ -23,8 +22,7 @@ const TuViInterpret = (function () {
      * Load tất cả data diễn giải từ backend
      */
     async function loadInterpretationData() {
-        if (_dataLoaded) return;
-
+        // Luôn gọi DB mới mỗi lần (không cache)
         try {
             const resp = await fetch('/api/interpretations/all');
             if (!resp.ok) throw new Error('API error: ' + resp.status);
@@ -33,8 +31,7 @@ const TuViInterpret = (function () {
             _saoData = data.sao || {};
             _cungData = data.cung || {};
             _specialData = data.special || {};
-            _dataLoaded = true;
-            console.log('[Interpret] Data loaded from API');
+            console.log('[Interpret] Data loaded from DB');
         } catch (err) {
             console.error('[Interpret] Failed to load data:', err);
             // Fallback: dùng data trống
@@ -183,6 +180,9 @@ const TuViInterpret = (function () {
         };
 
         result.overview = {
+            gioiTinh: lasoData.input.gioiTinh,
+            cungMenhPos: lasoData.cungMenhPos,
+            cungThanPos: lasoData.cungThanPos,
             amDuong: lasoData.amDuong,
             menhNapAm: lasoData.menhNapAm,
             hanhMenh: lasoData.hanhMenh,

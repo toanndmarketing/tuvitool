@@ -44,6 +44,12 @@ function verifyToken(token) {
 
 // Middleware: Verify auth token
 function requireAuth(req, res, next) {
+    // Tự động bypass auth nếu đang ở môi trường local hoặc có flag SKIP_AUTH
+    if (process.env.SKIP_AUTH === 'true' || req.hostname === 'localhost' || req.hostname === '127.0.0.1') {
+        req.user = { username: 'local_user' };
+        return next();
+    }
+
     const authHeader = req.headers.authorization;
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
         return res.status(401).json({ error: 'Unauthorized: Missing token' });

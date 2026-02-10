@@ -735,6 +735,23 @@ const TuViSao = (function () {
             addSao(luuKV['Thiên Khôi'], 'Lưu Thiên Khôi', 'luu', 'cat');
             addSao(luuKV['Thiên Việt'], 'Lưu Thiên Việt', 'luu', 'cat');
 
+            // Lưu Tang Môn, Bạch Hổ, Điếu Khách (theo chi năm xem)
+            const luuTangMon = anKiepSatTangMon(chiNamXem);
+            addSao(luuTangMon['Tang Môn'], 'Lưu Tang Môn', 'luu', 'hung');
+            addSao(luuTangMon['Bạch Hổ'], 'Lưu Bạch Hổ', 'luu', 'hung');
+            addSao(luuTangMon['Điếu Khách'], 'Lưu Điếu Khách', 'luu', 'hung');
+
+            // Lưu Hồng Loan, Đào Hoa, Thiên Hỷ (theo chi năm xem)
+            const luuDaoHoa = anDaoHoaHongLoan(chiNamXem);
+            addSao(luuDaoHoa['Hồng Loan'], 'Lưu Hồng Loan', 'luu', 'cat');
+            addSao(luuDaoHoa['Đào Hoa'], 'Lưu Đào Hoa', 'luu', 'trung');
+            addSao(luuDaoHoa['Thiên Hỷ'], 'Lưu Thiên Hỷ', 'luu', 'cat');
+
+            // Lưu Hoả Tinh, Linh Tinh (theo chi năm xem + giờ sinh)
+            const luuHoaLinh = anHoaLinh(chiNamXem, chiGio);
+            addSao(luuHoaLinh['Hoả Tinh'], 'Lưu Hoả Tinh', 'luu', 'hung');
+            addSao(luuHoaLinh['Linh Tinh'], 'Lưu Linh Tinh', 'luu', 'hung');
+
             // Lưu Tứ Hoá
             const luuTuHoa = anTuHoa(canNamXem);
             lasoData.luuTuHoa = luuTuHoa;

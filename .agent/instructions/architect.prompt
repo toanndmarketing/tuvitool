@@ -86,6 +86,34 @@ Browser → POST /api/ai/analyze + JWT
         → Return result
 ```
 
+## Logic Engine Architecture (v2.0)
+
+### Event Scanner Pipeline
+```
+tu-vi-calc.js  →  tu-vi-sao.js  →  tu-vi-event-scanner.js  →  tu-vi-interpret.js
+  (tính toán)     (an sao)         (quét sự kiện)              (tổng hợp luận giải)
+      ↓               ↓                  ↓                          ↓
+   lasoData        saoMap          events[]                  interpretation
+                                   (scored, sorted)           + events
+                                        ↓
+                                  server/gemini.js
+                                   (AI luận sâu)
+```
+
+### Data Files
+```
+public/
+├── tu-vi-event-rules.js      # 26 event rules (4 categories)
+├── tu-vi-star-patterns.js     # Bộ sao kết hợp + miếu/hãm 14 tinh
+├── tu-vi-templates.js         # Templates lời luận giải
+└── tu-vi-event-scanner.js     # Logic engine: scan() → events
+```
+
+### Knowledge Base
+```
+.agent/knowledge/tu-vi-logic-engine.md  # Full reference
+```
+
 ## Security Architecture
 
 1. **Auth:** JWT (7 days expire) + bcrypt (10 rounds)

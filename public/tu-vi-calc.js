@@ -407,6 +407,40 @@ const TuViCalc = (function () {
     }
 
     /**
+     * Tính Nguyệt Hạn (Tiểu hạn 12 tháng)
+     * Khởi tháng Giêng từ cung Tiểu Vận
+     * Thuận/Nghịch theo Âm Dương giới tính
+     * @param {number} tieuVanPos - Vị trí cung Tiểu Vận
+     * @param {boolean} thuan - Thuận hay Nghịch
+     * @param {number} namXem - Năm xem
+     * @returns {Array} 12 tháng, mỗi tháng: { thang, cungPos, canChiThang }
+     */
+    function tinhNguyetHan(tieuVanPos, thuan, namXem) {
+        const canChiNamXem = AmLich.getCanChiNam(namXem);
+        const monthlyFortune = [];
+
+        for (let thang = 1; thang <= 12; thang++) {
+            let cungPos;
+            if (thuan) {
+                cungPos = (tieuVanPos + thang - 1) % 12;
+            } else {
+                cungPos = ((tieuVanPos - thang + 1) % 12 + 12) % 12;
+            }
+
+            // Can Chi của tháng trong năm xem
+            const canChiThang = AmLich.getCanChiThang(canChiNamXem.canIndex, thang);
+
+            monthlyFortune.push({
+                thang: thang,
+                cungPos: cungPos,
+                canChiThang: canChiThang
+            });
+        }
+
+        return monthlyFortune;
+    }
+
+    /**
      * Xác định Đại Vận hiện tại theo năm xem
      */
     function getDaiVanHienTai(daiVanList, namXem) {
@@ -481,6 +515,9 @@ const TuViCalc = (function () {
         // 13. Tiểu Vận
         const tieuVan = tinhTieuVan(gioiTinh, thuan, lunarDate.year, namXem);
 
+        // 14. Nguyệt Hạn (12 tháng)
+        const nguyetHan = tinhNguyetHan(tieuVan.cungPos, thuan, namXem);
+
         return {
             // Input
             input: params,
@@ -532,6 +569,9 @@ const TuViCalc = (function () {
             // Tiểu Vận
             tieuVan,
 
+            // Nguyệt Hạn (12 tháng)
+            nguyetHan,
+
             // Sao (sẽ được TuViSao populate)
             saoMap: {}
         };
@@ -552,6 +592,7 @@ const TuViCalc = (function () {
         getCuc,
         tinhDaiVan,
         tinhTieuVan,
+        tinhNguyetHan,
         getDaiVanHienTai
     };
 })();

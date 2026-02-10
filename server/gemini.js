@@ -139,7 +139,8 @@ async function generateAiInterpretation(interpretationData) {
 }
 
 /**
- * Build prompt cho Gemini
+ * Build prompt cho Gemini - Per-Palace format
+ * Trả về phân tích theo TỪNG CUNG thay vì sections chung
  */
 function buildPrompt(data) {
     const ov = data.overview || {};
@@ -186,8 +187,14 @@ function buildPrompt(data) {
         }
     }
 
-    return `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam. Hãy phân tích tổng hợp lá số sau một cách chuyên sâu.
-LƯU Ý QUAN TRỌNG: Hãy sử dụng danh xưng "Đương số" xuyên suốt bài viết, KHÔNG nhắc đến tên riêng cụ thể của người xem để đảm bảo tính khách quan.
+    return `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam. Hãy phân tích lá số sau.
+
+## QUY TẮC VIẾT:
+- Dùng danh xưng "Đương số". KHÔNG nhắc tên riêng.
+- KHÔNG liệt kê lại tên sao (người dùng đã thấy danh sách sao trong giao diện).
+- Mỗi cung viết NGẮN GỌN 2-4 câu, tập trung vào ý NGHĨA THỰC TẾ và LỜI KHUYÊN cụ thể.
+- KHÔNG lặp lại thông tin giữa các cung. Mỗi cung chỉ viết điểm ĐẶC TRƯNG nhất.
+- Viết phong cách chuyên gia: điềm đạm, sắc sảo, đi thẳng vào vấn đề.
 
 ## THÔNG TIN LÁ SỐ:
 - Giới tính: ${ov.gioiTinh === 'nam' ? 'Nam' : 'Nữ'}
@@ -195,76 +202,124 @@ LƯU Ý QUAN TRỌNG: Hãy sử dụng danh xưng "Đương số" xuyên suốt 
 - Âm Dương: ${ov.amDuong} (${ov.thuan ? 'Thuận hành' : 'Nghịch hành'})
 - Mệnh: ${ov.menhNapAm} (Hành ${ov.hanhMenh})
 - Cục: ${ov.cucName} (Hành ${ov.hanhCuc})
-- Chủ Mệnh: ${ov.chuMenh} | Chủ Thân: ${ov.chuThan}
 
-## CHI TIẾT 12 CUNG (đã kèm diễn giải cơ bản của từng sao):
+## CHI TIẾT 12 CUNG:
 ${palaceInfo}
 
 ## ĐẶC BIỆT:
-${specialInfo || 'Không có điều kiện đặc biệt'}
+${specialInfo || 'Không có'}
 ${vanHanInfo}
-## YÊU CẦU:
-Dựa trên thông tin chi tiết từng sao trong từng cung ở trên, hãy viết bài phân tích tổng hợp chuyên sâu. Giải thích ý nghĩa thực tiễn, không dùng thuật ngữ khó hiểu. Cấu trúc:
 
-1. **TỔNG QUAN VẬN MỆNH** (3-5 câu): Nhận xét tổng quát, điểm mạnh/yếu nổi bật
-2. **LUẬN GIẢI GIỜ SINH** (3-4 câu): Phân tích tầm quan trọng của giờ sinh
-3. **TÍNH CÁCH & CON NGƯỜI** (3-5 câu): Tính cách, phong thái
-4. **SỰ NGHIỆP & TÀI CHÍNH** (3-5 câu): Hướng nghề nghiệp, tiềm năng tài chính
-5. **TÌNH DUYÊN & GIA ĐÌNH** (3-5 câu): Đường tình cảm, gia đình
-6. **SỨC KHỎE** (2-3 câu): Điểm cần lưu ý
-7. **VẬN HẠN NĂM ${data.yearView || ''}** (4-6 câu): Phân tích Đại Vận hiện tại đang chạy qua cung nào, Tiểu Vận năm nay ở cung nào, Lưu Tứ Hoá tác động ra sao. Nêu rõ những thuận lợi và cảnh báo cụ thể.
-8. **LỜI KHUYÊN** (3-4 câu): Lời khuyên thiết thực
+## FORMAT BẮT BUỘC:
+Chia bài viết bằng dấu "---". Cấu trúc:
 
-Mỗi phần viết chi tiết, dễ hiểu. KHÔNG dùng markdown header. Mỗi phần cách nhau bởi "---".
+1. **TỔNG QUAN** (3-5 câu: tóm tắt vận mệnh, điểm nổi bật nhất).
+2. 12 đoạn **LUẬN GIẢI CUNG** — mỗi đoạn bắt đầu bằng [MỆNH], [PHỤ MẪU]... Ngăn cách bằng "---". Mỗi cung 2-4 câu.
+3. **VẬN HẠN NĂM ${data.yearView || ''}** (3-5 câu).
+4. **LỜI KHUYÊN** (3-5 câu thiết thực).
+
+KHÔNG viết "Phần 1:...", "Phần 2:...".
 Viết bằng Tiếng Việt.`;
 }
 
 /**
  * Parse AI response thành structured data
+ * Hỗ trợ cả format mới (per-palace [CUNG_NAME]) và format cũ (8 sections)
  */
 function parseAiResponse(text) {
-    const sections = text.split('---').map(s => s.trim()).filter(s => s.length > 0);
+    // Tiền xử lý: Nếu AI quên dấu --- giữa các cung, ta tự insert bằng regex
+    const PALACE_NAMES = ['MỆNH', 'PHỤ MẪU', 'PHÚC ĐỨC', 'ĐIỀN TRẠCH', 'QUAN LỘC', 'NÔ BỘC',
+        'THIÊN DI', 'TẬT ÁCH', 'TÀI BẠCH', 'TỬ TỨC', 'PHU THÊ', 'HUYNH ĐỆ'];
 
-    const titles = [
-        'Tổng Quan Vận Mệnh',
-        'Luận Giải Giờ Sinh',
-        'Tính Cách & Con Người',
-        'Sự Nghiệp & Tài Chính',
-        'Tình Duyên & Gia Đình',
-        'Sức Khỏe',
-        'Vận Hạn Năm',
-        'Lời Khuyên'
-    ];
+    let processedText = text;
+    // Tự động thêm --- trước mỗi [CUNG] nếu chưa có
+    PALACE_NAMES.forEach(pName => {
+        const escaped = pName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+        const regex = new RegExp('([^\\-])\\s*\\[(' + escaped + ')\\]', 'gi');
+        processedText = processedText.replace(regex, '$1\n---\n[$2]');
+    });
 
-    const icons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '📅', '💡'];
+    const sections = processedText.split('---').map(s => s.trim()).filter(s => s.length > 0);
 
     const result = {
-        sections: [],
+        sections: [],      // Phần tổng quan (overview + vận hạn + lời khuyên)
+        palaceSections: {}, // Per-palace AI content { 'MỆNH': '...', 'PHỤ MẪU': '...' }
         raw: text
     };
 
-    sections.forEach((section, i) => {
-        // Remove bold markers, numbering
+    let overviewSections = [];
+    let hasPalaceFormat = false;
+
+    sections.forEach((section) => {
+        // Clean bold markers, numbering, and "PHẦN X" headers
         let content = section
             .replace(/\*\*/g, '')
-            .replace(/^\d+\.\s*/gm, '')
-            .replace(/^(TỔNG QUAN VẬN MỆNH|LUẬN GIẢI GIỜ SINH|TÍNH CÁCH.*|SỰ NGHIỆP.*|TÌNH DUYÊN.*|SỨC KHỎE|LỜI KHUYÊN):?\s*/i, '')
+            .replace(/^\s*(PHẦN|PHAN)\s*\d+[:.]?\s*/i, '') // Xoá "PHẦN 1:", "PHẦN 2."
+            .replace(/^\d+[:.]?\s*/gm, '') // Xoá "1.", "2:" ở đầu dòng
             .trim();
 
-        result.sections.push({
-            title: titles[i] || `Phần ${i + 1}`,
-            icon: icons[i] || '📌',
-            content: content
-        });
+        // Check nếu section bắt đầu bằng [CUNG_NAME]
+        let matchedPalace = null;
+        for (let i = 0; i < PALACE_NAMES.length; i++) {
+            const pName = PALACE_NAMES[i];
+            const escaped = pName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regex = new RegExp('^\\s*\\[(' + escaped + ')\\]\\s*', 'i');
+            if (regex.test(content)) {
+                matchedPalace = pName;
+                content = content.replace(regex, '').trim();
+                break;
+            }
+        }
+
+        if (matchedPalace) {
+            hasPalaceFormat = true;
+            content = content
+                .replace(/^(LUẬN GIẢI|PHÂN TÍCH)\s*(CUNG)?\s*/i, '')
+                .trim();
+            result.palaceSections[matchedPalace] = content;
+        } else {
+            overviewSections.push(content);
+        }
     });
 
-    // If parsing failed, return raw
-    if (result.sections.length === 0) {
-        result.sections.push({
-            title: 'Phân Tích AI',
-            icon: '🤖',
-            content: text
+    const overviewTitles = ['Tổng Quan Vận Mệnh', 'Vận Hạn Năm', 'Lời Khuyên'];
+    const overviewIcons = ['🌟', '📅', '💡'];
+
+    if (hasPalaceFormat) {
+        overviewSections.forEach((content, i) => {
+            // Xác định title dựa trên keyword trong content nếu i > 0
+            let title = overviewTitles[i] || `Phân Tích ${i + 1}`;
+            let icon = overviewIcons[i] || '📌';
+
+            if (content.toLowerCase().includes('vận hạn') || content.toLowerCase().includes('năm ' + new Date().getFullYear())) {
+                title = 'Vận Hạn Năm'; icon = '📅';
+            } else if (content.toLowerCase().includes('lời khuyên') || content.toLowerCase().includes('khuyên đương số')) {
+                title = 'Lời Khuyên'; icon = '💡';
+            }
+
+            content = content
+                .replace(/^(TỔNG QUAN VẬN MỆNH|TỔNG QUAN|VẬN HẠN.*|LỜI KHUYÊN):?\s*/i, '')
+                .trim();
+
+            result.sections.push({ title, icon, content });
         });
+    } else {
+        // Fallback cũ
+        const fallbackTitles = ['Tổng Quan Vận Mệnh', 'Giờ Sinh', 'Tính Cách', 'Sự Nghiệp', 'Tình Duyên', 'Sức Khỏe', 'Vận Hạn', 'Lời Khuyên'];
+        const fallbackIcons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '📅', '💡'];
+
+        sections.forEach((section, i) => {
+            let content = section.replace(/\*\*/g, '').replace(/^\d+[:.]?\s*/gm, '').trim();
+            result.sections.push({
+                title: fallbackTitles[i] || `Phần ${i + 1}`,
+                icon: fallbackIcons[i] || '📌',
+                content: content
+            });
+        });
+    }
+
+    if (result.sections.length === 0 && Object.keys(result.palaceSections).length === 0) {
+        result.sections.push({ title: 'Phân Tích AI', icon: '🤖', content: text });
     }
 
     return result;

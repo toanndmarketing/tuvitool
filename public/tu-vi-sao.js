@@ -712,6 +712,44 @@ const TuViSao = (function () {
         addSao(tuePha['Long Đức'], 'Long Đức', 'phu', 'cat');
         addSao(tuePha['Phượng Các'], 'Phượng Các', 'phu', 'cat');
 
+        // --- Sao Lưu Niên (theo Can Chi năm xem) ---
+        if (lasoData.canChiNamXem) {
+            const canNamXem = lasoData.canChiNamXem.canIndex;
+            const chiNamXem = lasoData.canChiNamXem.chiIndex;
+
+            // Lưu Thái Tuế = Chi năm xem
+            addSao(chiNamXem, 'Lưu Thái Tuế', 'luu', 'trung');
+
+            // Lưu Thiên Mã
+            const luuMa = anThienMa(chiNamXem);
+            addSao(luuMa['Thiên Mã'], 'Lưu Thiên Mã', 'luu', 'cat');
+
+            // Lưu Lộc Tồn, Kình Dương, Đà La
+            const luuLoc = anLocTon(canNamXem);
+            addSao(luuLoc['Lộc Tồn'], 'Lưu Lộc Tồn', 'luu', 'cat');
+            addSao(luuLoc['Kình Dương'], 'Lưu Kình Dương', 'luu', 'hung');
+            addSao(luuLoc['Đà La'], 'Lưu Đà La', 'luu', 'hung');
+
+            // Lưu Thiên Khôi, Thiên Việt
+            const luuKV = anThienKhoiThienViet(canNamXem);
+            addSao(luuKV['Thiên Khôi'], 'Lưu Thiên Khôi', 'luu', 'cat');
+            addSao(luuKV['Thiên Việt'], 'Lưu Thiên Việt', 'luu', 'cat');
+
+            // Lưu Tứ Hoá
+            const luuTuHoa = anTuHoa(canNamXem);
+            lasoData.luuTuHoa = luuTuHoa;
+
+            // Gán Lưu Hoá lên sao
+            for (let ci = 0; ci < 12; ci++) {
+                saoMap[ci].forEach(sao => {
+                    if (sao.name === luuTuHoa['Hoá Lộc']) sao.luuHoa = 'Lộc';
+                    if (sao.name === luuTuHoa['Hoá Quyền']) sao.luuHoa = 'Quyền';
+                    if (sao.name === luuTuHoa['Hoá Khoa']) sao.luuHoa = 'Khoa';
+                    if (sao.name === luuTuHoa['Hoá Kỵ']) sao.luuHoa = 'Kỵ';
+                });
+            }
+        }
+
         // Store saoMap
         lasoData.saoMap = saoMap;
         lasoData.nhomTuVi = nhomTuVi;

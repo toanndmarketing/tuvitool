@@ -349,6 +349,76 @@ const TuViCalc = (function () {
     }
 
     // =====================
+    // ĐẠI VẬN & TIỂU VẬN
+    // =====================
+
+    /**
+     * Tính Đại Vận (12 giai đoạn, mỗi giai đoạn 10 năm)
+     * Thuận: Mệnh → Phụ Mẫu → Phúc Đức (tăng chi index)
+     * Nghịch: Mệnh → Huynh Đệ → Phu Thê (giảm chi index)
+     */
+    function tinhDaiVan(cucValue, cungMenhPos, thuan, namSinhAL) {
+        const daiVanList = [];
+        const tuoiBatDau = cucValue;
+
+        for (let i = 0; i < 12; i++) {
+            let cungPos;
+            if (thuan) {
+                cungPos = (cungMenhPos + i) % 12;
+            } else {
+                cungPos = ((cungMenhPos - i) % 12 + 12) % 12;
+            }
+
+            const tuoiFrom = tuoiBatDau + i * 10;
+            const tuoiTo = tuoiBatDau + (i + 1) * 10 - 1;
+            const namFrom = namSinhAL + tuoiFrom - 1;
+            const namTo = namSinhAL + tuoiTo - 1;
+
+            daiVanList.push({
+                index: i,
+                cungPos: cungPos,
+                tuoiFrom: tuoiFrom,
+                tuoiTo: tuoiTo,
+                namFrom: namFrom,
+                namTo: namTo
+            });
+        }
+
+        return daiVanList;
+    }
+
+    /**
+     * Tính Tiểu Vận cho năm xem
+     * Nam khởi Dần (2), Nữ khởi Thân (8) tại tuổi 1
+     * Thuận/Nghịch theo Âm Dương
+     */
+    function tinhTieuVan(gioiTinh, thuan, namSinhAL, namXem) {
+        const tuoi = namXem - namSinhAL + 1;
+        const khoi = gioiTinh === 'nam' ? 2 : 8;
+
+        let cungPos;
+        if (thuan) {
+            cungPos = (khoi + tuoi - 1) % 12;
+        } else {
+            cungPos = ((khoi - tuoi + 1) % 12 + 12) % 12;
+        }
+
+        return { cungPos, tuoi };
+    }
+
+    /**
+     * Xác định Đại Vận hiện tại theo năm xem
+     */
+    function getDaiVanHienTai(daiVanList, namXem) {
+        for (const dv of daiVanList) {
+            if (namXem >= dv.namFrom && namXem <= dv.namTo) {
+                return dv;
+            }
+        }
+        return daiVanList[0] || null;
+    }
+
+    // =====================
     // MAIN CALCULATION
     // =====================
 
@@ -404,6 +474,13 @@ const TuViCalc = (function () {
         // 11. Tuổi
         const tuoi = tinhTuoi(lunarDate.year, namXem);
 
+        // 12. Đại Vận
+        const daiVan = tinhDaiVan(cucValue, cungMenhPos, thuan, lunarDate.year);
+        const daiVanHienTai = getDaiVanHienTai(daiVan, namXem);
+
+        // 13. Tiểu Vận
+        const tieuVan = tinhTieuVan(gioiTinh, thuan, lunarDate.year, namXem);
+
         return {
             // Input
             input: params,
@@ -448,6 +525,13 @@ const TuViCalc = (function () {
             // Tuổi
             tuoi,
 
+            // Đại Vận
+            daiVan,
+            daiVanHienTai,
+
+            // Tiểu Vận
+            tieuVan,
+
             // Sao (sẽ được TuViSao populate)
             saoMap: {}
         };
@@ -465,6 +549,9 @@ const TuViCalc = (function () {
         anTuanTriet,
         getCungMenh,
         getCungThan,
-        getCuc
+        getCuc,
+        tinhDaiVan,
+        tinhTieuVan,
+        getDaiVanHienTai
     };
 })();

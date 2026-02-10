@@ -52,6 +52,7 @@ const TuViRender = (function () {
 
     function getSaoClass(sao) {
         if (sao.type === 'chinh') return 'star-main';
+        if (sao.type === 'luu') return 'star-luu';
         if (sao.nature === 'cat') return 'star-good';
         if (sao.nature === 'hung') return 'star-bad';
         return 'star-neutral';
@@ -85,7 +86,7 @@ const TuViRender = (function () {
         const isThan = (chiIndex === cungThanPos);
 
         const chinhTinh = saoList.filter(s => s.type === 'chinh');
-        const phuTinh = saoList.filter(s => s.type !== 'chinh');
+        const phuTinh = saoList.filter(s => s.type !== 'chinh' && s.type !== 'luu');
 
         const prefix = getDiaChiPrefix(lasoData.canChiNam.canIndex, chiIndex);
 
@@ -216,6 +217,84 @@ const TuViRender = (function () {
     }
 
     /**
+     * Render bảng Đại Vận & Tiểu Vận
+     */
+    function renderDaiVanTimeline(lasoData) {
+        const daiVan = lasoData.daiVan;
+        const daiVanHienTai = lasoData.daiVanHienTai;
+        const tieuVan = lasoData.tieuVan;
+        const cungMap = lasoData.cungMap;
+        const saoMap = lasoData.saoMap;
+
+        if (!daiVan || daiVan.length === 0) return '';
+
+        let html = `<div class="dai-van-section">`;
+        html += `<h3 class="dai-van-title">📅 Đại Vận & Tiểu Vận — Năm ${lasoData.input.namXem}</h3>`;
+
+        // Tiểu Vận info banner
+        if (tieuVan) {
+            const tvCungName = cungMap[tieuVan.cungPos] || '';
+            const tvChiName = CHI_NAMES[tieuVan.cungPos];
+            const tvSao = (saoMap[tieuVan.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name).join(', ');
+            html += `<div class="tieu-van-banner">`;
+            html += `<div class="tieu-van-main">`;
+            html += `<span class="tieu-van-label">🔄 Tiểu Vận:</span>`;
+            html += `<span class="tieu-van-value">Cung <strong>${tvCungName}</strong> (${tvChiName}) — ${tieuVan.tuoi} tuổi</span>`;
+            html += `</div>`;
+            if (tvSao) html += `<div class="tieu-van-sao">Chính tinh: ${tvSao}</div>`;
+            html += `</div>`;
+        }
+
+        // Lưu Tứ Hoá banner
+        if (lasoData.luuTuHoa) {
+            const lth = lasoData.luuTuHoa;
+            html += `<div class="luu-tu-hoa-banner">`;
+            html += `<span class="luu-hoa-label">✨ Lưu Tứ Hoá ${lasoData.input.namXem}:</span>`;
+            html += `<span class="luu-hoa-items">`;
+            html += `<span class="lh-loc">Lộc→${lth['Hoá Lộc']}</span>`;
+            html += `<span class="lh-quyen">Quyền→${lth['Hoá Quyền']}</span>`;
+            html += `<span class="lh-khoa">Khoa→${lth['Hoá Khoa']}</span>`;
+            html += `<span class="lh-ky">Kỵ→${lth['Hoá Kỵ']}</span>`;
+            html += `</span></div>`;
+        }
+
+        // Đại Vận grid
+        html += `<div class="dai-van-grid">`;
+        html += `<div class="dai-van-header-row">`;
+        html += `<div class="dvh-cell">#</div>`;
+        html += `<div class="dvh-cell">Tuổi</div>`;
+        html += `<div class="dvh-cell">Năm</div>`;
+        html += `<div class="dvh-cell">Cung</div>`;
+        html += `<div class="dvh-cell dvh-sao">Chính Tinh</div>`;
+        html += `</div>`;
+
+        daiVan.forEach(dv => {
+            const isActive = daiVanHienTai && dv.index === daiVanHienTai.index;
+            const cungName = cungMap[dv.cungPos] || '';
+            const chiName = CHI_NAMES[dv.cungPos];
+            const saoList = (saoMap[dv.cungPos] || []).filter(s => s.type === 'chinh');
+            const saoNames = saoList.map(s => {
+                let n = s.name;
+                if (s.hoa) n += `(${s.hoa})`;
+                return n;
+            }).join(', ');
+
+            html += `<div class="dai-van-row ${isActive ? 'dai-van-active' : ''}">`;
+            html += `<div class="dv-cell dv-index">${dv.index + 1}</div>`;
+            html += `<div class="dv-cell dv-age">${dv.tuoiFrom}—${dv.tuoiTo}</div>`;
+            html += `<div class="dv-cell dv-year">${dv.namFrom}—${dv.namTo}</div>`;
+            html += `<div class="dv-cell dv-cung"><strong>${cungName}</strong><br><small>${chiName}</small></div>`;
+            html += `<div class="dv-cell dv-sao">${saoNames || '<em>—</em>'}</div>`;
+            if (isActive) html += `<div class="dv-badge">▶ Hiện tại</div>`;
+            html += `</div>`;
+        });
+
+        html += `</div>`; // dai-van-grid
+        html += `</div>`; // dai-van-section
+        return html;
+    }
+
+    /**
      * Render toàn bộ lá số
      */
     function render(lasoData, hoTen) {
@@ -231,10 +310,13 @@ const TuViRender = (function () {
         html += renderCenterCell(lasoData, hoTen);
 
         html += `</div>`;
+
+
         return html;
     }
 
     return {
-        render
+        render,
+        renderDaiVanTimeline
     };
 })();

@@ -33,10 +33,11 @@ function createCacheKey(data) {
 
     const keyData = JSON.stringify({
         gender: ov.gioiTinh,
-        yearView: data.yearView, // Phân tích theo năm nên cần giữ năm xem
+        yearView: data.yearView,
         cuc: ov.cucName,
         menh: ov.menhNapAm,
         cungMenh: ov.cungMenhPos,
+        vanHan: data.vanHan ? { dv: data.vanHan.daiVan?.cungName, tv: data.vanHan.tieuVan?.cungName } : null,
         dna: palaceDNA
     });
     return crypto.createHash('md5').update(keyData).digest('hex');
@@ -168,6 +169,23 @@ function buildPrompt(data) {
 
     let specialInfo = specials.map(s => `- ${s.title}: ${s.content}`).join('\n');
 
+    // Vận Hạn info
+    let vanHanInfo = '';
+    if (data.vanHan) {
+        const vh = data.vanHan;
+        vanHanInfo = `\n## VẬN HẠN NĂM ${data.yearView || ''}:\n`;
+        if (vh.daiVan) {
+            const dvSao = (vh.daiVan.chinhTinh || []).map(s => s.name + (s.hoa ? ` (Hoá ${s.hoa})` : '')).join(', ');
+            vanHanInfo += `- Đại Vận: Cung ${vh.daiVan.cungName} (${vh.daiVan.chiName}), tuổi ${vh.daiVan.tuoiFrom}-${vh.daiVan.tuoiTo}, năm ${vh.daiVan.namFrom}-${vh.daiVan.namTo}. Chính tinh: ${dvSao || 'Không có'}. Rating: ${vh.daiVan.rating}/5\n`;
+        }
+        if (vh.tieuVan) {
+            vanHanInfo += `- Tiểu Vận: Cung ${vh.tieuVan.cungName} (${vh.tieuVan.chiName}), ${vh.tieuVan.tuoi} tuổi. Chính tinh: ${(vh.tieuVan.chinhTinh || []).join(', ') || 'Không có'}\n`;
+        }
+        if (vh.luuTuHoa) {
+            vanHanInfo += `- Lưu Tứ Hoá: Lộc→${vh.luuTuHoa['Hoá Lộc']}, Quyền→${vh.luuTuHoa['Hoá Quyền']}, Khoa→${vh.luuTuHoa['Hoá Khoa']}, Kỵ→${vh.luuTuHoa['Hoá Kỵ']}\n`;
+        }
+    }
+
     return `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam. Hãy phân tích tổng hợp lá số sau một cách chuyên sâu.
 LƯU Ý QUAN TRỌNG: Hãy sử dụng danh xưng "Đương số" xuyên suốt bài viết, KHÔNG nhắc đến tên riêng cụ thể của người xem để đảm bảo tính khách quan.
 
@@ -184,17 +202,18 @@ ${palaceInfo}
 
 ## ĐẶC BIỆT:
 ${specialInfo || 'Không có điều kiện đặc biệt'}
-
+${vanHanInfo}
 ## YÊU CẦU:
 Dựa trên thông tin chi tiết từng sao trong từng cung ở trên, hãy viết bài phân tích tổng hợp chuyên sâu. Giải thích ý nghĩa thực tiễn, không dùng thuật ngữ khó hiểu. Cấu trúc:
 
 1. **TỔNG QUAN VẬN MỆNH** (3-5 câu): Nhận xét tổng quát, điểm mạnh/yếu nổi bật
-2. **LUẬN GIẢI GIỜ SINH** (3-4 câu): Phân tích tầm quan trọng của giờ sinh đối với lá số này. Nêu rõ các đặc điểm tính cách hoặc vận hạn bị ảnh hưởng mạnh bởi giờ sinh (như vị trí Mệnh/Thân). Lưu ý người xem nếu giờ sinh không chính xác thì phần này và toàn bộ lá số sẽ thay đổi.
-3. **TÍNH CÁCH & CON NGƯỜI** (3-5 câu): Tính cách, phong thái, điểm đặc biệt
-4. **SỰ NGHIỆP & TÀI CHÍNH** (3-5 câu): Hướng nghề nghiệp phù hợp, tiềm năng tài chính
-5. **TÌNH DUYÊN & GIA ĐÌNH** (3-5 câu): Đường tình cảm, gia đình, con cái
-6. **SỨC KHỎE** (2-3 câu): Điểm cần lưu ý về sức khỏe
-7. **LỜI KHUYÊN** (3-4 câu): Lời khuyên thiết thực, cụ thể
+2. **LUẬN GIẢI GIỜ SINH** (3-4 câu): Phân tích tầm quan trọng của giờ sinh
+3. **TÍNH CÁCH & CON NGƯỜI** (3-5 câu): Tính cách, phong thái
+4. **SỰ NGHIỆP & TÀI CHÍNH** (3-5 câu): Hướng nghề nghiệp, tiềm năng tài chính
+5. **TÌNH DUYÊN & GIA ĐÌNH** (3-5 câu): Đường tình cảm, gia đình
+6. **SỨC KHỎE** (2-3 câu): Điểm cần lưu ý
+7. **VẬN HẠN NĂM ${data.yearView || ''}** (4-6 câu): Phân tích Đại Vận hiện tại đang chạy qua cung nào, Tiểu Vận năm nay ở cung nào, Lưu Tứ Hoá tác động ra sao. Nêu rõ những thuận lợi và cảnh báo cụ thể.
+8. **LỜI KHUYÊN** (3-4 câu): Lời khuyên thiết thực
 
 Mỗi phần viết chi tiết, dễ hiểu. KHÔNG dùng markdown header. Mỗi phần cách nhau bởi "---".
 Viết bằng Tiếng Việt.`;
@@ -213,10 +232,11 @@ function parseAiResponse(text) {
         'Sự Nghiệp & Tài Chính',
         'Tình Duyên & Gia Đình',
         'Sức Khỏe',
+        'Vận Hạn Năm',
         'Lời Khuyên'
     ];
 
-    const icons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '💡'];
+    const icons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '📅', '💡'];
 
     const result = {
         sections: [],

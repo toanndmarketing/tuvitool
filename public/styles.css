@@ -797,6 +797,34 @@ body {
     color: var(--text-muted);
 }
 
+.btn-ai-retry {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    margin-top: 1rem;
+    padding: 0.7rem 1.6rem;
+    background: linear-gradient(135deg, rgba(251, 146, 60, 0.9), rgba(234, 88, 12, 0.9));
+    border: none;
+    border-radius: var(--radius-sm);
+    color: #fff;
+    font-size: 0.9rem;
+    font-weight: 600;
+    font-family: var(--font-sans);
+    cursor: pointer;
+    transition: all 0.2s;
+    box-shadow: 0 4px 12px rgba(251, 146, 60, 0.2);
+}
+
+.btn-ai-retry:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(251, 146, 60, 0.35);
+}
+
+.btn-ai-retry:active {
+    transform: translateY(0);
+}
+
 /* AI Auth Required */
 .ai-auth-required {
     text-align: center;
@@ -2420,5 +2448,318 @@ body {
         background: rgba(255, 255, 255, 0.05) !important;
         border: 1px solid rgba(255, 255, 255, 0.1) !important;
         opacity: 1 !important;
+    }
+}
+
+/* =====================
+   ĐẠI VẬN & TIỂU VẬN
+   ===================== */
+.dai-van-section {
+    margin-top: 2rem;
+    background: var(--bg-card);
+    backdrop-filter: blur(12px);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius);
+    padding: 1.5rem;
+    animation: slideUp 0.5s ease-out forwards;
+}
+
+.dai-van-title {
+    font-family: var(--font-serif);
+    font-size: 1.3rem;
+    color: var(--accent-gold);
+    margin-bottom: 1rem;
+    text-align: center;
+}
+
+/* Tiểu Vận banner */
+.tieu-van-banner {
+    background: linear-gradient(135deg, rgba(96, 165, 250, 0.12), rgba(96, 165, 250, 0.04));
+    border: 1px solid rgba(96, 165, 250, 0.25);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+}
+
+.tieu-van-main {
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.tieu-van-label {
+    font-weight: 600;
+    color: #60a5fa;
+    font-size: 0.9rem;
+}
+
+.tieu-van-value {
+    color: var(--text-primary);
+    font-size: 0.9rem;
+}
+
+.tieu-van-sao {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    padding-left: 1.8rem;
+}
+
+/* Lưu Tứ Hoá banner */
+.luu-tu-hoa-banner {
+    background: linear-gradient(135deg, rgba(226, 176, 66, 0.1), rgba(226, 176, 66, 0.03));
+    border: 1px solid rgba(226, 176, 66, 0.2);
+    border-radius: var(--radius-sm);
+    padding: 0.7rem 1rem;
+    margin-bottom: 1rem;
+    display: flex;
+    align-items: center;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.luu-hoa-label {
+    font-weight: 600;
+    color: var(--accent-gold);
+    font-size: 0.85rem;
+}
+
+.luu-hoa-items {
+    display: flex;
+    gap: 0.6rem;
+    flex-wrap: wrap;
+}
+
+.luu-hoa-items span {
+    font-size: 0.78rem;
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.lh-loc {
+    background: rgba(74, 222, 128, 0.15);
+    color: #4ade80;
+    border: 1px solid rgba(74, 222, 128, 0.3);
+}
+
+.lh-quyen {
+    background: rgba(251, 146, 60, 0.15);
+    color: #fb923c;
+    border: 1px solid rgba(251, 146, 60, 0.3);
+}
+
+.lh-khoa {
+    background: rgba(96, 165, 250, 0.15);
+    color: #60a5fa;
+    border: 1px solid rgba(96, 165, 250, 0.3);
+}
+
+.lh-ky {
+    background: rgba(255, 95, 95, 0.15);
+    color: var(--accent-red);
+    border: 1px solid rgba(255, 95, 95, 0.3);
+}
+
+/* Đại Vận Grid */
+.dai-van-grid {
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: var(--radius-sm);
+    overflow: hidden;
+}
+
+.dai-van-header-row {
+    display: grid;
+    grid-template-columns: 40px 90px 120px 100px 1fr;
+    background: rgba(226, 176, 66, 0.1);
+    border-bottom: 1px solid rgba(226, 176, 66, 0.2);
+}
+
+.dvh-cell {
+    padding: 0.5rem 0.6rem;
+    font-size: 0.72rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    font-family: var(--font-serif);
+}
+
+.dai-van-row {
+    display: grid;
+    grid-template-columns: 40px 90px 120px 100px 1fr;
+    position: relative;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+    transition: all 0.2s;
+}
+
+.dai-van-row:hover {
+    background: rgba(255, 255, 255, 0.03);
+}
+
+.dai-van-row:last-child {
+    border-bottom: none;
+}
+
+.dai-van-active {
+    background: linear-gradient(135deg, rgba(226, 176, 66, 0.12), rgba(226, 176, 66, 0.04)) !important;
+    border-left: 3px solid var(--accent-gold);
+}
+
+.dv-cell {
+    padding: 0.55rem 0.6rem;
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    display: flex;
+    align-items: center;
+}
+
+.dv-index {
+    font-weight: 700;
+    color: var(--text-muted);
+    font-size: 0.75rem;
+    justify-content: center;
+}
+
+.dv-age {
+    font-weight: 600;
+    color: var(--text-primary);
+}
+
+.dv-year {
+    font-size: 0.75rem;
+    color: var(--text-muted);
+}
+
+.dv-cung {
+    flex-direction: column;
+    align-items: flex-start;
+    line-height: 1.3;
+}
+
+.dv-cung strong {
+    color: var(--accent-gold-light);
+    font-size: 0.82rem;
+}
+
+.dv-cung small {
+    color: var(--text-muted);
+    font-size: 0.7rem;
+}
+
+.dv-sao {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+    line-height: 1.4;
+}
+
+.dv-sao em {
+    color: var(--text-muted);
+}
+
+.dai-van-active .dv-age,
+.dai-van-active .dv-cung strong {
+    color: var(--accent-gold);
+}
+
+.dv-badge {
+    position: absolute;
+    right: 0.5rem;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 0.65rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    background: rgba(226, 176, 66, 0.2);
+    padding: 0.15rem 0.5rem;
+    border-radius: 12px;
+    border: 1px solid rgba(226, 176, 66, 0.3);
+}
+
+/* Sao Lưu Niên styling */
+.star-luu {
+    color: #60a5fa !important;
+    font-style: italic;
+    font-size: 0.72rem;
+}
+
+/* Vận Hạn interpretation card */
+.van-han-summary {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.8rem;
+    margin-bottom: 1rem;
+}
+
+.van-han-box {
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.06);
+    border-radius: var(--radius-sm);
+    padding: 0.8rem;
+}
+
+.van-han-box-title {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 0.4rem;
+}
+
+.van-han-box-value {
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    font-weight: 600;
+    margin-bottom: 0.2rem;
+}
+
+.van-han-box-detail {
+    font-size: 0.78rem;
+    color: var(--text-secondary);
+    line-height: 1.5;
+}
+
+.van-han-luu-hoa {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.4rem;
+    margin-top: 0.5rem;
+}
+
+/* Mobile responsive for Đại Vận */
+@media (max-width: 640px) {
+
+    .dai-van-header-row,
+    .dai-van-row {
+        grid-template-columns: 30px 70px 1fr 80px;
+    }
+
+    .dvh-sao,
+    .dv-sao {
+        display: none;
+    }
+
+    .dv-badge {
+        position: static;
+        transform: none;
+        grid-column: 1 / -1;
+        text-align: center;
+        margin-top: 0.2rem;
+    }
+
+    .van-han-summary {
+        grid-template-columns: 1fr;
+    }
+
+    .luu-tu-hoa-banner {
+        flex-direction: column;
+        align-items: flex-start;
     }
 }

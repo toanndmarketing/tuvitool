@@ -170,6 +170,75 @@ const TuViInterpret = (function () {
     }
 
     /**
+     * Phân tích Vận Hạn năm xem (Đại Vận + Tiểu Vận + Lưu Niên)
+     */
+    function analyzeVanHan(lasoData) {
+        const dv = lasoData.daiVanHienTai;
+        const tv = lasoData.tieuVan;
+        if (!dv) return null;
+
+        const cungMap = lasoData.cungMap;
+        const saoMap = lasoData.saoMap;
+
+        // Đại Vận
+        const dvPos = dv.cungPos;
+        const dvCungName = cungMap[dvPos] || '';
+        const dvSaoList = saoMap[dvPos] || [];
+        const dvChinh = dvSaoList.filter(s => s.type === 'chinh');
+        const dvLuu = dvSaoList.filter(s => s.type === 'luu');
+        const dvCat = dvSaoList.filter(s => s.nature === 'cat');
+        const dvHung = dvSaoList.filter(s => s.nature === 'hung');
+
+        let dvRating = 0;
+        dvCat.forEach(s => { dvRating += (s.type === 'chinh' ? 2 : 1); });
+        dvHung.forEach(s => { dvRating -= (s.type === 'chinh' ? 2 : 1); });
+        dvRating = Math.max(-5, Math.min(5, dvRating));
+
+        // Tiểu Vận
+        let tvData = null;
+        if (tv) {
+            const tvPos = tv.cungPos;
+            const tvCungName = cungMap[tvPos] || '';
+            const tvSaoList = saoMap[tvPos] || [];
+            const tvChinh = tvSaoList.filter(s => s.type === 'chinh');
+            tvData = {
+                cungPos: tvPos,
+                cungName: tvCungName,
+                chiName: AmLich.DIA_CHI[tvPos],
+                tuoi: tv.tuoi,
+                chinhTinh: tvChinh.map(s => s.name)
+            };
+        }
+
+        // Đánh giá tổng thể
+        let overall = '';
+        if (dvRating >= 3) overall = 'Vận hạn rất tốt, nhiều thuận lợi và cát tinh hội tụ. Nên chủ động nắm bắt cơ hội.';
+        else if (dvRating >= 1) overall = 'Vận hạn khá tốt, có nhiều yếu tố hỗ trợ. Cần nỗ lực để phát huy tối đa.';
+        else if (dvRating >= -1) overall = 'Vận hạn bình thường, cát hung lẫn lộn. Nên cẩn trọng trong các quyết định lớn.';
+        else overall = 'Vận hạn nhiều thách thức, hung tinh chiếu. Cần đề phòng và tu tâm dưỡng đức.';
+
+        return {
+            daiVan: {
+                index: dv.index,
+                cungPos: dvPos,
+                cungName: dvCungName,
+                chiName: AmLich.DIA_CHI[dvPos],
+                tuoiFrom: dv.tuoiFrom,
+                tuoiTo: dv.tuoiTo,
+                namFrom: dv.namFrom,
+                namTo: dv.namTo,
+                chinhTinh: dvChinh.map(s => ({ name: s.name, hoa: s.hoa || null })),
+                luuSao: dvLuu.map(s => ({ name: s.name, nature: s.nature })),
+                rating: dvRating
+            },
+            tieuVan: tvData,
+            luuTuHoa: lasoData.luuTuHoa || null,
+            overall,
+            rating: dvRating
+        };
+    }
+
+    /**
      * Tổng hợp diễn giải toàn bộ lá số
      */
     function interpret(lasoData) {
@@ -204,6 +273,12 @@ const TuViInterpret = (function () {
         }
 
         result.specials = analyzeSpecial(lasoData);
+
+        // Vận Hạn (năm xem)
+        result.vanHan = analyzeVanHan(lasoData);
+
+        // Lưu ref để render timeline
+        result._lasoData = lasoData;
 
         return result;
     }
@@ -384,6 +459,54 @@ const TuViInterpret = (function () {
             html += `</div></div>`;
         });
 
+        // Vận Hạn card (cuối cùng, sau tất cả palace cards)
+        if (interpretation.vanHan) {
+            const vh = interpretation.vanHan;
+            const vhIdx = interpretation.palaces.length + interpretation.specials.length + 2;
+            const vhRatingColor = vh.rating >= 2 ? 'interp-good' : (vh.rating <= -2 ? 'interp-bad' : '');
+            const vhStars = vh.rating >= 3 ? '⭐⭐⭐⭐⭐' : vh.rating >= 2 ? '⭐⭐⭐⭐' : vh.rating >= 1 ? '⭐⭐⭐' : vh.rating >= 0 ? '⭐⭐' : '⭐';
+
+            html += `<div class="interp-card" style="--index: ${vhIdx}">
+                <div class="interp-header">
+                    <span class="interp-icon">📅</span>
+                    <div class="interp-title-group">
+                        <span class="interp-title">Vận Hạn Năm ${interpretation.overview?.namXem || ''} <span class="${vhRatingColor}">${vhStars}</span></span>
+                        <span class="badge-hour important">Đại Vận + Tiểu Vận</span>
+                    </div>
+                    <span class="interp-toggle open">▼</span>
+                </div>
+                <div class="interp-body open">
+                    <div class="van-han-summary">
+                        <div class="van-han-box">
+                            <div class="van-han-box-title">Đại Vận (10 năm)</div>
+                            <div class="van-han-box-value">Cung ${vh.daiVan.cungName} (${vh.daiVan.chiName})</div>
+                            <div class="van-han-box-detail">Tuổi ${vh.daiVan.tuoiFrom}—${vh.daiVan.tuoiTo} | Năm ${vh.daiVan.namFrom}—${vh.daiVan.namTo}</div>
+                            ${vh.daiVan.chinhTinh.length > 0 ? `<div class="van-han-box-detail" style="margin-top:4px">Chính tinh: <strong>${vh.daiVan.chinhTinh.map(s => s.name + (s.hoa ? '(' + s.hoa + ')' : '')).join(', ')}</strong></div>` : ''}
+                        </div>
+                        ${vh.tieuVan ? `<div class="van-han-box">
+                            <div class="van-han-box-title">Tiểu Vận (1 năm)</div>
+                            <div class="van-han-box-value">Cung ${vh.tieuVan.cungName} (${vh.tieuVan.chiName})</div>
+                            <div class="van-han-box-detail">${vh.tieuVan.tuoi} tuổi</div>
+                            ${vh.tieuVan.chinhTinh.length > 0 ? `<div class="van-han-box-detail" style="margin-top:4px">Chính tinh: <strong>${vh.tieuVan.chinhTinh.join(', ')}</strong></div>` : ''}
+                        </div>` : ''}
+                    </div>
+                    ${vh.luuTuHoa ? `<div style="margin-bottom:8px;font-size:0.85rem">
+                        <strong style="color:var(--accent-gold)">Lưu Tứ Hoá:</strong>
+                        Hoá Lộc → ${vh.luuTuHoa['Hoá Lộc']},
+                        Hoá Quyền → ${vh.luuTuHoa['Hoá Quyền']},
+                        Hoá Khoa → ${vh.luuTuHoa['Hoá Khoa']},
+                        Hoá Kỵ → ${vh.luuTuHoa['Hoá Kỵ']}
+                    </div>` : ''}
+                    <div class="interp-summary">${vh.overall}</div>
+                </div>
+            </div>`;
+        }
+
+        // Đại Vận Timeline (cuối cùng)
+        if (interpretation._lasoData) {
+            html += TuViRender.renderDaiVanTimeline(interpretation._lasoData);
+        }
+
         return html;
     }
 
@@ -424,7 +547,36 @@ const TuViInterpret = (function () {
             container.innerHTML = `<div class="ai-error">
                 <p>⚠️ ${aiResult.error || 'Phân tích chuyên sâu không khả dụng'}</p>
                 <p><small>Bạn vẫn có thể xem diễn giải chi tiết từng cung bên dưới.</small></p>
+                <button class="btn-ai-retry" id="btnAiRetry">
+                    <span class="btn-icon">🔄</span>
+                    <span>Tải lại phân tích AI</span>
+                </button>
             </div>`;
+
+            // Attach retry handler
+            const btnRetry = document.getElementById('btnAiRetry');
+            if (btnRetry) {
+                btnRetry.addEventListener('click', async function () {
+                    // Show loading
+                    container.innerHTML = `<div class="ai-loading">
+                        <div class="ai-spinner"></div>
+                        <p>Đang tải lại phân tích...</p>
+                    </div>`;
+
+                    try {
+                        const payload = window._currentInterpretation;
+                        if (!payload) {
+                            renderAiAnalysis({ error: 'Không có dữ liệu để tải lại. Vui lòng lập lá số mới.', fallback: true });
+                            return;
+                        }
+                        const result = await getAiInterpretation(payload);
+                        renderAiAnalysis(result);
+                    } catch (retryErr) {
+                        console.error('[AI Retry] Error:', retryErr);
+                        renderAiAnalysis({ error: 'Tải lại thất bại: ' + retryErr.message, fallback: true });
+                    }
+                });
+            }
             return;
         }
 
@@ -494,7 +646,8 @@ const TuViInterpret = (function () {
         interpret,
         renderInterpretation,
         getAiInterpretation,
-        renderAiAnalysis
+        renderAiAnalysis,
+        analyzeVanHan
     };
 })();
 

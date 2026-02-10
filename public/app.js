@@ -18,6 +18,11 @@
     const btnBack = document.getElementById('btnBack');
     const btnPrint = document.getElementById('btnPrint');
     const btnSubmit = document.getElementById('btnSubmit');
+    const btnRawdata = document.getElementById('btnRawdata');
+    const rawdataModal = document.getElementById('rawdataModal');
+    const rawdataTextarea = document.getElementById('rawdataTextarea');
+    const rawdataCopyBtn = document.getElementById('rawdataCopyBtn');
+    const rawdataCloseBtn = document.getElementById('rawdataCloseBtn');
 
     // Tab elements
     const tabBtns = document.querySelectorAll('.tab-btn');
@@ -64,6 +69,35 @@
         window.print();
     });
 
+    // Rawdata Modal
+    btnRawdata.addEventListener('click', function () {
+        if (window._currentRawdata) {
+            rawdataTextarea.value = window._currentRawdata;
+            rawdataModal.style.display = 'flex';
+            rawdataTextarea.scrollTop = 0;
+        }
+    });
+
+    rawdataCloseBtn.addEventListener('click', function () {
+        rawdataModal.style.display = 'none';
+    });
+
+    rawdataModal.addEventListener('click', function (e) {
+        if (e.target === rawdataModal) rawdataModal.style.display = 'none';
+    });
+
+    rawdataCopyBtn.addEventListener('click', function () {
+        rawdataTextarea.select();
+        navigator.clipboard.writeText(rawdataTextarea.value).then(() => {
+            rawdataCopyBtn.textContent = '✅ Đã copy!';
+            setTimeout(() => { rawdataCopyBtn.textContent = '📋 Copy'; }, 2000);
+        }).catch(() => {
+            document.execCommand('copy');
+            rawdataCopyBtn.textContent = '✅ Đã copy!';
+            setTimeout(() => { rawdataCopyBtn.textContent = '📋 Copy'; }, 2000);
+        });
+    });
+
     // =====================
     // MAIN GENERATE (ASYNC)
     // =====================
@@ -103,14 +137,115 @@
             // An sao
             TuViSao.anSao(lasoData);
 
+            // === TÍNH NĂM TRƯỚC (namXem - 1) ĐỂ SO SÁNH ỨNG SỐ ===
+            let prevYearSummary = null;
+            try {
+                const prevParams = { ngay, thang, nam, gioSinh, gioiTinh, namXem: namXem - 1 };
+                const prevLasoData = TuViCalc.calculate(prevParams);
+                TuViSao.anSao(prevLasoData);
+                prevYearSummary = TuViInterpret.buildPrevYearSummary(prevLasoData);
+                console.log('[PrevYear] Đã tính năm', namXem - 1);
+            } catch (err) {
+                console.warn('[PrevYear] Không tính được năm trước:', err.message);
+            }
+
             // Render chart
             const chartHtml = TuViRender.render(lasoData, hoTen);
             chartWrapper.innerHTML = chartHtml;
 
             // Generate interpretation (từ API data)
             const interpretation = TuViInterpret.interpret(lasoData);
+            interpretation.prevYear = prevYearSummary;
             const interpHtml = TuViInterpret.renderInterpretation(interpretation);
             interpretationContent.innerHTML = interpHtml;
+
+            // Build rawdata cho nút "Xem Rawdata" - GỌN, chỉ lá số + sao + vận hạn
+            try {
+                const DIA_CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+                const compact = {
+                    // Thông tin cơ bản
+                    gioiTinh: gioiTinh,
+                    ngaySinh: ngaySinhStr,
+                    gioSinh: gioSinh,
+                    namXem: namXem,
+                    amDuong: lasoData.amDuong,
+                    menhNapAm: lasoData.menhNapAm,
+                    hanhMenh: lasoData.hanhMenh,
+                    cucName: lasoData.cucName,
+                    cungMenh: lasoData.cungMap[lasoData.cungMenhPos] + ' (' + DIA_CHI[lasoData.cungMenhPos] + ')',
+                    cungThan: lasoData.cungMap[lasoData.cungThanPos] + ' (' + DIA_CHI[lasoData.cungThanPos] + ')',
+                    thuan: lasoData.thuan,
+                    // 12 cung - chỉ tên sao + trạng thái + hoá
+                    cung: {}
+                };
+                for (let i = 0; i < 12; i++) {
+                    const pos = (lasoData.cungMenhPos + i) % 12;
+                    const cungName = lasoData.cungMap[pos];
+                    const saoList = lasoData.saoMap[pos] || [];
+                    const chinh = saoList.filter(s => s.type === 'chinh').map(s => {
+                        let label = s.name;
+                        const st = typeof TuViStarPatterns !== 'undefined' ? TuViStarPatterns.getStarStatus(s.name, pos) : '';
+                        if (st) label += '(' + st + ')';
+                        if (s.hoa) label += '[' + s.hoa + ']';
+                        if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
+                        return label;
+                    });
+                    const phu = saoList.filter(s => s.type !== 'chinh' && s.type !== 'luu').map(s => {
+                        let label = s.name;
+                        if (s.hoa) label += '[' + s.hoa + ']';
+                        if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
+                        return label;
+                    });
+                    compact.cung[cungName + '(' + DIA_CHI[pos] + ')'] = {
+                        chinh: chinh.length > 0 ? chinh.join(', ') : 'VCĐ',
+                        phu: phu.join(', ')
+                    };
+                }
+                // Đại vận + Tiểu vận
+                const dv = lasoData.daiVanHienTai;
+                const tv = lasoData.tieuVan;
+                if (dv) {
+                    const dvSao = (lasoData.saoMap[dv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
+                    compact.daiVan = {
+                        cung: lasoData.cungMap[dv.cungPos] + '(' + DIA_CHI[dv.cungPos] + ')',
+                        tuoi: dv.tuoiFrom + '-' + dv.tuoiTo,
+                        saoChinhTinh: dvSao.join(', ') || 'VCĐ'
+                    };
+                }
+                if (tv) {
+                    const tvSao = (lasoData.saoMap[tv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
+                    compact.tieuVan = {
+                        cung: lasoData.cungMap[tv.cungPos] + '(' + DIA_CHI[tv.cungPos] + ')',
+                        tuoi: tv.tuoi,
+                        saoChinhTinh: tvSao.join(', ') || 'VCĐ'
+                    };
+                }
+                // Lưu Tứ Hoá
+                if (lasoData.luuTuHoa && lasoData.luuTuHoa.length > 0) {
+                    compact.luuTuHoa = lasoData.luuTuHoa.map(h => h.hoaName + ': ' + h.saoName + ' → ' + lasoData.cungMap[h.cungPos]);
+                }
+                // Tuần/Triệt
+                if (lasoData.tuanTriet) {
+                    compact.tuanTriet = lasoData.tuanTriet;
+                }
+                // Sự kiện (Vận hạn) năm hiện tại
+                const eventScan = TuViEventScanner.scan(lasoData);
+                if (eventScan.events && eventScan.events.length > 0) {
+                    compact.suKien = eventScan.events.slice(0, 10).map(e =>
+                        `${e.severityInfo?.icon || '•'} ${e.name} (${e.severity}) tại ${e.primaryCungName || 'Lưu Cung'}`
+                    );
+                }
+                // Năm trước (nếu có)
+                if (prevYearSummary) {
+                    compact.namTruoc = prevYearSummary;
+                }
+
+                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số. Hãy phân tích CHI TIẾT lá số dưới đây.\n\nYêu cầu:\n- Dùng danh xưng "Đương số"\n- Mỗi cung 4-6 câu: đặc điểm + ảnh hưởng thực tế + lời khuyên\n- Phân tích tam hợp, xung chiếu, tứ hoá xuyên cung\n- Chú ý: miếu/hãm, Hoá Kỵ, Tuần/Triệt, VCĐ\n- Nếu có data năm trước, so sánh ứng số\n\nDATA:\n`;
+                window._currentRawdata = prompt + JSON.stringify(compact, null, 2);
+                btnRawdata.style.display = 'inline-flex';
+            } catch (e) {
+                console.warn('[Rawdata] Error building rawdata:', e);
+            }
 
             // =====================
             // THẦN SỐ HỌC CALCULATION

@@ -217,7 +217,8 @@ body {
 }
 
 .btn-back,
-.btn-print {
+.btn-print,
+.btn-rawdata {
     background: var(--bg-card);
     border: 1px solid var(--border-color);
     border-radius: var(--radius-sm);
@@ -227,11 +228,129 @@ body {
     cursor: pointer;
     font-family: var(--font-sans);
     transition: background 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-rawdata {
+    background: rgba(139, 92, 246, 0.1);
+    border-color: rgba(139, 92, 246, 0.3);
+    color: #a78bfa;
 }
 
 .btn-back:hover,
-.btn-print:hover {
+.btn-print:hover,
+.btn-rawdata:hover {
     background: var(--bg-card-hover);
+}
+
+.btn-rawdata:hover {
+    background: rgba(139, 92, 246, 0.2);
+    border-color: rgba(139, 92, 246, 0.5);
+}
+
+/* Rawdata Modal */
+.rawdata-modal {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 9999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 1rem;
+}
+
+.rawdata-modal-content {
+    background: var(--bg-primary);
+    border: 1px solid var(--border-highlight);
+    border-radius: var(--radius);
+    width: 100%;
+    max-width: 900px;
+    max-height: 85vh;
+    display: flex;
+    flex-direction: column;
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.5);
+}
+
+.rawdata-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color);
+}
+
+.rawdata-modal-header h3 {
+    font-family: var(--font-serif);
+    color: var(--accent-gold);
+    font-size: 1.1rem;
+    margin: 0;
+}
+
+.rawdata-modal-actions {
+    display: flex;
+    gap: 0.5rem;
+}
+
+.rawdata-copy-btn {
+    background: rgba(80, 208, 128, 0.15);
+    border: 1px solid rgba(80, 208, 128, 0.3);
+    color: #50d080;
+    padding: 6px 16px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rawdata-copy-btn:hover {
+    background: rgba(80, 208, 128, 0.25);
+}
+
+.rawdata-close-btn {
+    background: rgba(255, 255, 255, 0.05);
+    border: 1px solid var(--border-color);
+    color: var(--text-muted);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.rawdata-close-btn:hover {
+    background: rgba(244, 67, 54, 0.15);
+    color: #ef5350;
+}
+
+.rawdata-hint {
+    padding: 0.5rem 1.5rem;
+    font-size: 0.8rem;
+    color: var(--text-muted);
+    margin: 0;
+}
+
+.rawdata-textarea {
+    flex: 1;
+    margin: 0 1.5rem 1.5rem;
+    padding: 1rem;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    color: var(--text-secondary);
+    font-family: 'Consolas', 'Monaco', monospace;
+    font-size: 0.78rem;
+    line-height: 1.5;
+    resize: none;
+    min-height: 400px;
+    overflow-y: auto;
 }
 
 /* =====================
@@ -690,6 +809,75 @@ body {
 .interp-star-name {
     font-weight: 600;
     color: var(--accent-gold-light);
+}
+
+/* Compact Star List (Palace cards v2) */
+.star-compact-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+    padding: 6px 0;
+}
+
+.star-compact-label {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: var(--accent-gold);
+    margin-right: 2px;
+    white-space: nowrap;
+}
+
+.star-compact-item {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    font-size: 0.82rem;
+    padding: 3px 8px;
+    background: rgba(255, 255, 255, 0.04);
+    border: 1px solid var(--border-color);
+    border-radius: 6px;
+    color: var(--text-secondary);
+    white-space: nowrap;
+    transition: all 0.2s;
+}
+
+.star-compact-item:hover {
+    background: rgba(226, 176, 66, 0.08);
+    border-color: rgba(226, 176, 66, 0.3);
+}
+
+.star-compact-item strong {
+    color: var(--accent-gold-light);
+}
+
+.star-compact-item sup {
+    font-size: 0.6rem;
+    font-weight: 700;
+    margin-left: 1px;
+}
+
+.star-compact-item.star-cat sup {
+    color: #50d080;
+}
+
+.star-compact-item.star-hung sup {
+    color: #ef5350;
+}
+
+.star-compact-item.star-trung sup {
+    color: #999;
+}
+
+.star-compact-item .hoa-marker {
+    font-size: 0.7rem;
+}
+
+.star-compact-item .star-status-badge {
+    font-size: 0.55rem;
+    padding: 0 4px;
+    margin-left: 2px;
 }
 
 .interp-good {

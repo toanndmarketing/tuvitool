@@ -477,6 +477,88 @@ const TuViInterpret = (function () {
     }
 
     /**
+     * Tóm tắt vận hạn năm trước để so sánh ứng số
+     * Chỉ lấy thông tin cốt lõi, không render
+     */
+    function buildPrevYearSummary(prevLasoData) {
+        const DIA_CHI = AmLich.DIA_CHI;
+        const dv = prevLasoData.daiVanHienTai;
+        const tv = prevLasoData.tieuVan;
+        const namXem = prevLasoData.input.namXem;
+
+        // Lưu niên
+        let luuNien = null;
+        try {
+            if (typeof TuViLuuNien !== 'undefined') {
+                luuNien = TuViLuuNien.analyzeFull(prevLasoData);
+            }
+        } catch (e) { }
+
+        // Event Scanner
+        let eventScan = { events: [], patterns: [], summary: null };
+        try {
+            if (typeof TuViEventScanner !== 'undefined') {
+                eventScan = TuViEventScanner.scan(prevLasoData);
+            }
+        } catch (e) { }
+
+        // Build summary
+        const result = {
+            nam: namXem,
+            daiVan: dv ? {
+                cungName: prevLasoData.cungMap[dv.cungPos],
+                chiName: DIA_CHI[dv.cungPos],
+                tuoiFrom: dv.tuoiFrom,
+                tuoiTo: dv.tuoiTo
+            } : null,
+            tieuVan: tv ? {
+                cungName: prevLasoData.cungMap[tv.cungPos],
+                chiName: DIA_CHI[tv.cungPos],
+                tuoi: tv.tuoi
+            } : null
+        };
+
+        // Energy Score
+        if (luuNien && luuNien.energyScore) {
+            result.nangLuong = {
+                taiChinh: luuNien.energyScore.taiChinh.score,
+                sucKhoe: luuNien.energyScore.sucKhoe.score,
+                tinhCam: luuNien.energyScore.tinhCam.score,
+                tongHop: luuNien.energyScore.overall
+            };
+        }
+
+        // Lưu Tứ Hoá
+        if (luuNien && luuNien.luuTuHoa && luuNien.luuTuHoa.length > 0) {
+            result.luuTuHoa = luuNien.luuTuHoa.map(h =>
+                `${h.hoaName}: ${h.saoName} → ${h.cungName}`
+            );
+        }
+
+        // Hung tinh overlay
+        if (luuNien && luuNien.hungTinhOverlay && luuNien.hungTinhOverlay.length > 0) {
+            result.hungTinh = luuNien.hungTinhOverlay.map(a =>
+                `${a.cungName} (${a.severity})`
+            );
+        }
+
+        // Events tóm tắt
+        if (eventScan.events && eventScan.events.length > 0) {
+            result.suKien = eventScan.events.slice(0, 5).map(e =>
+                `${e.severityInfo?.icon || '•'} ${e.name} (${e.severity}) tại ${e.primaryCungName || 'Lưu Cung'}`
+            );
+            result.totalEvents = eventScan.events.length;
+        }
+
+        // Rating
+        if (eventScan.summary) {
+            result.rating = eventScan.summary.rating;
+        }
+
+        return result;
+    }
+
+    /**
      * Tổng hợp diễn giải toàn bộ lá số
      */
     function interpret(lasoData) {
@@ -497,7 +579,8 @@ const TuViInterpret = (function () {
             hanhCuc: lasoData.hanhCuc,
             chuMenh: TuViSao.getChuMenh(lasoData.cungMenhPos),
             chuThan: TuViSao.getChuThan(lasoData.cungThanPos),
-            thuan: lasoData.thuan
+            thuan: lasoData.thuan,
+            namXem: lasoData.input.namXem
         };
 
         for (let i = 0; i < 12; i++) {
@@ -801,7 +884,7 @@ const TuViInterpret = (function () {
             });
         }
 
-        // Palace cards
+        // Palace cards (collapse mặc định để ưu tiên AI analysis)
         interpretation.palaces.forEach((p, idx) => {
             const index = idx + interpretation.specials.length + 2;
             const ratingColor = p.rating >= 4 ? 'interp-good' : (p.rating <= 2 ? 'interp-bad' : '');
@@ -816,8 +899,7 @@ const TuViInterpret = (function () {
                     </div>
                     <span class="interp-toggle">▼</span>
                 </div>
-                <div class="interp-body">
-                    <p>${p.desc}</p>`;
+                <div class="interp-body">`;
 
             // Vô Chính Diệu warning
             if (p.voChinhDieu) {
@@ -827,40 +909,37 @@ const TuViInterpret = (function () {
                 </div>`;
             }
 
-            // Chính tinh (với miếu hãm)
+            // Chính tinh (compact: chỉ hiện sao + trạng thái + hoa, bỏ text detail dài)
             if (p.chinhTinh.length > 0) {
-                html += `<h4 style="margin-top:10px; color: var(--accent-gold);">Chính Tinh:</h4>
-                    <ul class="interp-star-list">`;
+                html += `<div class="star-compact-list">
+                    <span class="star-compact-label">Chính Tinh:</span>`;
                 p.chinhTinh.forEach(s => {
-                    const statusBadge = s.statusText ? `<span class="star-status-badge ${s.status === 'ham' ? 'status-ham' : (s.status === 'mieu' || s.status === 'vuong' ? 'status-mieu' : 'status-dac')}">${s.statusText}</span>` : '';
-                    html += `<li>
-                        <span class="interp-star-name">${s.icon} ${s.name}</span>
+                    const statusClass = s.status === 'ham' ? 'status-ham' : (s.status === 'mieu' || s.status === 'vuong' ? 'status-mieu' : 'status-dac');
+                    const statusBadge = s.statusText ? `<span class="star-status-badge ${statusClass}">${s.statusText}</span>` : '';
+                    html += `<span class="star-compact-item">
+                        ${s.icon} <strong>${s.name}</strong>
                         ${statusBadge}
-                        ${s.hoa ? `<span class="hoa-marker ${s.hoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}"> (Hoá ${s.hoa})</span>` : ''}
-                        ${s.luuHoa ? `<span class="hoa-marker ${s.luuHoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}"> (Lưu Hoá ${s.luuHoa})</span>` : ''}
-                        - ${s.short || ''}
-                        ${s.nhaiNguyetInfo ? `<br><small style="color:${s.nhaiNguyetInfo.trangThai === 'sáng' ? '#4caf50' : '#ff5722'}">☀ ${s.nhaiNguyetInfo.text}</small>` : ''}
-                        <br><small>${s.detail || ''}</small>
-                    </li>`;
+                        ${s.hoa ? `<span class="hoa-marker ${s.hoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(${s.hoa})</span>` : ''}
+                        ${s.luuHoa ? `<span class="hoa-marker ${s.luuHoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(Lưu ${s.luuHoa})</span>` : ''}
+                        ${s.nhaiNguyetInfo ? `<span style="color:${s.nhaiNguyetInfo.trangThai === 'sáng' ? '#4caf50' : '#ff5722'}">☀${s.nhaiNguyetInfo.trangThai}</span>` : ''}
+                    </span>`;
                 });
-                html += `</ul>`;
+                html += `</div>`;
             }
 
-            // Phụ tinh
+            // Phụ tinh (compact: chỉ hiện tên + hoa)
             if (p.phuTinh.length > 0) {
-                html += `<h4 style="margin-top:10px; color: var(--text-secondary);">Phụ Tinh Quan Trọng:</h4>
-                    <ul class="interp-star-list">`;
+                html += `<div class="star-compact-list">
+                    <span class="star-compact-label">Phụ Tinh:</span>`;
                 p.phuTinh.forEach(s => {
-                    html += `<li>
-                        <span class="interp-star-name">${s.icon} ${s.name}</span>
-                        ${s.hoa ? `<span class="hoa-marker ${s.hoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}"> (Hoá ${s.hoa})</span>` : ''}
-                        ${s.luuHoa ? `<span class="hoa-marker ${s.luuHoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}"> (Lưu Hoá ${s.luuHoa})</span>` : ''}
-                        - ${s.short || ''}
-                        ${s.good ? `<br><small class="interp-good">✅ ${s.good}</small>` : ''}
-                        ${s.bad ? `<br><small class="interp-bad">❌ ${s.bad}</small>` : ''}
-                    </li>`;
+                    const natureIcon = s.nature === 'cat' ? '+' : s.nature === 'hung' ? '-' : '~';
+                    html += `<span class="star-compact-item star-${s.nature}">
+                        ${s.icon} ${s.name}<sup>${natureIcon}</sup>
+                        ${s.hoa ? `<span class="hoa-marker ${s.hoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(${s.hoa})</span>` : ''}
+                        ${s.luuHoa ? `<span class="hoa-marker ${s.luuHoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(Lưu ${s.luuHoa})</span>` : ''}
+                    </span>`;
                 });
-                html += `</ul>`;
+                html += `</div>`;
             }
 
             // Cặp sao kết hợp
@@ -1269,7 +1348,8 @@ const TuViInterpret = (function () {
         renderInterpretation,
         getAiInterpretation,
         renderAiAnalysis,
-        analyzeVanHan
+        analyzeVanHan,
+        buildPrevYearSummary
     };
 })();
 

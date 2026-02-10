@@ -101,7 +101,23 @@
             <!-- Back/Print Actions -->
             <div class="chart-actions">
                 <button class="btn-back" id="btnBack">← Nhập lại</button>
+                <button class="btn-rawdata" id="btnRawdata" style="display:none;">📋 Xem Rawdata</button>
                 <button class="btn-print" id="btnPrint">🖨️ In kết quả</button>
+            </div>
+
+            <!-- Rawdata Modal -->
+            <div class="rawdata-modal" id="rawdataModal" style="display:none;">
+                <div class="rawdata-modal-content">
+                    <div class="rawdata-modal-header">
+                        <h3>📋 Raw Data - Lá Số Tử Vi</h3>
+                        <div class="rawdata-modal-actions">
+                            <button class="rawdata-copy-btn" id="rawdataCopyBtn">📋 Copy</button>
+                            <button class="rawdata-close-btn" id="rawdataCloseBtn">✕</button>
+                        </div>
+                    </div>
+                    <p class="rawdata-hint">Copy data bên dưới → dán vào ChatGPT/Gemini để luận giải chi tiết</p>
+                    <textarea class="rawdata-textarea" id="rawdataTextarea" readonly></textarea>
+                </div>
             </div>
 
             <!-- Tab: Tử Vi -->

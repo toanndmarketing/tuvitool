@@ -19,8 +19,8 @@ const gemini = require('./gemini');
 const app = express();
 const PORT = process.env.PORT || 8950;
 
-// Trust proxy (chạy sau Nginx)
-app.set('trust proxy', true);
+// Trust proxy (chạy sau Nginx) - dùng 1 thay vì true để tránh ERR_ERL_PERMISSIVE_TRUST_PROXY
+app.set('trust proxy', 1);
 
 // =====================
 // AUTH STORAGE (In-memory)

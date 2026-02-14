@@ -51,9 +51,40 @@
     });
 
     // =====================
+    // DATE TOGGLE LOGIC
+    // =====================
+    const dateTypeRadios = document.querySelectorAll('input[name="dateType"]');
+    const solarInputGroup = document.getElementById('solarInputGroup');
+    const lunarInputGroup = document.getElementById('lunarInputGroup');
+    const lunarPreview = document.getElementById('lunarPreview');
+    const ngaySinhInput = document.getElementById('ngaySinh');
+
+    dateTypeRadios.forEach(r => {
+        r.addEventListener('change', function () {
+            if (this.value === 'solar') {
+                solarInputGroup.style.display = 'grid';
+                lunarInputGroup.style.display = 'none';
+            } else {
+                solarInputGroup.style.display = 'none';
+                lunarInputGroup.style.display = 'grid';
+            }
+        });
+    });
+
+    const updateLunarPreview = () => {
+        const val = ngaySinhInput.value;
+        if (!val) return;
+        const [y, m, d] = val.split('-').map(v => parseInt(v));
+        const res = AmLich.solarToLunar(d, m, y);
+        lunarPreview.textContent = `Ngày ${res.day}/${res.month}/${res.year}${res.leap ? ' (Nhuận)' : ''}`;
+    };
+
+    ngaySinhInput.addEventListener('change', updateLunarPreview);
+    updateLunarPreview();
+
+    // =====================
     // EVENT HANDLERS
     // =====================
-
     form.addEventListener('submit', function (e) {
         e.preventDefault();
         generateChart();
@@ -98,41 +129,64 @@
         });
     });
 
-    // =====================
-    // MAIN GENERATE (ASYNC)
-    // =====================
 
     async function generateChart() {
         btnSubmit.innerHTML = '<span class="btn-icon">⏳</span><span>Đang tính toán...</span>';
         btnSubmit.disabled = true;
 
         try {
-            // 0. Load interpretation data từ API
             await TuViInterpret.loadInterpretationData();
 
-            // 1. Collect input
+            // 1. Collect basic input
             const hoTen = document.getElementById('hoTen').value || 'Không xác định';
             const gioiTinh = document.getElementById('gioiTinh').value;
-            const ngaySinhStr = document.getElementById('ngaySinh').value;
             const gioSinh = parseInt(document.getElementById('gioSinh').value);
             const namXem = parseInt(document.getElementById('namXem').value);
+            const dateType = document.querySelector('input[name="dateType"]:checked').value;
 
-            if (!ngaySinhStr) {
-                alert('Vui lòng nhập ngày sinh!');
-                resetButton();
-                return;
+            let ngay, thang, nam, isLunar, isLeap;
+            let jd;
+
+            if (dateType === 'solar') {
+                const ngaySinhStr = document.getElementById('ngaySinh').value;
+                if (!ngaySinhStr) {
+                    alert('Vui lòng nhập ngày sinh!');
+                    resetButton();
+                    return;
+                }
+                const parts = ngaySinhStr.split('-');
+                nam = parseInt(parts[0]);
+                thang = parseInt(parts[1]);
+                ngay = parseInt(parts[2]);
+                isLunar = false;
+                isLeap = false;
+                jd = AmLich.jdFromDate(ngay, thang, nam);
+            } else {
+                ngay = parseInt(document.getElementById('lDay').value);
+                thang = parseInt(document.getElementById('lMonth').value);
+                nam = parseInt(document.getElementById('lYear').value);
+                isLeap = document.getElementById('lLeap').checked;
+                isLunar = true;
+                jd = AmLich.lunarToSolarJd(ngay, thang, nam, isLeap ? 1 : 0);
             }
 
-            const parts = ngaySinhStr.split('-');
-            const nam = parseInt(parts[0]);
-            const thang = parseInt(parts[1]);
-            const ngay = parseInt(parts[2]);
+            // 2. Chuyển đổi sang object chuẩn của engine
+            // Nếu là Solar, engine sẽ tự convert sang Lunar. 
+            // Nếu là Lunar, ta tính JD rồi lát nữa TuViCalc sẽ dùng.
 
-            // =====================
-            // TỬ VI CALCULATION
-            // =====================
-            const params = { ngay, thang, nam, gioSinh, gioiTinh, namXem };
+            // ĐỂ ĐẢM BẢO ENGINE ĐÚNG: Ta luôn đưa về Solar date tương ứng
+            const solarParts = AmLich.jdToDate(jd); // [d, m, y]
+            const params = {
+                ngay: solarParts[0],
+                thang: solarParts[1],
+                nam: solarParts[2],
+                gioSinh,
+                gioiTinh,
+                namXem
+            };
+
             const lasoData = TuViCalc.calculate(params);
+
 
             // An sao
             TuViSao.anSao(lasoData);
@@ -159,22 +213,27 @@
             const interpHtml = TuViInterpret.renderInterpretation(interpretation);
             interpretationContent.innerHTML = interpHtml;
 
-            // Build rawdata cho nút "Xem Rawdata" - GỌN, chỉ lá số + sao + vận hạn
+            // Build rawdata cho nút "Xem Rawdata"
             try {
                 const DIA_CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+                const lunar = lasoData.lunarDate;
+                const lunarDateStr = `Ngày ${lunar.day} tháng ${lunar.month} năm ${lunar.year}${lunar.leap ? ' (Nhuận)' : ''} (${lasoData.canChiNam.full})`;
+                const gioSinhStr = `Giờ ${DIA_CHI[gioSinh]} (${gioSinh})`;
+
                 const compact = {
                     // Thông tin cơ bản
+                    hoTen: hoTen,
                     gioiTinh: gioiTinh,
-                    ngaySinh: ngaySinhStr,
-                    gioSinh: gioSinh,
+                    ngaySinhAL: lunarDateStr,
+                    gioSinh: gioSinhStr,
                     namXem: namXem,
                     amDuong: lasoData.amDuong,
                     menhNapAm: lasoData.menhNapAm,
                     hanhMenh: lasoData.hanhMenh,
                     cucName: lasoData.cucName,
-                    cungMenh: lasoData.cungMap[lasoData.cungMenhPos] + ' (' + DIA_CHI[lasoData.cungMenhPos] + ')',
-                    cungThan: lasoData.cungMap[lasoData.cungThanPos] + ' (' + DIA_CHI[lasoData.cungThanPos] + ')',
-                    thuan: lasoData.thuan,
+                    cungMenh: lasoData.cungMap[lasoData.cungMenhPos] + ' tại cung ' + DIA_CHI[lasoData.cungMenhPos],
+                    cungThan: lasoData.cungMap[lasoData.cungThanPos] + ' tại cung ' + DIA_CHI[lasoData.cungThanPos],
+                    thuan: lasoData.thuan ? 'Thuận lý' : 'Nghịch lý',
                     // 12 cung - chỉ tên sao + trạng thái + hoá
                     cung: {}
                 };
@@ -196,8 +255,8 @@
                         if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
                         return label;
                     });
-                    compact.cung[cungName + '(' + DIA_CHI[pos] + ')'] = {
-                        chinh: chinh.length > 0 ? chinh.join(', ') : 'VCĐ',
+                    compact.cung[cungName + ' (' + DIA_CHI[pos] + ')'] = {
+                        chinh: chinh.length > 0 ? chinh.join(', ') : 'Vô Chính Diệu',
                         phu: phu.join(', ')
                     };
                 }
@@ -207,45 +266,41 @@
                 if (dv) {
                     const dvSao = (lasoData.saoMap[dv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
                     compact.daiVan = {
-                        cung: lasoData.cungMap[dv.cungPos] + '(' + DIA_CHI[dv.cungPos] + ')',
-                        tuoi: dv.tuoiFrom + '-' + dv.tuoiTo,
-                        saoChinhTinh: dvSao.join(', ') || 'VCĐ'
+                        cung: lasoData.cungMap[dv.cungPos] + ' (' + DIA_CHI[dv.cungPos] + ')',
+                        tuoi: dv.tuoiFrom + ' đến ' + dv.tuoiTo + ' tuổi',
+                        saoChinhTinh: dvSao.join(', ') || 'Vô Chính Diệu'
                     };
                 }
                 if (tv) {
                     const tvSao = (lasoData.saoMap[tv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
                     compact.tieuVan = {
-                        cung: lasoData.cungMap[tv.cungPos] + '(' + DIA_CHI[tv.cungPos] + ')',
-                        tuoi: tv.tuoi,
-                        saoChinhTinh: tvSao.join(', ') || 'VCĐ'
+                        cung: lasoData.cungMap[tv.cungPos] + ' (' + DIA_CHI[tv.cungPos] + ')',
+                        tuoi: tv.tuoi + ' tuổi',
+                        saoChinhTinh: tvSao.join(', ') || 'Vô Chính Diệu'
                     };
                 }
                 // Lưu Tứ Hoá
                 if (lasoData.luuTuHoa && lasoData.luuTuHoa.length > 0) {
                     compact.luuTuHoa = lasoData.luuTuHoa.map(h => h.hoaName + ': ' + h.saoName + ' → ' + lasoData.cungMap[h.cungPos]);
                 }
-                // Tuần/Triệt
-                if (lasoData.tuanTriet) {
-                    compact.tuanTriet = lasoData.tuanTriet;
-                }
-                // Sự kiện (Vận hạn) năm hiện tại
-                const eventScan = TuViEventScanner.scan(lasoData);
-                if (eventScan.events && eventScan.events.length > 0) {
-                    compact.suKien = eventScan.events.slice(0, 10).map(e =>
-                        `${e.severityInfo?.icon || '•'} ${e.name} (${e.severity}) tại ${e.primaryCungName || 'Lưu Cung'}`
-                    );
-                }
                 // Năm trước (nếu có)
                 if (prevYearSummary) {
-                    compact.namTruoc = prevYearSummary;
+                    compact.soSanhNamTruoc = prevYearSummary;
                 }
 
-                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số. Hãy phân tích CHI TIẾT lá số dưới đây.\n\nYêu cầu:\n- Dùng danh xưng "Đương số"\n- Mỗi cung 4-6 câu: đặc điểm + ảnh hưởng thực tế + lời khuyên\n- Phân tích tam hợp, xung chiếu, tứ hoá xuyên cung\n- Chú ý: miếu/hãm, Hoá Kỵ, Tuần/Triệt, VCĐ\n- Nếu có data năm trước, so sánh ứng số\n\nDATA:\n`;
+                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số. Hãy phân tích CHI TIẾT lá số dưới đây.\n\n` +
+                    `QUY TẮC QUAN TRỌNG:\n` +
+                    `- Phân tích độc lập, không được lấy nội dung của đương số khác.\n` +
+                    `- Dùng danh xưng "Đương số".\n` +
+                    `- Phân tích kĩ miếu/hãm, tam hợp, xung chiếu, tứ hoá.\n` +
+                    `- Đưa ra lời khuyên thực tế và hóa giải.\n\n` +
+                    `DATA LÁ SỐ:\n`;
                 window._currentRawdata = prompt + JSON.stringify(compact, null, 2);
                 btnRawdata.style.display = 'inline-flex';
             } catch (e) {
                 console.warn('[Rawdata] Error building rawdata:', e);
             }
+
 
             // =====================
             // THẦN SỐ HỌC CALCULATION
@@ -287,7 +342,9 @@
             });
 
             // Async: Gọi AI interpretation (không block UI)
-            loadAiAnalysis(interpretation, { hoTen, ngaySinhStr, gioSinh, namXem });
+            const lunarStr = `${lasoData.lunarDate.day}/${lasoData.lunarDate.month}/${lasoData.lunarDate.year}${lasoData.lunarDate.leap ? ' (Nhuận)' : ''}`;
+            loadAiAnalysis(interpretation, { hoTen, ngaySinhStr: lunarStr, gioSinh, namXem });
+
 
             console.log('Lá số data:', lasoData);
 

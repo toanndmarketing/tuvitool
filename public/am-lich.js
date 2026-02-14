@@ -275,8 +275,34 @@ const AmLich = (function () {
         };
     }
 
+    /**
+     * Chuyển đổi Âm lịch sang Julian Day Number
+     */
+    function lunarToSolarJd(lDay, lMonth, lYear, lLeap, timeZone = 7) {
+        let a11 = getLunarMonth11(lYear - 1, timeZone);
+        let b11 = getLunarMonth11(lYear, timeZone);
+        let off = 0;
+        let diff;
+
+        if (b11 - a11 > 365) {
+            let leapMonthDiff = getLeapMonthOffset(a11, timeZone);
+            if (lMonth > leapMonthDiff || (lMonth === leapMonthDiff && lLeap)) {
+                off = 1;
+            }
+        }
+
+        if (lMonth >= 11) diff = lMonth - 11;
+        else diff = lMonth + 1;
+
+        let k = Math.floor((a11 - 2415021.076998695) / 29.530588853 + 0.5);
+        let nm = getNewMoonDay(k + diff + off, timeZone);
+        return nm + lDay - 1;
+    }
+
     return {
         solarToLunar,
+        lunarToSolarJd,
+        jdToDate,
         getCanChiNam,
         getCanChiThang,
         getCanChiNgay,
@@ -287,3 +313,5 @@ const AmLich = (function () {
         DIA_CHI_PREFIX
     };
 })();
+
+

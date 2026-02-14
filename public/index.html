@@ -48,10 +48,47 @@
                         </div>
                     </div>
                     <div class="form-row">
+                        <div class="form-group date-type-group">
+                            <label>Loại Lịch</label>
+                            <div class="date-type-toggle">
+                                <input type="radio" name="dateType" id="dateSolar" value="solar" checked>
+                                <label for="dateSolar">Dương Lịch</label>
+                                <input type="radio" name="dateType" id="dateLunar" value="lunar">
+                                <label for="dateLunar">Âm Lịch</label>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="form-row solar-input-group" id="solarInputGroup">
                         <div class="form-group">
                             <label for="ngaySinh">Ngày Sinh (Dương lịch)</label>
                             <input type="date" id="ngaySinh" value="2004-08-19">
                         </div>
+                        <div class="form-group">
+                            <label>Chuyển sang Âm lịch</label>
+                            <div class="lunar-preview" id="lunarPreview">...</div>
+                        </div>
+                    </div>
+                    <div class="form-row lunar-input-group" id="lunarInputGroup" style="display: none;">
+                        <div class="form-group col-3">
+                            <label for="lDay">Ngày Âm</label>
+                            <input type="number" id="lDay" min="1" max="30" value="4">
+                        </div>
+                        <div class="form-group col-3">
+                            <label for="lMonth">Tháng Âm</label>
+                            <input type="number" id="lMonth" min="1" max="12" value="7">
+                        </div>
+                        <div class="form-group col-3">
+                            <label for="lYear">Năm Âm</label>
+                            <input type="number" id="lYear" min="1900" max="2100" value="2004">
+                        </div>
+                        <div class="form-group col-3 checkbox-group">
+                            <label class="checkbox-label">
+                                <input type="checkbox" id="lLeap">
+                                <span>Tháng nhuận</span>
+                            </label>
+                        </div>
+                    </div>
+                    <div class="form-row">
                         <div class="form-group">
                             <label for="gioSinh">Giờ Sinh (Canh giờ)</label>
                             <select id="gioSinh">
@@ -70,6 +107,7 @@
                             </select>
                         </div>
                     </div>
+
                     <div class="form-row">
                         <div class="form-group">
                             <label for="namXem">Năm Xem (Lưu niên)</label>

@@ -38,6 +38,7 @@ const TuViEventScanner = (function () {
             direct: saoMap[pos] || [],
             xungChieu: [],
             tamHop: [],
+            lucHop: [],
             giapCung: []
         };
 
@@ -52,6 +53,16 @@ const TuViEventScanner = (function () {
                 var thStars = saoMap[tamHopPositions[t]] || [];
                 for (var s = 0; s < thStars.length; s++) {
                     result.tamHop.push(thStars[s]);
+                }
+            }
+        }
+
+        if (options && options.lucHop) {
+            var lucHopPos = TuViStarPatterns.getLucHop(pos);
+            if (lucHopPos !== undefined) {
+                var lhStars = saoMap[lucHopPos] || [];
+                for (var l = 0; l < lhStars.length; l++) {
+                    result.lucHop.push(lhStars[l]);
                 }
             }
         }

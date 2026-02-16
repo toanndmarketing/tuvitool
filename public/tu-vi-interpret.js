@@ -71,6 +71,8 @@ const TuViInterpret = (function () {
             truongSinh: null,  // Tràng Sinh info
             tuanTriet: null,   // Tuần/Triệt info
             nhaiNguyet: null,  // Thái Dương/Thái Âm sáng tối
+            lucHop: null,      // Lục Hợp info
+            hanhRelations: [], // Quan hệ Hành Sao-Cung
             overall: '',
             rating: 0
         };
@@ -109,6 +111,21 @@ const TuViInterpret = (function () {
                 analysis.nhaiNguyet = nhaiNguyetInfo;
             }
 
+            // Calculate star weight (tổng hợp)
+            let starWeight = 1.0;
+            if (typeof TuViStarPatterns !== 'undefined') {
+                starWeight = TuViStarPatterns.calculateStarWeight(s, pos, lasoData.tuanTriet);
+            }
+
+            // Quan hệ Hành Sao-Cung
+            let hanhRelation = null;
+            if (typeof TuViStarPatterns !== 'undefined') {
+                hanhRelation = TuViStarPatterns.getHanhRelationSaoCung(s.name, pos);
+                if (hanhRelation) {
+                    analysis.hanhRelations.push(hanhRelation);
+                }
+            }
+
             analysis.chinhTinh.push({
                 name: s.name,
                 hoa: s.hoa || null,
@@ -121,7 +138,9 @@ const TuViInterpret = (function () {
                 status: starStatus,
                 statusText: statusText,
                 statusRatingBonus: statusRatingBonus,
-                nhaiNguyetInfo: nhaiNguyetInfo
+                nhaiNguyetInfo: nhaiNguyetInfo,
+                starWeight: Math.round(starWeight * 100) / 100,
+                hanhRelation: hanhRelation
             });
         });
 
@@ -174,6 +193,22 @@ const TuViInterpret = (function () {
                     rating: biTriet ? -2 : -1
                 };
             }
+        }
+
+        // === LỤC HỢP ===
+        if (typeof TuViStarPatterns !== 'undefined') {
+            const lucHopPos = TuViStarPatterns.getLucHop(pos);
+            const lucHopName = TuViStarPatterns.getLucHopName(pos);
+            const lucHopCungName = lasoData.cungMap[lucHopPos] || '';
+            const lucHopSao = (lasoData.saoMap[lucHopPos] || []).filter(s => s.type === 'chinh');
+            analysis.lucHop = {
+                pos: lucHopPos,
+                name: lucHopName,
+                cungName: lucHopCungName,
+                chinhTinh: lucHopSao.map(s => s.name),
+                text: `Cung Lục Hợp: ${lucHopCungName} (${lucHopName})` +
+                    (lucHopSao.length > 0 ? ` — Chính tinh: ${lucHopSao.map(s => s.name).join(', ')}` : ' — Vô Chính Diệu')
+            };
         }
 
         // === TÍNH RATING NÂNG CAO ===
@@ -909,19 +944,39 @@ const TuViInterpret = (function () {
                 </div>`;
             }
 
-            // Chính tinh (compact: chỉ hiện sao + trạng thái + hoa, bỏ text detail dài)
+            // Chính tinh (compact: chỉ hiện sao + trạng thái + hoa)
             if (p.chinhTinh.length > 0) {
                 html += `<div class="star-compact-list">
                     <span class="star-compact-label">Chính Tinh:</span>`;
                 p.chinhTinh.forEach(s => {
                     const statusClass = s.status === 'ham' ? 'status-ham' : (s.status === 'mieu' || s.status === 'vuong' ? 'status-mieu' : 'status-dac');
                     const statusBadge = s.statusText ? `<span class="star-status-badge ${statusClass}">${s.statusText}</span>` : '';
+                    const weightPct = Math.min(Math.round((s.starWeight || 1) * 50), 100);
+                    const weightColor = (s.starWeight || 1) >= 1.3 ? '#4caf50' : ((s.starWeight || 1) <= 0.7 ? '#ff5722' : '#ff9800');
                     html += `<span class="star-compact-item">
                         ${s.icon} <strong>${s.name}</strong>
                         ${statusBadge}
                         ${s.hoa ? `<span class="hoa-marker ${s.hoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(${s.hoa})</span>` : ''}
                         ${s.luuHoa ? `<span class="hoa-marker ${s.luuHoa === 'Kỵ' ? 'hoa-ky' : 'hoa-loc'}">(Lưu ${s.luuHoa})</span>` : ''}
                         ${s.nhaiNguyetInfo ? `<span style="color:${s.nhaiNguyetInfo.trangThai === 'sáng' ? '#4caf50' : '#ff5722'}">☀${s.nhaiNguyetInfo.trangThai}</span>` : ''}
+                        <span class="star-weight-bar" title="Trọng số: ${s.starWeight}">
+                            <span class="star-weight-fill" style="width:${weightPct}%;background:${weightColor}"></span>
+                            <span class="star-weight-label">${s.starWeight}</span>
+                        </span>
+                    </span>`;
+                });
+                html += `</div>`;
+            }
+
+            // Hành Sao-Cung
+            if (p.hanhRelations && p.hanhRelations.length > 0) {
+                html += `<div class="hanh-relation-list">
+                    <span class="star-compact-label">⚡ Hành Sao-Cung:</span>`;
+                p.hanhRelations.forEach(hr => {
+                    const hrClass = hr.ratingBonus > 0 ? 'hr-sinh' : (hr.ratingBonus < 0 ? 'hr-khac' : 'hr-hoa');
+                    const hrIcon = hr.ratingBonus >= 2 ? '🟢' : (hr.ratingBonus > 0 ? '🔵' : (hr.ratingBonus < 0 ? '🔴' : '⚪'));
+                    html += `<span class="hanh-relation-tag ${hrClass}" title="${hr.text}">
+                        ${hrIcon} ${hr.hanhSao}↔${hr.hanhCung}
                     </span>`;
                 });
                 html += `</div>`;
@@ -969,6 +1024,13 @@ const TuViInterpret = (function () {
             if (p.tuanTriet) {
                 html += `<div style="margin-top:6px;padding:6px 10px;border-radius:4px;background:rgba(255,0,0,0.08);font-size:0.85rem;color:#ff9800;">
                     ${p.tuanTriet.tuan ? '🌑 Tuần Trung Không' : '⛔ Triệt Lộ'}: ${p.tuanTriet.text}
+                </div>`;
+            }
+
+            // Lục Hợp
+            if (p.lucHop) {
+                html += `<div class="luc-hop-info" style="margin-top:6px;padding:6px 10px;border-radius:4px;background:rgba(33,150,243,0.08);font-size:0.85rem;color:#2196f3;">
+                    🤝 ${p.lucHop.text}
                 </div>`;
             }
 

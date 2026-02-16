@@ -3883,3 +3883,554 @@ body {
         gap: 0.3rem;
     }
 }
+
+/* =====================
+   NEW: Star Weight Bar
+   ===================== */
+.star-weight-bar {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    width: 52px;
+    height: 10px;
+    background: rgba(255, 255, 255, 0.08);
+    border-radius: 5px;
+    overflow: hidden;
+    position: relative;
+    vertical-align: middle;
+    margin-left: 4px;
+}
+
+.star-weight-fill {
+    height: 100%;
+    border-radius: 5px;
+    transition: width 0.4s ease;
+}
+
+.star-weight-label {
+    position: absolute;
+    right: -28px;
+    font-size: 0.6rem;
+    color: var(--text-muted);
+    white-space: nowrap;
+}
+
+/* =====================
+   NEW: Hành Sao-Cung
+   ===================== */
+.hanh-relation-list {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 6px;
+    margin: 6px 0;
+    padding: 4px 0;
+}
+
+.hanh-relation-tag {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-size: 0.72rem;
+    font-weight: 500;
+    cursor: default;
+    transition: transform 0.15s;
+}
+
+.hanh-relation-tag:hover {
+    transform: scale(1.05);
+}
+
+.hr-sinh {
+    background: rgba(76, 175, 80, 0.12);
+    color: #66bb6a;
+    border: 1px solid rgba(76, 175, 80, 0.25);
+}
+
+.hr-khac {
+    background: rgba(244, 67, 54, 0.12);
+    color: #ef5350;
+    border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+.hr-hoa {
+    background: rgba(255, 255, 255, 0.06);
+    color: var(--text-secondary);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+/* =====================
+   NEW: Download Button
+   ===================== */
+.btn-download {
+    background: rgba(33, 150, 243, 0.12);
+    border: 1px solid rgba(33, 150, 243, 0.3);
+    border-radius: var(--radius-sm);
+    padding: 0.6rem 1.2rem;
+    color: #64b5f6;
+    font-size: 0.9rem;
+    cursor: pointer;
+    font-family: var(--font-sans);
+    transition: all 0.2s;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.btn-download:hover {
+    background: rgba(33, 150, 243, 0.22);
+    border-color: rgba(33, 150, 243, 0.5);
+    transform: translateY(-1px);
+}
+
+.btn-download:disabled {
+    opacity: 0.6;
+    cursor: wait;
+}
+
+/* =====================
+   RESPONSIVE: Tablet (≤1024px)
+   ===================== */
+@media (max-width: 1024px) {
+    .chart-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .chart-grid {
+        min-width: 700px;
+    }
+
+    .palace-cell {
+        min-height: 120px;
+        padding: 4px 6px;
+    }
+
+    .palace-main-stars {
+        font-size: 0.82rem;
+    }
+
+    .palace-stars {
+        font-size: 0.58rem;
+    }
+
+    .palace-header {
+        font-size: 0.65rem;
+    }
+
+    .palace-footer {
+        font-size: 0.6rem;
+    }
+
+    .center-cell {
+        padding: 10px;
+    }
+
+    .center-info {
+        font-size: 0.72rem;
+    }
+
+    .interpretation-section {
+        padding: 0 0.5rem;
+    }
+
+    .dai-van-grid {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+}
+
+/* =====================
+   RESPONSIVE: Mobile (≤768px)
+   ===================== */
+@media (max-width: 768px) {
+    /* Header */
+    .app-header {
+        padding: 1.5rem 0.5rem 1rem;
+    }
+
+    .header-title {
+        font-size: 1.4rem;
+        gap: 0.5rem;
+    }
+
+    .title-icon {
+        font-size: 1.6rem;
+    }
+
+    .header-subtitle {
+        font-size: 0.8rem;
+    }
+
+    /* Form */
+    .input-section {
+        padding: 0 0.5rem;
+        margin: 1rem auto;
+    }
+
+    .form-container {
+        padding: 1.2rem;
+        border-radius: var(--radius-sm);
+    }
+
+    .form-title {
+        font-size: 1.1rem;
+        margin-bottom: 1rem;
+    }
+
+    .form-row {
+        grid-template-columns: 1fr;
+        gap: 0.8rem;
+    }
+
+    .lunar-input-group {
+        grid-template-columns: 1fr 1fr;
+    }
+
+    .btn-submit {
+        margin-top: 1rem;
+        padding: 0.75rem;
+        font-size: 0.95rem;
+    }
+
+    /* Tabs */
+    .results-tabs {
+        gap: 0.3rem;
+        padding: 0 0.3rem;
+    }
+
+    .tab-btn {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.8rem;
+    }
+
+    .tab-icon {
+        font-size: 1rem;
+    }
+
+    /* Chart actions */
+    .chart-actions {
+        flex-wrap: wrap;
+        gap: 0.4rem;
+        padding: 0 0.3rem;
+    }
+
+    .btn-back,
+    .btn-print,
+    .btn-rawdata,
+    .btn-download {
+        padding: 0.5rem 0.7rem;
+        font-size: 0.78rem;
+        flex: 1;
+        justify-content: center;
+        min-width: 0;
+    }
+
+    /* Chart - horizontal scroll */
+    .chart-wrapper {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -0.3rem;
+        padding: 0 0.3rem;
+    }
+
+    .chart-grid {
+        min-width: 600px;
+        font-size: 0.85em;
+    }
+
+    .palace-cell {
+        min-height: 100px;
+        padding: 3px 5px;
+    }
+
+    .palace-main-stars {
+        font-size: 0.75rem;
+    }
+
+    .palace-stars {
+        font-size: 0.55rem;
+    }
+
+    .palace-header {
+        font-size: 0.6rem;
+        margin-bottom: 2px;
+    }
+
+    .palace-name {
+        font-size: 0.65rem;
+    }
+
+    .palace-footer {
+        font-size: 0.55rem;
+        padding-top: 2px;
+    }
+
+    .center-cell {
+        padding: 8px;
+    }
+
+    .center-title {
+        font-size: 0.72rem;
+        letter-spacing: 1px;
+    }
+
+    .center-info {
+        font-size: 0.65rem;
+        line-height: 1.5;
+    }
+
+    .center-info-label {
+        min-width: 50px;
+    }
+
+    .center-menh-info {
+        font-size: 0.65rem;
+        line-height: 1.6;
+    }
+
+    .center-divider {
+        margin: 6px 0;
+    }
+
+    .wm-line {
+        font-size: 0.9rem;
+    }
+
+    .center-content-watermark {
+        gap: 25px;
+    }
+
+    /* Interpretation */
+    .interpretation-section {
+        padding: 0 0.3rem;
+        margin: 1rem auto 2rem;
+    }
+
+    .section-title {
+        font-size: 1.2rem;
+        margin-bottom: 1rem;
+    }
+
+    .interp-card {
+        border-radius: var(--radius-sm);
+    }
+
+    .interp-header {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .interp-icon {
+        font-size: 1.2rem;
+    }
+
+    .interp-title {
+        font-size: 0.82rem;
+    }
+
+    .interp-body {
+        padding: 0.6rem 0.8rem;
+        font-size: 0.82rem;
+    }
+
+    .star-compact-item {
+        font-size: 0.78rem;
+    }
+
+    .star-weight-bar {
+        width: 40px;
+    }
+
+    .star-weight-label {
+        font-size: 0.55rem;
+    }
+
+    .hanh-relation-tag {
+        font-size: 0.65rem;
+        padding: 2px 6px;
+    }
+
+    .combo-item {
+        font-size: 0.78rem;
+        padding: 5px 8px;
+    }
+
+    /* Đại Vận */
+    .dai-van-section {
+        padding: 0 0.3rem;
+    }
+
+    .dai-van-title {
+        font-size: 1rem;
+    }
+
+    .dai-van-grid {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+    }
+
+    .dai-van-grid > .dai-van-header-row,
+    .dai-van-grid > .dai-van-row {
+        min-width: 500px;
+    }
+
+    .dvh-cell,
+    .dv-cell {
+        font-size: 0.72rem;
+        padding: 0.3rem 0.4rem;
+    }
+
+    .tieu-van-banner {
+        font-size: 0.8rem;
+    }
+
+    .luu-tu-hoa-banner {
+        flex-direction: column;
+        gap: 0.3rem;
+        font-size: 0.78rem;
+    }
+
+    .luu-hoa-items {
+        flex-wrap: wrap;
+        gap: 0.3rem;
+    }
+
+    /* Event Cards */
+    .event-card {
+        padding: 0.6rem 0.8rem;
+    }
+
+    .event-card-title {
+        font-size: 0.85rem;
+    }
+
+    .event-card-body {
+        font-size: 0.78rem;
+    }
+
+    /* Rawdata Modal */
+    .rawdata-modal-content {
+        max-height: 90vh;
+    }
+
+    .rawdata-modal-header {
+        padding: 0.7rem 1rem;
+    }
+
+    .rawdata-modal-header h3 {
+        font-size: 0.9rem;
+    }
+
+    .rawdata-textarea {
+        margin: 0 0.8rem 1rem;
+        font-size: 0.7rem;
+        min-height: 300px;
+    }
+
+    /* Star compact adjustments */
+    .star-compact-list {
+        gap: 0.3rem;
+    }
+
+    /* Lục Hợp info */
+    .luc-hop-info {
+        font-size: 0.78rem !important;
+    }
+}
+
+/* =====================
+   RESPONSIVE: Small Mobile (≤480px)
+   ===================== */
+@media (max-width: 480px) {
+    .header-title {
+        font-size: 1.15rem;
+        flex-direction: column;
+        gap: 0.3rem;
+    }
+
+    .title-icon {
+        font-size: 1.3rem;
+    }
+
+    .form-container {
+        padding: 1rem;
+    }
+
+    .chart-grid {
+        min-width: 520px;
+    }
+
+    .palace-cell {
+        min-height: 85px;
+        padding: 2px 3px;
+    }
+
+    .palace-main-stars {
+        font-size: 0.68rem;
+    }
+
+    .palace-stars {
+        font-size: 0.5rem;
+    }
+
+    .palace-name {
+        font-size: 0.58rem;
+    }
+
+    .center-info {
+        font-size: 0.6rem;
+    }
+
+    .center-title {
+        font-size: 0.65rem;
+    }
+
+    .btn-back,
+    .btn-print,
+    .btn-rawdata,
+    .btn-download {
+        padding: 0.4rem 0.5rem;
+        font-size: 0.72rem;
+    }
+
+    .section-title {
+        font-size: 1rem;
+    }
+
+    .interp-title {
+        font-size: 0.75rem;
+    }
+
+    .interp-body {
+        font-size: 0.75rem;
+    }
+
+    .star-weight-bar {
+        width: 32px;
+        height: 8px;
+    }
+}
+
+/* =====================
+   PRINT STYLES
+   ===================== */
+@media print {
+    .chart-wrapper {
+        overflow: visible;
+    }
+
+    .chart-grid {
+        min-width: unset;
+    }
+
+    .btn-back,
+    .btn-print,
+    .btn-rawdata,
+    .btn-download,
+    .chart-actions,
+    .results-tabs {
+        display: none !important;
+    }
+}

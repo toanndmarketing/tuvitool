@@ -467,6 +467,7 @@ const TuViStarPatterns = (function () {
         TRUC_TIEP: 1.0,     // Sao đóng trực tiếp trong cung
         XUNG_CHIEU: 0.6,    // Cung đối diện (cách 6)
         TAM_HOP: 0.4,       // Tam hợp (cách 4, cách 8)
+        LUC_HOP: 0.35,      // Lục Hợp / Nhị Hợp (cặp hợp nhau)
         GIAP_CUNG: 0.3,     // 2 cung kề bên
         MIEU_BONUS: 1.3,    // Sao miếu → tăng 30% hiệu lực
         VUONG_BONUS: 1.15,  // Sao vượng → tăng 15%
@@ -482,6 +483,147 @@ const TuViStarPatterns = (function () {
         SONG_KY_MULTIPLIER: 2.0, // Song Kỵ (gốc + lưu) → nhân đôi
         SONG_LOC_MULTIPLIER: 1.8  // Song Lộc → nhân 1.8
     };
+
+    // =====================
+    // LỤC HỢP (NHỊ HỢP) — 6 cặp Địa Chi hợp nhau
+    // =====================
+
+    /**
+     * 6 cặp Lục Hợp:
+     * Tý(0)-Sửu(1), Dần(2)-Hợi(11), Mão(3)-Tuất(10),
+     * Thìn(4)-Dậu(9), Tỵ(5)-Thân(8), Ngọ(6)-Mùi(7)
+     */
+    const LUC_HOP_MAP = {
+        0: 1,   // Tý → Sửu
+        1: 0,   // Sửu → Tý
+        2: 11,  // Dần → Hợi
+        3: 10,  // Mão → Tuất
+        4: 9,   // Thìn → Dậu
+        5: 8,   // Tỵ → Thân
+        6: 7,   // Ngọ → Mùi
+        7: 6,   // Mùi → Ngọ
+        8: 5,   // Thân → Tỵ
+        9: 4,   // Dậu → Thìn
+        10: 3,  // Tuất → Mão
+        11: 2   // Hợi → Dần
+    };
+
+    const LUC_HOP_NAMES = {
+        0: 'Tý-Sửu (Thổ)', 1: 'Tý-Sửu (Thổ)',
+        2: 'Dần-Hợi (Mộc)', 11: 'Dần-Hợi (Mộc)',
+        3: 'Mão-Tuất (Hoả)', 10: 'Mão-Tuất (Hoả)',
+        4: 'Thìn-Dậu (Kim)', 9: 'Thìn-Dậu (Kim)',
+        5: 'Tỵ-Thân (Thuỷ)', 8: 'Tỵ-Thân (Thuỷ)',
+        6: 'Ngọ-Mùi (Nhật Nguyệt)', 7: 'Ngọ-Mùi (Nhật Nguyệt)'
+    };
+
+    /**
+     * Lấy cung Lục Hợp (Nhị Hợp) của 1 cung
+     * @param {number} pos - vị trí cung (0-11)
+     * @returns {number} vị trí cung hợp
+     */
+    function getLucHop(pos) {
+        return LUC_HOP_MAP[pos];
+    }
+
+    /**
+     * Lấy tên cặp Lục Hợp
+     */
+    function getLucHopName(pos) {
+        return LUC_HOP_NAMES[pos] || '';
+    }
+
+    // =====================
+    // HÀNH 12 CUNG (Địa Chi → Ngũ Hành)
+    // =====================
+
+    const HANH_CUNG = {
+        0: 'Thuỷ',  // Tý
+        1: 'Thổ',   // Sửu
+        2: 'Mộc',   // Dần
+        3: 'Mộc',   // Mão
+        4: 'Thổ',   // Thìn
+        5: 'Hoả',   // Tỵ
+        6: 'Hoả',   // Ngọ
+        7: 'Thổ',   // Mùi
+        8: 'Kim',   // Thân
+        9: 'Kim',   // Dậu
+        10: 'Thổ',  // Tuất
+        11: 'Thuỷ'  // Hợi
+    };
+
+    // =====================
+    // HÀNH 14 CHÍNH TINH
+    // =====================
+
+    const HANH_SAO = {
+        'Tử Vi': 'Thổ',
+        'Thiên Cơ': 'Mộc',
+        'Thái Dương': 'Hoả',
+        'Vũ Khúc': 'Kim',
+        'Thiên Đồng': 'Thuỷ',
+        'Liêm Trinh': 'Hoả',
+        'Thiên Phủ': 'Thổ',
+        'Thái Âm': 'Thuỷ',
+        'Tham Lang': 'Thuỷ',
+        'Cự Môn': 'Thuỷ',
+        'Thiên Tướng': 'Thuỷ',
+        'Thiên Lương': 'Mộc',
+        'Thất Sát': 'Kim',
+        'Phá Quân': 'Thuỷ'
+    };
+
+    /**
+     * Phân tích quan hệ Ngũ Hành Sao ↔ Cung
+     * @param {string} starName - Tên sao
+     * @param {number} cungPos - Vị trí cung (0-11)
+     * @returns {Object} { relation, hanhSao, hanhCung, text, ratingBonus }
+     */
+    function getHanhRelationSaoCung(starName, cungPos) {
+        var hanhSao = HANH_SAO[starName];
+        var hanhCung = HANH_CUNG[cungPos];
+        if (!hanhSao || !hanhCung) return null;
+
+        // Bảng Sinh-Khắc
+        var sinh = { 'Kim': 'Thuỷ', 'Thuỷ': 'Mộc', 'Mộc': 'Hoả', 'Hoả': 'Thổ', 'Thổ': 'Kim' };
+        var khac = { 'Kim': 'Mộc', 'Mộc': 'Thổ', 'Thuỷ': 'Hoả', 'Hoả': 'Kim', 'Thổ': 'Thuỷ' };
+
+        var relation, text, ratingBonus;
+
+        if (hanhSao === hanhCung) {
+            relation = 'dong_hanh';
+            text = hanhSao + ' = ' + hanhCung + ' → Đồng hành, hài hoà ổn định';
+            ratingBonus = 1;
+        } else if (sinh[hanhCung] === hanhSao) {
+            relation = 'cung_sinh_sao';
+            text = hanhCung + ' sinh ' + hanhSao + ' → Cung sinh Sao, được đất nuôi dưỡng';
+            ratingBonus = 2;
+        } else if (sinh[hanhSao] === hanhCung) {
+            relation = 'sao_sinh_cung';
+            text = hanhSao + ' sinh ' + hanhCung + ' → Sao sinh Cung, hao lực nhưng vẫn khá';
+            ratingBonus = 0;
+        } else if (khac[hanhCung] === hanhSao) {
+            relation = 'cung_khac_sao';
+            text = hanhCung + ' khắc ' + hanhSao + ' → Cung khắc Sao, sao bị kìm hãm';
+            ratingBonus = -1;
+        } else if (khac[hanhSao] === hanhCung) {
+            relation = 'sao_khac_cung';
+            text = hanhSao + ' khắc ' + hanhCung + ' → Sao khắc Cung, mạnh mẽ nhưng bất ổn';
+            ratingBonus = -1;
+        } else {
+            relation = 'trung_tinh';
+            text = hanhSao + ' / ' + hanhCung + ' → Trung tính';
+            ratingBonus = 0;
+        }
+
+        return {
+            relation: relation,
+            hanhSao: hanhSao,
+            hanhCung: hanhCung,
+            text: text,
+            ratingBonus: ratingBonus
+        };
+    }
 
     // =====================
     // HELPER FUNCTIONS
@@ -1101,11 +1243,17 @@ const TuViStarPatterns = (function () {
         TRUONG_SINH_LUAN,
         NAP_AM_LUAN,
         WEIGHTS,
+        LUC_HOP_MAP,
+        HANH_CUNG,
+        HANH_SAO,
         getStarStatus,
         getStatusWeight,
         getDoiCung,
         getTamHop,
         getGiapCung,
+        getLucHop,
+        getLucHopName,
+        getHanhRelationSaoCung,
         isTuan,
         isTriet,
         calculateStarWeight,

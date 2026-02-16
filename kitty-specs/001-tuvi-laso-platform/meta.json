@@ -1,0 +1,10 @@
+{
+    "feature_number": "001",
+    "slug": "001-tuvi-laso-platform",
+    "friendly_name": "Tu Vi La So Platform - Full Specification",
+    "mission": "software-dev",
+    "source_description": "Ung dung Tử Vi Lá Số - Tính toán và phân tích lá số Tử Vi + Thần Số Học (Numerology Pythagoras) với tích hợp Google Gemini AI. Backend Node.js + Express + SQLite. Frontend Vanilla JS + HTML5. Docker deployment on port 8950.",
+    "created_at": "2026-02-16T21:03:00+07:00",
+    "target_branch": "master",
+    "vcs": "git"
+}

@@ -19,6 +19,19 @@ const gemini = require('./gemini');
 const app = express();
 const PORT = process.env.PORT || 8950;
 
+// =====================
+// ENV VALIDATION (Startup)
+// =====================
+if (!process.env.GEMINI_API_KEY) {
+    throw new Error('[FATAL] GEMINI_API_KEY is required. Set it in .env file.');
+}
+if (!process.env.AUTH_USERNAME || !process.env.AUTH_PASSWORD) {
+    throw new Error('[FATAL] AUTH_USERNAME and AUTH_PASSWORD are required. Set them in .env file.');
+}
+if (!process.env.GEMINI_MODEL) {
+    console.warn('[WARN] GEMINI_MODEL not set, defaulting to gemini-2.0-flash');
+}
+
 // Trust proxy (chạy sau Nginx) - dùng 1 thay vì true để tránh ERR_ERL_PERMISSIVE_TRUST_PROXY
 app.set('trust proxy', 1);
 
@@ -213,8 +226,8 @@ app.post('/api/auth/login', apiLimiter, (req, res) => {
     try {
         const { username, password } = req.body;
 
-        const validUsername = process.env.AUTH_USERNAME || 'tuvisteven';
-        const validPassword = process.env.AUTH_PASSWORD || '2134jsad@#@!%asgg';
+        const validUsername = process.env.AUTH_USERNAME;
+        const validPassword = process.env.AUTH_PASSWORD;
 
         if (username === validUsername && password === validPassword) {
             const token = generateToken();

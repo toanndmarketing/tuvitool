@@ -131,43 +131,71 @@
 
     // Download chart as image
     const btnDownload = document.getElementById('btnDownload');
-    btnDownload.addEventListener('click', async function () {
-        const chartEl = document.querySelector('.chart-grid');
-        if (!chartEl) return;
+    if (btnDownload) {
+        btnDownload.addEventListener('click', async function () {
+            const chartEl = document.querySelector('.chart-grid');
+            if (!chartEl) {
+                alert('Không tìm thấy vùng dữ liệu lá số');
+                return;
+            }
 
-        btnDownload.textContent = '⏳ Đang xử lý...';
-        btnDownload.disabled = true;
+            const originalText = btnDownload.innerHTML;
+            btnDownload.innerHTML = '⏳ Đang xử lý...';
+            btnDownload.disabled = true;
 
-        try {
-            const canvas = await html2canvas(chartEl, {
-                backgroundColor: '#1a1a2e',
-                scale: 2,
-                useCORS: true,
-                logging: false
-            });
+            try {
+                // Đảm bảo các font đã được load
+                await document.fonts.ready;
 
-            // Add watermark
-            const ctx = canvas.getContext('2d');
-            ctx.font = '14px Inter, sans-serif';
-            ctx.fillStyle = 'rgba(255,255,255,0.25)';
-            ctx.textAlign = 'center';
-            ctx.fillText('Webest.asia - Nguyễn Đức Toàn - Tử Vi Tool', canvas.width / 2, canvas.height - 12);
+                const canvas = await html2canvas(chartEl, {
+                    scale: 2, // Tăng chất lượng ảnh
+                    useCORS: true,
+                    allowTaint: true,
+                    backgroundColor: '#fffcf2', // Khớp với --chart-bg
+                    logging: false,
+                    onclone: (clonedDoc) => {
+                        // Đảm bảo watermark hiển thị trong bản clone
+                        const centerCell = clonedDoc.querySelector('.center-cell');
+                        if (centerCell) centerCell.style.overflow = 'hidden';
+                    }
+                });
 
-            // Download
-            const link = document.createElement('a');
-            const hoTen = document.getElementById('hoTen').value || 'laso';
-            const safeName = hoTen.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_');
-            link.download = `tuvi_${safeName}_${new Date().toISOString().slice(0, 10)}.png`;
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        } catch (err) {
-            console.error('Download error:', err);
-            alert('Lỗi khi tải ảnh');
-        }
+                // Watermark text ở góc dưới (phụ trợ cho watermark nền)
+                const ctx = canvas.getContext('2d');
+                ctx.font = 'bold 12px Inter, sans-serif';
+                ctx.fillStyle = 'rgba(0,0,0,0.15)';
+                ctx.textAlign = 'right';
+                ctx.fillText('tuvi.demowebest.site', canvas.width - 20, canvas.height - 20);
 
-        btnDownload.textContent = '📷 Tải Ảnh';
-        btnDownload.disabled = false;
-    });
+                // Chuyển sang Blob để tải file ổn định hơn trên mobile/tablet
+                canvas.toBlob((blob) => {
+                    if (!blob) {
+                        alert('Lỗi tạo dữ liệu ảnh');
+                        return;
+                    }
+                    const url = URL.createObjectURL(blob);
+                    const link = document.createElement('a');
+                    const hoTen = document.getElementById('hoTen').value || 'laso';
+                    const safeName = hoTen.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_');
+                    link.download = `tuvi_${safeName}_${new Date().getTime()}.png`;
+                    link.href = url;
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    URL.revokeObjectURL(url);
+
+                    btnDownload.innerHTML = originalText;
+                    btnDownload.disabled = false;
+                }, 'image/png');
+
+            } catch (err) {
+                console.error('Download error:', err);
+                alert('Có lỗi xảy ra khi tạo ảnh. Vui lòng thử lại hoặc chụp màn hình trực tiếp.');
+                btnDownload.innerHTML = originalText;
+                btnDownload.disabled = false;
+            }
+        });
+    }
 
 
     async function generateChart() {

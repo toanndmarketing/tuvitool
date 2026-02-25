@@ -1,0 +1,73 @@
+/**
+ * SCRIPT TẠO DỮ LIỆU MẪU (RAW DATA) CHO THẦN SỐ HỌC
+ * Dùng để test prompt AI
+ */
+
+// Giả định chúng ta đang ở môi trường node hoặc browser có ThanSoHoc engine
+// Ở đây tôi sẽ viết code để chạy trực tiếp hoặc mô phỏng output
+
+const exampleData = {
+    fullName: "Nguyễn Đức Toàn",
+    day: 15,
+    month: 6,
+    year: 1990,
+    currentYear: 2026
+};
+
+// Kết quả tính toán từ ThanSoHoc.calculate(exampleData)
+// (Dựa trên logic trong public/than-so-hoc.js)
+
+const result = {
+    personalInfo: {
+        fullName: "Nguyễn Đức Toàn",
+        dob: "15/06/1990",
+        currentYear: 2026,
+        currentAge: 36
+    },
+    coreNumbers: {
+        lifePath: 4, // 15/6/1990 -> 1+5=6, 6, 1+9+9+0=19=1+9=10=1 -> 6+6+1=13=4
+        birthDay: 6, // 15 -> 1+5=6
+        soulUrge: 1,  // Nguyên âm: u-y-e-u-a -> 3+7+5+3+1 = 19 = 1 (Tùy Letter Map)
+        personality: 3, // Phụ âm còn lại
+        expression: 4, // Tổng cộng
+        maturity: 8,   // Life Path (4) + Expression (4) = 8
+        attitude: 3,   // 1+5 + 6 = 21 = 3
+        personalYear: 4 // (1+5) + 6 + (2+0+2+6) = 6 + 6 + 1 = 13 = 4
+    },
+    birthChart: {
+        "1": 2, // 1, 1 (từ 15 và 1990)
+        "2": 0,
+        "3": 0,
+        "4": 0,
+        "5": 1, // 5 (từ 15)
+        "6": 1, // 6 (từ 06)
+        "7": 0,
+        "8": 0,
+        "9": 2  // 9, 9 (từ 1990)
+    },
+    arrows: [
+        { name: "Mũi tên Quyết tâm", nums: [1, 5, 9], isStrength: true },
+        { name: "Mũi tên Hỗn loạn", nums: [1, 2, 3], isStrength: false }
+    ],
+    missingNumbers: [2, 3, 4, 7, 8],
+    dominantNumbers: [
+        { num: 1, count: 2 },
+        { num: 9, count: 2 }
+    ],
+    pinnacles: [
+        { number: 3, age: "0-32", period: "1990-2022" },
+        { number: 7, age: "33-41", period: "2023-2031" },
+        { number: 1, age: "42-50", period: "2032-2040" },
+        { number: 7, age: "51+", period: "2041+" }
+    ],
+    challenges: [3, 2, 1, 4],
+    personalYearTimeline: [
+        { year: 2024, number: 2 },
+        { year: 2025, number: 3 },
+        { year: 2026, number: 4, isCurrent: true },
+        { year: 2027, number: 5 },
+        { year: 2028, number: 6 }
+    ]
+};
+
+console.log(JSON.stringify(result, null, 2));

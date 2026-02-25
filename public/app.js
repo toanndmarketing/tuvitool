@@ -126,10 +126,35 @@
 
     // Rawdata Modal
     btnRawdata.addEventListener('click', function () {
-        if (window._currentRawdata) {
-            rawdataTextarea.value = window._currentRawdata;
+        const activeBtn = document.querySelector('.tab-btn.active');
+        if (!activeBtn) {
+            console.warn('[Rawdata] No active tab button found');
+            return;
+        }
+
+        const activeTab = activeBtn.dataset.tab;
+        let data = '';
+        let title = '';
+
+        console.log('[Rawdata] Clicked. Active Tab:', activeTab);
+
+        if (activeTab === 'tuvi') {
+            data = window._currentTuViRawdata;
+            title = '📋 Raw Data - Lá Số Tử Vi';
+        } else if (activeTab === 'thanSoHoc') {
+            data = window._currentTSHRawdata;
+            title = '📋 Raw Data - Thần Số Học';
+        }
+
+        if (data) {
+            rawdataTextarea.value = data;
+            const titleEl = document.querySelector('.rawdata-modal-header h3');
+            if (titleEl) titleEl.textContent = title;
             rawdataModal.style.display = 'flex';
             rawdataTextarea.scrollTop = 0;
+        } else {
+            console.warn('[Rawdata] No data available for tab:', activeTab);
+            alert('Vui lòng đợi hệ thống tính toán xong dữ liệu cho tab này.');
         }
     });
 
@@ -547,7 +572,7 @@ Luận giải CHI TIẾT lá số Tử Vi cho Đương Số "${hoTen}" dựa tr�
 
 ## DATA LÁ SỐ:
 `;
-                window._currentRawdata = prompt + JSON.stringify(compact, null, 2);
+                window._currentTuViRawdata = prompt + JSON.stringify(compact, null, 2);
                 btnRawdata.style.display = 'inline-flex';
             } catch (e) {
                 console.warn('[Rawdata] Error building rawdata:', e);
@@ -570,6 +595,35 @@ Luận giải CHI TIẾT lá số Tử Vi cho Đương Số "${hoTen}" dựa tr�
             tshContainer.innerHTML = tshHtml;
 
             console.log('Thần Số Học data:', tshResult);
+
+            // Build TSH Rawdata
+            try {
+                const tshPrompt = `Bạn là một chuyên gia Thần Số Học (Numerologist) hàng đầu với hơn 20 năm kinh nghiệm, am hiểu sâu sắc trường phái Pythagoras. Bản luận giải này cần sự sâu sắc, thấu cảm và mang tính định hướng cao.
+
+## NHIỆM VỤ:
+Dựa trên dữ liệu JSON bên dưới, hãy viết một bản Luận giải Thần Số Học chi tiết (khoảng 2000-3000 từ). 
+
+## CẤU TRÚC BÀI LUẬN GIẢI YÊU CẦU:
+1. **LỜI DẪN**: Giới thiệu về ý nghĩa các con số và thông điệp chung cho Đương số.
+2. **CON SỐ CHỦ ĐẠO (Life Path)**: Phân tích bài học, năng lực và con đường phát triển.
+3. **BIỂU ĐỒ NGÀY SINH**: Phân tích các bộ số, Mũi tên Sức mạnh và Mũi tên Trống. Đưa ra giải pháp "điền số ảo" để hóa giải.
+4. **LINH HỒN (Soul Urge) & NHÂN CÁCH (Personality)**: Sự mâu thuẫn hoặc cộng hưởng giữa khao khát nội tâm và biểu hiện bên ngoài.
+5. **SỨ MỆNH (Expression) & TRƯỞNG THÀNH (Maturity)**: Tài năng thiên bẩm và vận mệnh hậu vận.
+6. **CHỈ SỐ CẦU NỐI**: Cách hài hòa các khía cạnh cuộc sống.
+7. **NĂM CÁ NHÂN & CHU KỲ ĐỈNH CAO**: Phân tích vận trình năm hiện tại và 4 đỉnh cao vinh quang.
+8. **LỜI KHUYÊN CHIẾN LƯỢC**: 3 bước hành động cụ thể.
+
+## QUY TẮC BẮT BUỘC:
+- Gọi là "Đương số".
+- Phải phân tích sự TƯƠNG TÁC giữa các con số (ví dụ: Số Chủ Đạo 4 gặp Linh Hồn 1 thì sẽ thế nào).
+- KHÔNG nói chung chung, hãy dùng ngôn từ tinh tế, truyền cảm hứng.
+
+## DATA THẦN SỐ HỌC:
+`;
+                window._currentTSHRawdata = tshPrompt + JSON.stringify(tshResult, null, 2);
+            } catch (e) {
+                console.warn('[Rawdata TSH] Error building rawdata:', e);
+            }
 
             // =====================
             // SHOW RESULTS

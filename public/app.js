@@ -509,7 +509,7 @@ Luận giải CHI TIẾT lá số Tử Vi cho Đương Số "${hoTen}" dựa tr�
 
 ## FORMAT OUTPUT BẮT BUỘC:
 
-# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT
+# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT: ${hoTen}
 ## Đương Số: ${hoTen}
 
 ### 📋 Thông Tin Đương Số

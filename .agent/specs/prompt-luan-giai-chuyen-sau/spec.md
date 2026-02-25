@@ -97,7 +97,7 @@ Nâng cấp toàn diện prompt luận giải Tử Vi Đẩu Số — cả **raw
 - **FR12**: Format mẫu output mà rawdata prompt yêu cầu AI bên ngoài tạo ra:
 
 ```
-# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT
+# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT: [Tên]
 ## Đương Số: [Tên]
 
 ### 📋 Thông Tin Đương Số

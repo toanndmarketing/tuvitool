@@ -1314,8 +1314,8 @@ const TuViInterpret = (function () {
                 <h4 class="ai-section-title">🏛️ Luận Giải Chi Tiết Từng Cung</h4>
             </div>`;
 
-            const palaceOrder = ['MỆNH', 'PHỤ MẪU', 'PHÚC ĐỨC', 'ĐIỀN TRẠCH', 'QUAN LỘC', 'NÔ BỘC',
-                'THIÊN DI', 'TẬT ÁCH', 'TÀI BẠCH', 'TỬ TỨC', 'PHU THÊ', 'HUYNH ĐỆ'];
+            const palaceOrder = ['MỆNH', 'HUYNH ĐỆ', 'PHU THÊ', 'TỬ TỨC', 'TÀI BẠCH', 'TẬT ÁCH',
+                'THIÊN DI', 'NÔ BỘC', 'QUAN LỘC', 'ĐIỀN TRẠCH', 'PHÚC ĐỨC', 'PHỤ MẪU'];
 
             // Render theo thứ tự chuẩn, fallback cho keys không match
             const renderedKeys = new Set();

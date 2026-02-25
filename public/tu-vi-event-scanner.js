@@ -402,6 +402,30 @@ const TuViEventScanner = (function () {
             }
         }
 
+        // 10.5. Đại Vận Hóa Kỵ bonus (Trung Châu Phái - Giai đoạn 3)
+        if (primaryHousePos >= 0 && lasoData.daiVanTuHoa) {
+            var dvTH = lasoData.daiVanTuHoa;
+
+            // ĐV Hóa Kỵ rơi vào focus house → tăng score
+            if (dvTH.hoaKyCung === primaryHousePos) {
+                var dvKyBonus = TuViEventRules.THRESHOLD_CONFIG.LUU_TU_HOA_BONUS || 2;
+                totalScore += dvKyBonus;
+                allDetails.push('ĐV Hóa Kỵ (' + dvTH.hoaKySao + ')');
+            }
+
+            // ĐV Hóa Lộc rơi vào focus house → bonus cho cát event
+            if (rule.isPositive && dvTH.hoaLocCung === primaryHousePos) {
+                totalScore += TuViEventRules.THRESHOLD_CONFIG.LUU_TU_HOA_BONUS || 2;
+                allDetails.push('ĐV Hóa Lộc (' + dvTH.hoaLocSao + ')');
+            }
+
+            // Kỵ trùng phùng (ĐV Kỵ + Lưu Kỵ cùng cung focus) → critical multiplier
+            if (lasoData.kyTrungPhung && lasoData.kyTrungPhung.cungPos === primaryHousePos) {
+                totalScore *= 1.5;
+                allDetails.push('🔴 Kỵ trùng phùng');
+            }
+        }
+
         // 11. Check threshold
         if (totalScore < rule.threshold) return null;
 

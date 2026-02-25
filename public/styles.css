@@ -3991,6 +3991,70 @@ body {
 }
 
 /* =====================
+   NEW: Tinh Hệ Section
+   ===================== */
+.tinh-he-section {
+    background: rgba(139, 92, 246, 0.06);
+    border: 1px solid rgba(139, 92, 246, 0.2);
+    border-radius: var(--radius);
+    padding: 1rem 1.2rem;
+    margin: 1rem 0;
+}
+
+.tinh-he-title {
+    font-family: var(--font-serif);
+    font-size: 1.05rem;
+    color: #a78bfa;
+    margin: 0 0 0.3rem 0;
+}
+
+.tinh-he-archetype {
+    font-size: 0.85rem;
+    color: var(--text-muted);
+    font-style: italic;
+    margin-bottom: 0.5rem;
+}
+
+.tinh-he-profile {
+    font-size: 0.88rem;
+    color: var(--text-secondary);
+    line-height: 1.7;
+    margin-bottom: 0.7rem;
+}
+
+.tinh-he-tags {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.4rem;
+}
+
+.tinh-he-tag-label {
+    font-size: 0.72rem;
+    color: var(--text-muted);
+    font-weight: 600;
+}
+
+.tinh-he-tag {
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 12px;
+    font-weight: 500;
+}
+
+.tinh-he-tag-good {
+    background: rgba(76, 175, 80, 0.12);
+    color: #66bb6a;
+    border: 1px solid rgba(76, 175, 80, 0.25);
+}
+
+.tinh-he-tag-bad {
+    background: rgba(244, 67, 54, 0.12);
+    color: #ef5350;
+    border: 1px solid rgba(244, 67, 54, 0.25);
+}
+
+/* =====================
    RESPONSIVE: Tablet (≤1024px)
    ===================== */
 @media (max-width: 1024px) {

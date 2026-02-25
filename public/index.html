@@ -59,9 +59,17 @@
                         </div>
                     </div>
                     <div class="form-row solar-input-group" id="solarInputGroup">
-                        <div class="form-group">
-                            <label for="ngaySinh">Ngày Sinh (Dương lịch)</label>
-                            <input type="date" id="ngaySinh" value="2004-08-19">
+                        <div class="form-group col-3">
+                            <label for="solarDay">Ngày</label>
+                            <select id="solarDay"></select>
+                        </div>
+                        <div class="form-group col-3">
+                            <label for="solarMonth">Tháng</label>
+                            <select id="solarMonth"></select>
+                        </div>
+                        <div class="form-group col-3">
+                            <label for="solarYear">Năm</label>
+                            <input type="number" id="solarYear" min="1920" max="2030" value="2004">
                         </div>
                         <div class="form-group">
                             <label>Chuyển sang Âm lịch</label>
@@ -187,6 +195,8 @@
     <script src="am-lich.js"></script>
     <script src="tu-vi-calc.js"></script>
     <script src="tu-vi-sao.js"></script>
+    <script src="tu-vi-dai-van-hoa.js"></script>
+    <script src="tu-vi-tinh-he.js"></script>
     <script src="tu-vi-star-patterns.js"></script>
     <script src="tu-vi-event-rules.js"></script>
     <script src="tu-vi-templates.js"></script>

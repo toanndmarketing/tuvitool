@@ -17,6 +17,12 @@ if (!GEMINI_API_KEY) {
 }
 
 /**
+ * Prompt version — tăng khi thay đổi prompt format/structure
+ * Cache cũ sẽ tự động bị miss khi version thay đổi
+ */
+const PROMPT_VERSION = 'v4.0';
+
+/**
  * Tạo cache key dựa trên cấu trúc "DNA" của lá số
  * Nếu 2 người khác nhau có cùng vị trí các sao => Dùng chung 1 kết quả AI
  */
@@ -31,6 +37,7 @@ function createCacheKey(data) {
     }).join(';');
 
     const keyData = JSON.stringify({
+        promptVersion: PROMPT_VERSION,
         gender: ov.gioiTinh,
         yearView: data.yearView,
         cuc: ov.cucName,
@@ -49,6 +56,7 @@ function createCacheKey(data) {
 function buildCompactData(data) {
     const ov = data.overview || {};
     const palaces = data.palaces || [];
+    const HUNG_TINH_NANG = ['Kình Dương', 'Đà La', 'Hoả Tinh', 'Linh Tinh', 'Địa Không', 'Địa Kiếp'];
 
     // Build 12 cung compact
     const cungData = {};
@@ -87,6 +95,20 @@ function buildCompactData(data) {
             value.combos = p.combos.map(c => `${c.name} (${c.stars.join('+')}): ${c.nature}`);
         }
         if (p.isHourDependent) value.phuThuocGio = true;
+
+        // Trọng số cung: đếm yếu tố nặng
+        let heavyCount = 0;
+        (p.phuTinh || []).forEach(s => {
+            if (HUNG_TINH_NANG.includes(s.name)) heavyCount++;
+            if (s.hoa === 'Kỵ') heavyCount++;
+            if (s.luuHoa === 'Kỵ') heavyCount++;
+        });
+        (p.chinhTinh || []).forEach(s => {
+            if (s.hoa === 'Kỵ') heavyCount++;
+            if (s.luuHoa === 'Kỵ') heavyCount++;
+        });
+        if (p.tuanTriet && p.tuanTriet.triet) heavyCount++;
+        if (heavyCount >= 3) value.weight = 'HEAVY';
 
         cungData[key] = value;
     });
@@ -150,11 +172,15 @@ function buildCompactData(data) {
                 };
             }
 
-            // Nguyệt hạn tóm tắt (chỉ gửi tháng tốt/xấu nhất)
+            // Nguyệt hạn 12 tháng (gửi đầy đủ thay vì chỉ top/bottom)
             if (ln.nguyetHan && ln.nguyetHan.length > 0) {
-                const sorted = [...ln.nguyetHan].sort((a, b) => b.energy - a.energy);
-                vanHanInfo.thangTot = sorted.slice(0, 2).map(m => `T${m.thang}: ${m.cungName} (${m.energy}/100)`);
-                vanHanInfo.thangXau = sorted.slice(-2).reverse().map(m => `T${m.thang}: ${m.cungName} (${m.energy}/100)`);
+                vanHanInfo.nguyetHan = ln.nguyetHan.map(m => ({
+                    t: m.thang,
+                    cung: m.cungName,
+                    e: m.energy,
+                    lv: m.level,
+                    ky: m.hasHoaKy || false
+                }));
             }
         }
 
@@ -171,10 +197,38 @@ function buildCompactData(data) {
                 `${p.patternName} tại ${p.cungName}: ${p.effect}`
             );
         }
+
+        // Đại Vận Tứ Hóa (Giai đoạn 3 - Trung Châu Phái)
+        if (vh.luuNienAnalysis && vh.luuNienAnalysis.daiVanTuHoa) {
+            const dvth = vh.luuNienAnalysis.daiVanTuHoa;
+            vanHanInfo.daiVanTuHoa = {
+                canDaiVan: dvth.canDaiVan,
+                tuHoa: dvth.items.map(i =>
+                    `ĐV ${i.hoaName}: ${i.saoName} → ${i.cungName}`
+                )
+            };
+            // Kỵ trùng phùng cảnh báo
+            if (dvth.kyTrungPhung) {
+                vanHanInfo.kyTrungPhung = dvth.kyTrungPhung.description;
+            }
+        }
     }
 
     // Specials
     const dacBiet = (data.specials || []).map(s => `${s.title}: ${s.content}`);
+
+    // 3 năm trước (tóm tắt điểm nhấn)
+    let ungSo3NamTruoc = undefined;
+    if (data.prevYears && data.prevYears.length > 0) {
+        ungSo3NamTruoc = data.prevYears.map(s => ({
+            nam: s.nam,
+            daiVan: s.daiVan ? s.daiVan.cungName : null,
+            tieuVan: s.tieuVan ? s.tieuVan.cungName : null,
+            nangLuong: s.nangLuong ? s.nangLuong.tongHop : null,
+            suKien: s.suKien ? s.suKien.slice(0, 3) : null,
+            rating: s.rating || null
+        }));
+    }
 
     return {
         gioiTinh: ov.gioiTinh === 'nam' ? 'Nam' : 'Nữ',
@@ -185,31 +239,26 @@ function buildCompactData(data) {
         chuMenh: ov.chuMenh,
         chuThan: ov.chuThan,
         namXem: data.yearView,
+        tinhHeMenh: data.tinhHeMenh || undefined,
         cung: cungData,
         dacBiet: dacBiet.length > 0 ? dacBiet : undefined,
-        vanHan: vanHanInfo
+        vanHan: vanHanInfo,
+        ungSo3NamTruoc: ungSo3NamTruoc
     };
 }
 
 /**
- * Build prompt system instruction v3
- * Chi tiết hơn, thêm so sánh năm trước
+ * Build prompt system instruction v4
+ * Nâng cấp: trọng số cung, 3 năm trước, tiểu hạn tháng, cách cục, hóa giải
  */
 function buildPrompt(data) {
     const compactData = buildCompactData(data);
     const namXem = data.yearView || new Date().getFullYear();
-    const namTruoc = namXem - 1;
-
-    // Thêm data năm trước nếu có
-    let prevYearSection = '';
-    if (data.prevYear) {
-        prevYearSection = `\n\n## DATA NĂM TRƯỚC (${namTruoc}) ĐỂ SO SÁNH ỨNG SỐ:\n\`\`\`json\n${JSON.stringify(data.prevYear, null, 1)}\n\`\`\``;
-    }
 
     const systemInstruction = `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam, có 30+ năm kinh nghiệm luận giải. Bạn nổi tiếng với lối phân tích SẮC SẢO, THỰC TẾ, không nói chung chung.
 
 ## NHIỆM VỤ:
-Phân tích CHI TIẾT lá số Tử Vi dưới đây. Data JSON là KẾT QUẢ TÍNH TOÁN CHÍNH XÁC từ hệ thống, bao gồm 12 cung với vị trí sao thật, tứ hoá, miếu/vượng/đắc/hãm, vận hạn, energy score.
+Phân tích CHI TIẾT lá số Tử Vi dưới đây. Data JSON là KẾT QUẢ TÍNH TOÁN CHÍNH XÁC từ hệ thống, bao gồm 12 cung với vị trí sao thật, tứ hoá, miếu/vượng/đắc/hãm, vận hạn, energy score, nguyệt hạn 12 tháng, và ứng số 3 năm trước.
 
 ## PHƯƠNG PHÁP LUẬN GIẢI (tuân thủ chặt):
 1. **Tam Hợp**: Xem xét 3 cung tam hợp (Mệnh-Tài-Quan, Phụ Mẫu-Tật Ách-Nô Bộc, Huynh Đệ-Thiên Di-Điền Trạch, Phu Thê-Tử Tức-Phúc Đức) để đánh giá tổng thể mỗi lĩnh vực.
@@ -218,54 +267,61 @@ Phân tích CHI TIẾT lá số Tử Vi dưới đây. Data JSON là KẾT QUẢ
 4. **Miếu/Hãm**: Sao miếu/vượng phát huy tối đa, sao hãm giảm lực hoặc phản tác dụng.
 5. **Tuần/Triệt**: Sao bị Tuần giảm lực, bị Triệt triệt tiêu.
 6. **Vô Chính Diệu**: Cung VCĐ cần xem tam hợp + xung chiếu để đánh giá.
-7. **Ứng số năm trước**: Nếu có data năm ${namTruoc}, so sánh xem vận hạn năm trước có ứng nghiệm gì không → dự đoán xu hướng năm ${namXem}.
+7. **Đại Vận Tứ Hóa**: Nếu có field daiVanTuHoa, phân tích ĐV Hóa Lộc/Kỵ rơi vào cung nào → xu hướng 10 năm. Đặc biệt nếu có Kỵ trùng phùng → cảnh báo nghiêm trọng.
+8. **Tinh Hệ Mệnh**: Nếu có field tinhHeMenh, sử dụng archetype để mở đầu phần luận Mệnh.
+9. **Cách cục**: Nhận diện cách cục nổi bật → viết vào phần Tổng Quan (Sát Phá Tham, Cơ Nguyệt Đồng Lương, Tử Phủ Vũ Tướng, Song Lộc triều viên, Nhật Nguyệt đồng minh...).
 
 ## QUY TẮC BẮT BUỘC:
 1. Dùng danh xưng "Đương số". KHÔNG nhắc tên.
 2. KHÔNG liệt kê lại tên sao — người dùng đã thấy trên giao diện lá số.
-3. Mỗi cung viết **4-6 câu**. Phải gồm: (a) Đặc điểm chính, (b) Ảnh hưởng thực tế, (c) Lời khuyên cụ thể.
+3. **TRỌNG SỐ CUNG**: Cung có field weight="HEAVY" → viết **8-12 câu** (nhiều hung tinh, Hóa Kỵ → phân tích kỹ + cảnh báo rõ). Cung thường → 4-6 câu.
 4. KHÔNG lặp thông tin giữa các cung. Mỗi cung tập trung điểm ĐẶC TRƯNG NHẤT.
-5. Chú ý đặc biệt: hung tinh overlay, Song Kỵ, Song Lộc, bộ sao cách cục đặc biệt.
-6. Phong cách: điềm đạm, sắc sảo, đi thẳng vào vấn đề. Không sáo rỗng. KHÔNG nói "nhìn chung", "nói chung".
-7. Phải đề cập rõ ảnh hưởng CỤ THỂ tới công việc/tiền bạc/sức khỏe/tình cảm — đây là điều người xem quan tâm nhất.
+5. Phong cách: điềm đạm, sắc sảo, đi thẳng vào vấn đề. KHÔNG nói "nhìn chung", "nói chung".
+6. Phải đề cập rõ ảnh hưởng CỤ THỂ tới công việc/tiền bạc/sức khỏe/tình cảm.
+7. Cung PHU THÊ: đặc biệt chú ý sao tình duyên (Đào Hoa, Hồng Loan, Thiên Hỷ, Thiên Diêu, Phong Cáo).
+8. Chú ý đặc biệt: hung tinh overlay, Song Kỵ, Song Lộc, bộ sao cách cục đặc biệt.
 
 ## FORMAT OUTPUT:
 Chia bài bằng "---". Cấu trúc:
 
-1. TỔNG QUAN (5-7 câu: tóm tắt vận mệnh, đặc trưng lá số, thế mạnh/yếu điểm nổi bật)
+TỔNG QUAN (7-10 câu: tóm tắt vận mệnh, đặc trưng lá số, thế mạnh/yếu điểm nổi bật. **Nhận diện cách cục nổi bật** nếu có.)
 ---
-[MỆNH] 4-6 câu
+[MỆNH] 4-12 câu tùy weight
 ---
-[PHỤ MẪU] 4-6 câu
+[HUYNH ĐỆ] 4-12 câu tùy weight
 ---
-[PHÚC ĐỨC] 4-6 câu
+[PHU THÊ] 4-12 câu tùy weight (chú ý sao tình duyên)
 ---
-[ĐIỀN TRẠCH] 4-6 câu
+[TỬ TỨC] 4-12 câu tùy weight
 ---
-[QUAN LỘC] 4-6 câu
+[TÀI BẠCH] 4-12 câu tùy weight
 ---
-[NÔ BỘC] 4-6 câu
+[TẬT ÁCH] 4-12 câu tùy weight
 ---
-[THIÊN DI] 4-6 câu
+[THIÊN DI] 4-12 câu tùy weight
 ---
-[TẬT ÁCH] 4-6 câu
+[NÔ BỘC] 4-12 câu tùy weight
 ---
-[TÀI BẠCH] 4-6 câu
+[QUAN LỘC] 4-12 câu tùy weight
 ---
-[TỬ TỨC] 4-6 câu
+[ĐIỀN TRẠCH] 4-12 câu tùy weight
 ---
-[PHU THÊ] 4-6 câu
+[PHÚC ĐỨC] 4-12 câu tùy weight
 ---
-[HUYNH ĐỆ] 4-6 câu
+[PHỤ MẪU] 4-12 câu tùy weight
 ---
-VẬN HẠN NĂM ${namXem} (5-8 câu: đại vận + tiểu vận + lưu niên + energy. Nếu có data năm ${namTruoc}, mở đầu bằng 1-2 câu SO SÁNH với năm trước)
+ĐẠI VẬN HIỆN TẠI (5-8 câu: cung đại vận, sao chính tinh, ĐV Tứ Hóa, Kỵ trùng phùng nếu có, xu hướng 10 năm)
 ---
-LỜI KHUYÊN (5-7 câu: thiết thực, cụ thể theo từng lĩnh vực: sự nghiệp, tài chính, sức khỏe, tình cảm)
+ỨNG SỐ 3 NĂM TRƯỚC (Nếu có field ungSo3NamTruoc: tạo bảng tóm tắt, mỗi năm 1-2 câu điểm nhấn vận hạn. Cuối: nhận xét xu hướng cho năm ${namXem}.)
+---
+TIỂU HẠN NĂM ${namXem} (3-5 câu tổng quan. Sau đó chi tiết 12 tháng: tháng có energy thấp hoặc Hóa Kỵ → 3-4 câu + 🔴. Tháng bình thường → 1-2 câu + 🟢/🟡. Dùng data nguyetHan nếu có.)
+---
+LỜI KHUYÊN TỔNG HỢP (Chia: Sự nghiệp, Tài chính, Sức khỏe, Tình cảm. Mỗi mục 2-3 câu. LUÔN có mục 🙏 Hóa Giải & Tu Tâm — dù lá số nhẹ hay nặng.)
 
 KHÔNG viết "Phần 1:", "Phần 2:".
 Viết bằng Tiếng Việt.`;
 
-    return systemInstruction + '\n\n## DATA LÁ SỐ NĂM ' + namXem + ' (JSON):\n```json\n' + JSON.stringify(compactData, null, 1) + '\n```' + prevYearSection;
+    return systemInstruction + '\n\n## DATA LÁ SỐ NĂM ' + namXem + ' (JSON):\n```json\n' + JSON.stringify(compactData, null, 1) + '\n```';
 }
 
 /**
@@ -373,18 +429,42 @@ async function generateAiInterpretation(interpretationData) {
 
 /**
  * Parse AI response thành structured data
- * Hỗ trợ cả format mới (per-palace [CUNG_NAME]) và format cũ (8 sections)
+ * Hỗ trợ: [CUNG_NAME] brackets, plain text header, markdown ###
  */
 function parseAiResponse(text) {
-    const PALACE_NAMES = ['MỆNH', 'PHỤ MẪU', 'PHÚC ĐỨC', 'ĐIỀN TRẠCH', 'QUAN LỘC', 'NÔ BỘC',
-        'THIÊN DI', 'TẬT ÁCH', 'TÀI BẠCH', 'TỬ TỨC', 'PHU THÊ', 'HUYNH ĐỆ'];
+    const PALACE_NAMES = ['MỆNH', 'HUYNH ĐỆ', 'PHU THÊ', 'TỬ TỨC', 'TÀI BẠCH', 'TẬT ÁCH',
+        'THIÊN DI', 'NÔ BỘC', 'QUAN LỘC', 'ĐIỀN TRẠCH', 'PHÚC ĐỨC', 'PHỤ MẪU'];
+
+    // Các section đặc biệt (không phải cung)
+    const SPECIAL_SECTIONS = [
+        { keywords: ['TỔNG QUAN'], title: 'Tổng Quan Lá Số', icon: '⭐' },
+        { keywords: ['ĐẠI VẬN HIỆN TẠI', 'ĐẠI VẬN'], title: 'Đại Vận Hiện Tại', icon: '🔄' },
+        { keywords: ['ỨNG SỐ', 'ỨNG NGHIỆM', '3 NĂM TRƯỚC', 'NĂM TRƯỚC'], title: 'Ứng Số Các Năm Trước', icon: '📊' },
+        { keywords: ['TIỂU HẠN', 'TIỂU VẬN'], title: 'Tiểu Hạn Năm', icon: '📅' },
+        { keywords: ['LỜI KHUYÊN'], title: 'Lời Khuyên Tổng Hợp', icon: '💡' },
+        { keywords: ['VẬN HẠN NĂM'], title: 'Vận Hạn Năm', icon: '📅' }
+    ];
 
     let processedText = text;
-    // Tự động thêm --- trước mỗi [CUNG] nếu chưa có
+
+    // Tự động thêm --- trước mỗi [CUNG] hoặc heading ### nếu chưa có
     PALACE_NAMES.forEach(pName => {
         const escaped = pName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-        const regex = new RegExp('([^\\-])\\s*\\[(' + escaped + ')\\]', 'gi');
-        processedText = processedText.replace(regex, '$1\n---\n[$2]');
+        // Match [CUNG_NAME]
+        const regBracket = new RegExp('([^\\-])\\s*\\[(' + escaped + ')\\]', 'gi');
+        processedText = processedText.replace(regBracket, '$1\n---\n[$2]');
+        // Match ### heading (#### 1. Cung MỆNH, ### Cung MỆNH, ### 🏛️ MỆNH, etc.)
+        const regHeading = new RegExp('(#+\\s*(?:\\d+\\.?\\s*)?(?:Cung\\s+)?(?:🏛️\\s*)?' + escaped + ')', 'gi');
+        processedText = processedText.replace(regHeading, '\n---\n$1');
+    });
+
+    // Thêm --- trước các special section headings
+    SPECIAL_SECTIONS.forEach(spec => {
+        spec.keywords.forEach(kw => {
+            const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const regHeading = new RegExp('(#+\\s*(?:[🔮⭐📊📅💡🔄🏛️🙏]*\\s*)?' + escaped + ')', 'gi');
+            processedText = processedText.replace(regHeading, '\n---\n$1');
+        });
     });
 
     const sections = processedText.split('---').map(s => s.trim()).filter(s => s.length > 0);
@@ -395,74 +475,109 @@ function parseAiResponse(text) {
         raw: text
     };
 
-    let overviewSections = [];
-    let hasPalaceFormat = false;
-
     sections.forEach((section) => {
         let content = section
             .replace(/\*\*/g, '')
-            .replace(/^\s*(PHẦN|PHAN)\s*\d+[:.]?\s*/i, '')
-            .replace(/^\d+[:.]?\s*/gm, '')
+            .replace(/^\s*(PHẦN|PHAN)\s*\d+[:.]\s*/i, '')
             .trim();
 
-        // Check nếu section bắt đầu bằng [CUNG_NAME]
+        // === Try match PALACE (cung) ===
         let matchedPalace = null;
         for (let i = 0; i < PALACE_NAMES.length; i++) {
             const pName = PALACE_NAMES[i];
             const escaped = pName.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
-            const regex = new RegExp('^\\s*\\[(' + escaped + ')\\]\\s*', 'i');
-            if (regex.test(content)) {
+
+            // Pattern 1: [CUNG_NAME]
+            const regBracket = new RegExp('^\\s*\\[(' + escaped + ')\\]\\s*', 'i');
+            // Pattern 2: ### Cung CUNG_NAME hoặc #### 1. Cung CUNG_NAME hoặc ### 🏛️ CUNG_NAME
+            const regHeading = new RegExp('^\\s*#{1,4}\\s*(?:\\d+\\.?\\s*)?(?:Cung\\s+)?(?:🏛️\\s*)?' + escaped + '\\s*$', 'im');
+            // Pattern 3: Chỉ CUNG_NAME ở đầu dòng (all caps, không phải inline)
+            const regPlain = new RegExp('^\\s*' + escaped + '\\s+(Cung|Đây|Tại|Mặc|Với|Không|Có|Cuộc|Sự|Đương|Nhìn)', 'i');
+
+            if (regBracket.test(content)) {
                 matchedPalace = pName;
-                content = content.replace(regex, '').trim();
+                content = content.replace(regBracket, '').trim();
+                break;
+            }
+            if (regHeading.test(content)) {
+                matchedPalace = pName;
+                content = content.replace(regHeading, '').trim();
+                break;
+            }
+            if (regPlain.test(content)) {
+                matchedPalace = pName;
+                content = content.replace(new RegExp('^\\s*' + escaped + '\\s+', 'i'), '').trim();
                 break;
             }
         }
 
         if (matchedPalace) {
-            hasPalaceFormat = true;
             content = content
                 .replace(/^(LUẬN GIẢI|PHÂN TÍCH)\s*(CUNG)?\s*/i, '')
+                .replace(/^#+\s*/gm, '') // Strip remaining headers
                 .trim();
             result.palaceSections[matchedPalace] = content;
-        } else {
-            overviewSections.push(content);
+            return;
         }
-    });
 
-    const overviewTitles = ['Tổng Quan Vận Mệnh', 'Vận Hạn Năm', 'Lời Khuyên'];
-    const overviewIcons = ['🌟', '📅', '💡'];
-
-    if (hasPalaceFormat) {
-        overviewSections.forEach((content, i) => {
-            let title = overviewTitles[i] || `Phân Tích ${i + 1}`;
-            let icon = overviewIcons[i] || '📌';
-
-            if (content.toLowerCase().includes('vận hạn') || content.toLowerCase().includes('năm ')) {
-                title = 'Vận Hạn Năm'; icon = '📅';
-            } else if (content.toLowerCase().includes('lời khuyên') || content.toLowerCase().includes('khuyên đương số')) {
-                title = 'Lời Khuyên'; icon = '💡';
+        // === Try match SPECIAL section ===
+        let matchedSpecial = null;
+        for (let i = 0; i < SPECIAL_SECTIONS.length; i++) {
+            const spec = SPECIAL_SECTIONS[i];
+            for (let j = 0; j < spec.keywords.length; j++) {
+                const kw = spec.keywords[j];
+                const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+                const regKw = new RegExp('(^|\\n)\\s*#{0,4}\\s*(?:[🔮⭐📊📅💡🔄📋🏛️🙏]*\\s*)?' + escaped, 'i');
+                if (regKw.test(content)) {
+                    matchedSpecial = spec;
+                    // Strip the heading line
+                    content = content.replace(new RegExp('^\\s*#{0,4}\\s*(?:[🔮⭐📊📅💡🔄📋🏛️🙏]*\\s*)?' + escaped + '[^\\n]*\\n?', 'i'), '').trim();
+                    break;
+                }
             }
+            if (matchedSpecial) break;
+        }
 
-            content = content
-                .replace(/^(TỔNG QUAN VẬN MỆNH|TỔNG QUAN|VẬN HẠN.*|LỜI KHUYÊN):?\s*/i, '')
-                .trim();
-
-            result.sections.push({ title, icon, content });
-        });
-    } else {
-        // Fallback cũ
-        const fallbackTitles = ['Tổng Quan Vận Mệnh', 'Giờ Sinh', 'Tính Cách', 'Sự Nghiệp', 'Tình Duyên', 'Sức Khỏe', 'Vận Hạn', 'Lời Khuyên'];
-        const fallbackIcons = ['🌟', '⏰', '👤', '💼', '💕', '🏥', '📅', '💡'];
-
-        sections.forEach((section, i) => {
-            let content = section.replace(/\*\*/g, '').replace(/^\d+[:.]?\s*/gm, '').trim();
+        if (matchedSpecial) {
+            content = content.replace(/^#+\s*/gm, '').trim();
             result.sections.push({
-                title: fallbackTitles[i] || `Phần ${i + 1}`,
-                icon: fallbackIcons[i] || '📌',
+                title: matchedSpecial.title,
+                icon: matchedSpecial.icon,
                 content: content
             });
-        });
-    }
+            return;
+        }
+
+        // === Unmatched section: infer from content ===
+        let title = 'Phân Tích';
+        let icon = '📌';
+
+        const contentLower = content.toLowerCase();
+        if (contentLower.includes('tổng quan') || contentLower.includes('lá số này')) {
+            title = 'Tổng Quan Lá Số'; icon = '⭐';
+        } else if (contentLower.includes('đại vận')) {
+            title = 'Đại Vận Hiện Tại'; icon = '🔄';
+        } else if (contentLower.includes('lời khuyên') || contentLower.includes('khuyên đương số')) {
+            title = 'Lời Khuyên Tổng Hợp'; icon = '💡';
+        } else if (contentLower.includes('tiểu hạn') || contentLower.includes('tháng')) {
+            title = 'Tiểu Hạn Năm'; icon = '📅';
+        } else if (contentLower.includes('ứng số') || contentLower.includes('năm trước')) {
+            title = 'Ứng Số Các Năm Trước'; icon = '📊';
+        } else if (contentLower.includes('vận hạn')) {
+            title = 'Vận Hạn Năm'; icon = '📅';
+        } else if (contentLower.includes('hóa giải') || contentLower.includes('tu tâm')) {
+            title = 'Hóa Giải & Tu Tâm'; icon = '🙏';
+        }
+
+        content = content
+            .replace(/^(TỔNG QUAN[^\n]*|VẬN HẠN[^\n]*|LỜI KHUYÊN[^\n]*|ĐẠI VẬN[^\n]*|ỨNG SỐ[^\n]*|TIỂU HẠN[^\n]*)\n?/i, '')
+            .replace(/^#+\s*/gm, '')
+            .trim();
+
+        if (content.length > 20) {
+            result.sections.push({ title, icon, content });
+        }
+    });
 
     if (result.sections.length === 0 && Object.keys(result.palaceSections).length === 0) {
         result.sections.push({ title: 'Phân Tích AI', icon: '🤖', content: text });

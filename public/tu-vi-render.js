@@ -258,6 +258,26 @@ const TuViRender = (function () {
             html += `</span></div>`;
         }
 
+        // Đại Vận Tứ Hóa banner (Giai đoạn 3)
+        if (lasoData.daiVanTuHoa) {
+            const dvth = lasoData.daiVanTuHoa;
+            html += `<div class="luu-tu-hoa-banner" style="border-left: 3px solid #9b59b6;">`;
+            html += `<span class="luu-hoa-label">⚖️ Đại Vận Tứ Hóa (Can ${dvth.canDaiVan}):</span>`;
+            html += `<span class="luu-hoa-items">`;
+            dvth.details.forEach(function (d) {
+                var cls = d.hoaType === 'Kỵ' ? 'lh-ky' : (d.hoaType === 'Lộc' ? 'lh-loc' : (d.hoaType === 'Quyền' ? 'lh-quyen' : 'lh-khoa'));
+                html += `<span class="${cls}">${d.hoaType}→${d.saoName}(${d.cungName})</span>`;
+            });
+            html += `</span></div>`;
+
+            // Kỵ trùng phùng cảnh báo
+            if (lasoData.kyTrungPhung) {
+                html += `<div class="luu-tu-hoa-banner" style="border-left: 3px solid #e74c3c; background: #fff5f5;">`;
+                html += `<span style="color: #e74c3c; font-weight: 600;">${lasoData.kyTrungPhung.description}</span>`;
+                html += `</div>`;
+            }
+        }
+
         // Đại Vận grid
         html += `<div class="dai-van-grid">`;
         html += `<div class="dai-van-header-row">`;
@@ -311,12 +331,48 @@ const TuViRender = (function () {
 
         html += `</div>`;
 
+        return html;
+    }
 
+    /**
+     * Render Tinh Hệ Mệnh (nếu có)
+     */
+    function renderTinhHe(lasoData) {
+        if (!lasoData.tinhHeMenh || lasoData.tinhHeMenh.id === 'vcd') return '';
+
+        const th = lasoData.tinhHeMenh;
+        const cungMenhName = lasoData.cungMap[lasoData.cungMenhPos] || 'MỆNH';
+        const profileText = (typeof TuViTinhHe !== 'undefined' && th.byPalace && th.byPalace[cungMenhName])
+            ? th.byPalace[cungMenhName]
+            : th.profile;
+
+        let html = `<div class="tinh-he-section">`;
+        html += `<h3 class="tinh-he-title">☄️ Tinh Hệ Mệnh: <strong>${th.name}</strong></h3>`;
+        html += `<div class="tinh-he-archetype">${th.archetype}</div>`;
+        html += `<div class="tinh-he-profile">${profileText}</div>`;
+
+        if (th.strengths && th.strengths.length > 0) {
+            html += `<div class="tinh-he-tags">`;
+            html += `<span class="tinh-he-tag-label">Điểm mạnh:</span>`;
+            th.strengths.forEach(function (s) {
+                html += `<span class="tinh-he-tag tinh-he-tag-good">${s}</span>`;
+            });
+            if (th.weaknesses && th.weaknesses.length > 0) {
+                html += `<span class="tinh-he-tag-label" style="margin-left: 12px;">Điểm yếu:</span>`;
+                th.weaknesses.forEach(function (w) {
+                    html += `<span class="tinh-he-tag tinh-he-tag-bad">${w}</span>`;
+                });
+            }
+            html += `</div>`;
+        }
+
+        html += `</div>`;
         return html;
     }
 
     return {
         render,
-        renderDaiVanTimeline
+        renderDaiVanTimeline,
+        renderTinhHe
     };
 })();

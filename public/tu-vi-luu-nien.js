@@ -516,12 +516,58 @@ const TuViLuuNien = (function () {
     }
 
     // =====================
+    // P7: ĐẠI VẬN TỨ HÓA (Trung Châu Phái - Giai đoạn 3)
+    // =====================
+
+    /**
+     * Luận giải Đại Vận Tứ Hóa
+     * @param {Object} lasoData
+     * @returns {Object|null}
+     */
+    function analyzeDaiVanTuHoa(lasoData) {
+        if (!lasoData.daiVanTuHoa) return null;
+
+        var dvTH = lasoData.daiVanTuHoa;
+        var result = {
+            canDaiVan: dvTH.canDaiVan,
+            items: [],
+            kyTrungPhung: lasoData.kyTrungPhung || null
+        };
+
+        // Luận giải mỗi Hóa rơi vào cung nào
+        for (var i = 0; i < dvTH.details.length; i++) {
+            var detail = dvTH.details[i];
+            var cungName = detail.cungName;
+            var hoaType = detail.hoaType;
+            var meaning = '';
+
+            // Dùng LUU_HOA_MEANING có sẵn → reuse cho ĐV
+            if (LUU_HOA_MEANING[cungName] && LUU_HOA_MEANING[cungName][hoaType]) {
+                meaning = 'Đại Vận ' + LUU_HOA_MEANING[cungName][hoaType];
+            } else {
+                meaning = 'Đại Vận Hóa ' + hoaType + ' tại ' + cungName + '.';
+            }
+
+            result.items.push({
+                hoaType: hoaType,
+                hoaName: detail.hoaName,
+                saoName: detail.saoName,
+                cungName: cungName,
+                meaning: meaning,
+                isNegative: detail.isNegative
+            });
+        }
+
+        return result;
+    }
+
+    // =====================
     // TỔNG HỢP PHÂN TÍCH LƯU NIÊN
     // =====================
 
     /**
      * Phân tích toàn diện lưu niên
-     * Gọi tất cả P2-P6
+     * Gọi tất cả P2-P7
      */
     function analyzeFull(lasoData) {
         return {
@@ -529,7 +575,8 @@ const TuViLuuNien = (function () {
             hungTinhOverlay: analyzeHungTinhOverlay(lasoData),
             thaiTue: analyzeLuuThaiTue(lasoData),
             nguyetHan: analyzeNguyetHan(lasoData),
-            energyScore: calculateEnergyScore(lasoData)
+            energyScore: calculateEnergyScore(lasoData),
+            daiVanTuHoa: analyzeDaiVanTuHoa(lasoData)
         };
     }
 
@@ -543,6 +590,7 @@ const TuViLuuNien = (function () {
         analyzeLuuThaiTue: analyzeLuuThaiTue,
         analyzeNguyetHan: analyzeNguyetHan,
         calculateEnergyScore: calculateEnergyScore,
+        analyzeDaiVanTuHoa: analyzeDaiVanTuHoa,
         analyzeFull: analyzeFull,
         LUU_HOA_MEANING: LUU_HOA_MEANING
     };

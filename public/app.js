@@ -57,7 +57,27 @@
     const solarInputGroup = document.getElementById('solarInputGroup');
     const lunarInputGroup = document.getElementById('lunarInputGroup');
     const lunarPreview = document.getElementById('lunarPreview');
-    const ngaySinhInput = document.getElementById('ngaySinh');
+    const solarDaySelect = document.getElementById('solarDay');
+    const solarMonthSelect = document.getElementById('solarMonth');
+    const solarYearInput = document.getElementById('solarYear');
+
+    // Populate day options (1-31)
+    for (let d = 1; d <= 31; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d < 10 ? '0' + d : d;
+        solarDaySelect.appendChild(opt);
+    }
+    solarDaySelect.value = '19';
+
+    // Populate month options (1-12)
+    for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = 'Tháng ' + (m < 10 ? '0' + m : m);
+        solarMonthSelect.appendChild(opt);
+    }
+    solarMonthSelect.value = '8';
 
     dateTypeRadios.forEach(r => {
         r.addEventListener('change', function () {
@@ -72,14 +92,18 @@
     });
 
     const updateLunarPreview = () => {
-        const val = ngaySinhInput.value;
-        if (!val) return;
-        const [y, m, d] = val.split('-').map(v => parseInt(v));
+        const d = parseInt(solarDaySelect.value);
+        const m = parseInt(solarMonthSelect.value);
+        const y = parseInt(solarYearInput.value);
+        if (!d || !m || !y) return;
         const res = AmLich.solarToLunar(d, m, y);
         lunarPreview.textContent = `Ngày ${res.day}/${res.month}/${res.year}${res.leap ? ' (Nhuận)' : ''}`;
     };
 
-    ngaySinhInput.addEventListener('change', updateLunarPreview);
+    solarDaySelect.addEventListener('change', updateLunarPreview);
+    solarMonthSelect.addEventListener('change', updateLunarPreview);
+    solarYearInput.addEventListener('change', updateLunarPreview);
+    solarYearInput.addEventListener('input', updateLunarPreview);
     updateLunarPreview();
 
     // =====================
@@ -216,16 +240,14 @@
             let jd;
 
             if (dateType === 'solar') {
-                const ngaySinhStr = document.getElementById('ngaySinh').value;
-                if (!ngaySinhStr) {
-                    alert('Vui lòng nhập ngày sinh!');
+                ngay = parseInt(document.getElementById('solarDay').value);
+                thang = parseInt(document.getElementById('solarMonth').value);
+                nam = parseInt(document.getElementById('solarYear').value);
+                if (!ngay || !thang || !nam) {
+                    alert('Vui lòng nhập đầy đủ ngày tháng năm sinh!');
                     resetButton();
                     return;
                 }
-                const parts = ngaySinhStr.split('-');
-                nam = parseInt(parts[0]);
-                thang = parseInt(parts[1]);
-                ngay = parseInt(parts[2]);
                 isLunar = false;
                 isLeap = false;
                 jd = AmLich.jdFromDate(ngay, thang, nam);
@@ -259,21 +281,66 @@
             // An sao
             TuViSao.anSao(lasoData);
 
-            // === TÍNH NĂM TRƯỚC (namXem - 1) ĐỂ SO SÁNH ỨNG SỐ ===
-            let prevYearSummary = null;
-            try {
-                const prevParams = { ngay, thang, nam, gioSinh, gioiTinh, namXem: namXem - 1 };
-                const prevLasoData = TuViCalc.calculate(prevParams);
-                TuViSao.anSao(prevLasoData);
-                prevYearSummary = TuViInterpret.buildPrevYearSummary(prevLasoData);
-                console.log('[PrevYear] Đã tính năm', namXem - 1);
-            } catch (err) {
-                console.warn('[PrevYear] Không tính được năm trước:', err.message);
+            // === ĐẠI VẬN TỨ HÓA (Giai đoạn 3: Trung Châu Phái) ===
+            if (typeof TuViDaiVanHoa !== 'undefined' && lasoData.daiVanHienTai) {
+                try {
+                    lasoData.daiVanTuHoa = TuViDaiVanHoa.calculate(
+                        lasoData.canChiNam.canIndex,
+                        lasoData.daiVanHienTai,
+                        lasoData.saoMap,
+                        lasoData.cungMap
+                    );
+                    // Phát hiện Kỵ trùng phùng
+                    if (lasoData.daiVanTuHoa) {
+                        lasoData.kyTrungPhung = TuViDaiVanHoa.detectKyTrungPhung(
+                            lasoData.daiVanTuHoa, lasoData
+                        );
+                    }
+                    console.log('[DaiVanTuHoa] Calculated:', lasoData.daiVanTuHoa);
+                } catch (err) {
+                    console.warn('[DaiVanTuHoa] Error:', err.message);
+                }
             }
+
+            // === TINH HỆ (Lục Thập Tinh Hệ v1.0) ===
+            if (typeof TuViTinhHe !== 'undefined') {
+                try {
+                    lasoData.tinhHeMenh = TuViTinhHe.getTinhHe(lasoData.cungMenhPos, lasoData.saoMap);
+                    lasoData.allTinhHe = TuViTinhHe.getAllTinhHe(lasoData.saoMap);
+                    console.log('[TinhHe] Mệnh:', lasoData.tinhHeMenh?.name);
+                } catch (err) {
+                    console.warn('[TinhHe] Error:', err.message);
+                }
+            }
+
+            // === TÍNH 3 NĂM TRƯỚC (N-1, N-2, N-3) ĐỂ SO SÁNH ỨNG SỐ ===
+            let prevYearsSummaries = [];
+            for (let offset = 1; offset <= 3; offset++) {
+                try {
+                    const prevParams = { ngay, thang, nam, gioSinh, gioiTinh, namXem: namXem - offset };
+                    const prevLasoData = TuViCalc.calculate(prevParams);
+                    TuViSao.anSao(prevLasoData);
+                    const summary = TuViInterpret.buildPrevYearSummary(prevLasoData);
+                    prevYearsSummaries.push(summary);
+                    console.log('[PrevYear] Đã tính năm', namXem - offset);
+                } catch (err) {
+                    console.warn('[PrevYear] Không tính được năm', namXem - offset, ':', err.message);
+                }
+            }
+            // Backward compat: giữ prevYearSummary = năm gần nhất
+            const prevYearSummary = prevYearsSummaries.length > 0 ? prevYearsSummaries[0] : null;
 
             // Render chart
             const chartHtml = TuViRender.render(lasoData, hoTen);
             chartWrapper.innerHTML = chartHtml;
+
+            // Tinh Hệ Mệnh section (sau chart, trước interpretation)
+            if (typeof TuViRender.renderTinhHe === 'function') {
+                const tinhHeHtml = TuViRender.renderTinhHe(lasoData);
+                if (tinhHeHtml) {
+                    chartWrapper.insertAdjacentHTML('afterend', tinhHeHtml);
+                }
+            }
 
             // Generate interpretation (từ API data)
             const interpretation = TuViInterpret.interpret(lasoData);
@@ -284,15 +351,21 @@
             // Build rawdata cho nút "Xem Rawdata"
             try {
                 const DIA_CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
+                const HUNG_TINH_NANG = ['Kình Dương', 'Đà La', 'Hoả Tinh', 'Linh Tinh', 'Địa Không', 'Địa Kiếp'];
                 const lunar = lasoData.lunarDate;
                 const lunarDateStr = `Ngày ${lunar.day} tháng ${lunar.month} năm ${lunar.year}${lunar.leap ? ' (Nhuận)' : ''} (${lasoData.canChiNam.full})`;
-                const gioSinhStr = `Giờ ${DIA_CHI[gioSinh]} (${gioSinh})`;
+                const gioSinhStr = `Giờ ${DIA_CHI[gioSinh]}`;
+                const ngayDL = `${ngay}/${thang}/${nam}`;
+
+                // Thứ tự cung chuẩn Tử Vi
+                const CUNG_ORDER = ['MỆNH', 'HUYNH ĐỆ', 'PHU THÊ', 'TỬ TỨC', 'TÀI BẠCH', 'TẬT ÁCH',
+                    'THIÊN DI', 'NÔ BỘC', 'QUAN LỘC', 'ĐIỀN TRẠCH', 'PHÚC ĐỨC', 'PHỤ MẪU'];
 
                 const compact = {
-                    // Thông tin cơ bản
                     hoTen: hoTen,
                     gioiTinh: gioiTinh,
                     ngaySinhAL: lunarDateStr,
+                    ngaySinhDL: ngayDL,
                     gioSinh: gioSinhStr,
                     namXem: namXem,
                     amDuong: lasoData.amDuong,
@@ -302,13 +375,32 @@
                     cungMenh: lasoData.cungMap[lasoData.cungMenhPos] + ' tại cung ' + DIA_CHI[lasoData.cungMenhPos],
                     cungThan: lasoData.cungMap[lasoData.cungThanPos] + ' tại cung ' + DIA_CHI[lasoData.cungThanPos],
                     thuan: lasoData.thuan ? 'Thuận lý' : 'Nghịch lý',
-                    // 12 cung - chỉ tên sao + trạng thái + hoá
                     cung: {}
                 };
+
+                // Tinh Hệ Mệnh
+                if (lasoData.tinhHeMenh && lasoData.tinhHeMenh.id !== 'vcd') {
+                    compact.tinhHeMenh = lasoData.tinhHeMenh.name + ' (' + lasoData.tinhHeMenh.archetype + ')';
+                }
+
+                // 12 cung: sao + trạng thái + hoá + TRỌNG SỐ (weight)
                 for (let i = 0; i < 12; i++) {
                     const pos = (lasoData.cungMenhPos + i) % 12;
                     const cungName = lasoData.cungMap[pos];
                     const saoList = lasoData.saoMap[pos] || [];
+
+                    // Tính trọng số cung
+                    let heavyCount = 0;
+                    saoList.forEach(s => {
+                        if (HUNG_TINH_NANG.includes(s.name)) heavyCount++;
+                        if (s.hoa === 'Kỵ') heavyCount++;
+                        if (s.luuHoa === 'Kỵ') heavyCount++;
+                    });
+                    // Tuần/Triệt
+                    if (lasoData.tuanTriet) {
+                        if (lasoData.tuanTriet.triet && lasoData.tuanTriet.triet.indexOf(pos) >= 0) heavyCount++;
+                    }
+
                     const chinh = saoList.filter(s => s.type === 'chinh').map(s => {
                         let label = s.name;
                         const st = typeof TuViStarPatterns !== 'undefined' ? TuViStarPatterns.getStarStatus(s.name, pos) : '';
@@ -323,11 +415,14 @@
                         if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
                         return label;
                     });
-                    compact.cung[cungName + ' (' + DIA_CHI[pos] + ')'] = {
+                    const cungEntry = {
                         chinh: chinh.length > 0 ? chinh.join(', ') : 'Vô Chính Diệu',
                         phu: phu.join(', ')
                     };
+                    if (heavyCount >= 3) cungEntry.weight = 'HEAVY';
+                    compact.cung[cungName + ' (' + DIA_CHI[pos] + ')'] = cungEntry;
                 }
+
                 // Đại vận + Tiểu vận
                 const dv = lasoData.daiVanHienTai;
                 const tv = lasoData.tieuVan;
@@ -351,18 +446,107 @@
                 if (lasoData.luuTuHoa && lasoData.luuTuHoa.length > 0) {
                     compact.luuTuHoa = lasoData.luuTuHoa.map(h => h.hoaName + ': ' + h.saoName + ' → ' + lasoData.cungMap[h.cungPos]);
                 }
-                // Năm trước (nếu có)
-                if (prevYearSummary) {
-                    compact.soSanhNamTruoc = prevYearSummary;
+                // Đại Vận Tứ Hóa
+                if (lasoData.daiVanTuHoa) {
+                    compact.daiVanTuHoa = {
+                        canDaiVan: lasoData.daiVanTuHoa.canDaiVan,
+                        tuHoa: lasoData.daiVanTuHoa.details.map(d => d.hoaName + ': ' + d.saoName + ' → ' + d.cungName)
+                    };
+                    if (lasoData.kyTrungPhung) {
+                        compact.daiVanTuHoa.kyTrungPhung = lasoData.kyTrungPhung.description;
+                    }
                 }
 
-                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số. Hãy phân tích CHI TIẾT lá số dưới đây.\n\n` +
-                    `QUY TẮC QUAN TRỌNG:\n` +
-                    `- Phân tích độc lập, không được lấy nội dung của đương số khác.\n` +
-                    `- Dùng danh xưng "Đương số".\n` +
-                    `- Phân tích kĩ miếu/hãm, tam hợp, xung chiếu, tứ hoá.\n` +
-                    `- Đưa ra lời khuyên thực tế và hóa giải.\n\n` +
-                    `DATA LÁ SỐ:\n`;
+                // Nguyệt hạn 12 tháng
+                if (interpretation.vanHan && interpretation.vanHan.luuNienAnalysis && interpretation.vanHan.luuNienAnalysis.nguyetHan) {
+                    compact.nguyetHan = interpretation.vanHan.luuNienAnalysis.nguyetHan.map(m => ({
+                        thang: m.thang,
+                        cung: m.cungName,
+                        energy: m.energy,
+                        level: m.level,
+                        chinh: m.chinhTinh ? m.chinhTinh.join(', ') : 'VCĐ',
+                        hoaKy: m.hasHoaKy ? true : undefined
+                    }));
+                }
+
+                // 3 năm trước (tóm tắt điểm nhấn)
+                if (prevYearsSummaries.length > 0) {
+                    compact.ungSo3NamTruoc = prevYearsSummaries.map(s => ({
+                        nam: s.nam,
+                        daiVan: s.daiVan ? s.daiVan.cungName : null,
+                        tieuVan: s.tieuVan ? s.tieuVan.cungName : null,
+                        nangLuong: s.nangLuong ? s.nangLuong.tongHop : null,
+                        suKien: s.suKien ? s.suKien.slice(0, 3) : null,
+                        rating: s.rating || null
+                    }));
+                }
+
+                // Build rawdata prompt chuyên nghiệp
+                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam, 30+ năm kinh nghiệm luận giải. Phong cách sắc sảo, thực tế, đi thẳng vào vấn đề.
+
+## NHIỆM VỤ:
+Luận giải CHI TIẾT lá số Tử Vi cho Đương Số "${hoTen}" dựa trên data JSON bên dưới. Data là KẾT QUẢ TÍNH TOÁN CHÍNH XÁC từ hệ thống.
+
+## PHƯƠNG PHÁP LUẬN GIẢI:
+1. **Tam Hợp**: Xem 3 cung tam hợp (Mệnh-Tài-Quan, Phụ Mẫu-Tật Ách-Nô Bộc, Huynh Đệ-Thiên Di-Điền Trạch, Phu Thê-Tử Tức-Phúc Đức)
+2. **Xung Chiếu**: Cung đối diện ảnh hưởng trực tiếp (Mệnh ↔ Thiên Di, Tài ↔ Phúc...)
+3. **Tứ Hoá Xuyên Cung**: Hoá Lộc/Kỵ rơi vào cung nào → ảnh hưởng cung đó
+4. **Miếu/Hãm**: Sao miếu/vượng phát huy tối đa, sao hãm giảm lực hoặc phản tác dụng
+5. **Tuần/Triệt**: Sao bị Tuần giảm lực, bị Triệt triệt tiêu
+6. **Vô Chính Diệu**: Cung VCĐ cần xem tam hợp + xung chiếu
+7. **Đại Vận Tứ Hóa**: Phân tích ĐV Hóa Lộc/Kỵ → xu hướng 10 năm. Kỵ trùng phùng → cảnh báo đặc biệt
+8. **Tinh Hệ Mệnh**: Dùng archetype để mở đầu luận Mệnh
+9. **Cách cục**: Nhận diện cách cục nổi bật (Sát Phá Tham, Cơ Nguyệt Đồng Lương, Song Lộc triều viên...)
+
+## QUY TẮC BẮT BUỘC:
+- Dùng danh xưng "Đương số". KHÔNG nhắc tên trực tiếp.
+- **Cung có tag weight=HEAVY → luận KỸ HƠN (8-12 câu)**, cung bình thường 4-6 câu.
+- Cung PHU THÊ: đặc biệt chú ý sao tình duyên (Đào Hoa, Hồng Loan, Thiên Hỷ, Thiên Diêu).
+- KHÔNG nói "nhìn chung", "nói chung". Đi thẳng vào vấn đề.
+- Phải đề cập ảnh hưởng CỤ THỂ tới công việc/tiền bạc/sức khỏe/tình cảm.
+- Tiểu hạn 12 tháng: tháng nặng/đặc biệt (energy thấp, có Hóa Kỵ) → 3-4 câu. Tháng bình thường → 1-2 câu.
+- Phần Lời Khuyên LUÔN có mục Hóa Giải & Tu Tâm.
+
+## FORMAT OUTPUT BẮT BUỘC:
+
+# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT
+## Đương Số: ${hoTen}
+
+### 📋 Thông Tin Đương Số
+(Lấy từ data JSON)
+
+---
+### ⭐ TỔNG QUAN LÁ SỐ
+(7-10 câu. Bao gồm nhận diện cách cục nổi bật.)
+
+---
+### 🏛️ LUẬN GIẢI 12 CUNG
+(Thứ tự: ${CUNG_ORDER.join(' → ')})
+(Cung HEAVY: 8-12 câu. Cung thường: 4-6 câu.)
+
+---
+### 🔄 ĐẠI VẬN HIỆN TẠI
+(5-8 câu: cung, sao, ĐV Tứ Hóa, Kỵ trùng phùng, xu hướng 10 năm)
+
+---
+### 📊 ỨNG SỐ 3 NĂM TRƯỚC
+| Năm | Điểm nhấn nổi bật | Ứng nghiệm? |
+(Mỗi năm 1-2 câu tóm tắt. Cuối: nhận xét xu hướng cho năm ${namXem})
+
+---
+### 📅 TIỂU HẠN NĂM ${namXem}
+(Tổng quan 3-5 câu, sau đó chi tiết 12 tháng theo trọng số)
+
+---
+### 💡 LỜI KHUYÊN TỔNG HỢP
+- Sự nghiệp, Tài chính, Sức khỏe, Tình cảm
+- 🙏 Hóa giải & Tu tâm (LUÔN có)
+
+---
+*Bạn có thể hỏi tiếp chi tiết về bất kỳ cung hoặc lĩnh vực nào.*
+
+## DATA LÁ SỐ:
+`;
                 window._currentRawdata = prompt + JSON.stringify(compact, null, 2);
                 btnRawdata.style.display = 'inline-flex';
             } catch (e) {
@@ -411,7 +595,7 @@
 
             // Async: Gọi AI interpretation (không block UI)
             const lunarStr = `${lasoData.lunarDate.day}/${lasoData.lunarDate.month}/${lasoData.lunarDate.year}${lasoData.lunarDate.leap ? ' (Nhuận)' : ''}`;
-            loadAiAnalysis(interpretation, { hoTen, ngaySinhStr: lunarStr, gioSinh, namXem });
+            loadAiAnalysis(interpretation, { hoTen, ngaySinhStr: lunarStr, gioSinh, namXem, tinhHeMenh: lasoData.tinhHeMenh, prevYears: prevYearsSummaries });
 
 
             console.log('Lá số data:', lasoData);
@@ -434,7 +618,9 @@
                 name: metadata.hoTen,
                 dob: metadata.ngaySinhStr,
                 hour: metadata.gioSinh,
-                yearView: metadata.namXem
+                yearView: metadata.namXem,
+                tinhHeMenh: metadata.tinhHeMenh ? metadata.tinhHeMenh.name + ' (' + metadata.tinhHeMenh.archetype + ')' : undefined,
+                prevYears: metadata.prevYears || []
             };
 
             // Lưu vào global để dùng lại sau khi login

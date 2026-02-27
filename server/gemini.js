@@ -20,7 +20,7 @@ if (!GEMINI_API_KEY) {
  * Prompt version — tăng khi thay đổi prompt format/structure
  * Cache cũ sẽ tự động bị miss khi version thay đổi
  */
-const PROMPT_VERSION = 'v4.0';
+const PROMPT_VERSION = 'v6.0';
 
 /**
  * Tạo cache key dựa trên cấu trúc "DNA" của lá số
@@ -230,6 +230,10 @@ function buildCompactData(data) {
         }));
     }
 
+    // === HINTS CHO 4 NGÁCH CHUYÊN SÂU ===
+    // (Data sao đã có đầy đủ trong `cung`, chỉ bổ sung thông tin chưa có)
+    const dienTrachPalace = palaces.find(p => p.cungName === 'ĐIỀN TRẠCH');
+
     return {
         gioiTinh: ov.gioiTinh === 'nam' ? 'Nam' : 'Nữ',
         amDuong: ov.amDuong,
@@ -243,7 +247,10 @@ function buildCompactData(data) {
         cung: cungData,
         dacBiet: dacBiet.length > 0 ? dacBiet : undefined,
         vanHan: vanHanInfo,
-        ungSo3NamTruoc: ungSo3NamTruoc
+        ungSo3NamTruoc: ungSo3NamTruoc,
+        // Hints bổ sung (info chưa có trong cung)
+        hanhMenh: ov.hanhMenh || null,
+        chiDienTrach: dienTrachPalace ? dienTrachPalace.chiName : null
     };
 }
 
@@ -255,7 +262,7 @@ function buildPrompt(data) {
     const compactData = buildCompactData(data);
     const namXem = data.yearView || new Date().getFullYear();
 
-    const systemInstruction = `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam, có 30+ năm kinh nghiệm luận giải. Bạn nổi tiếng với lối phân tích SẮC SẢO, THỰC TẾ, không nói chung chung.
+    const systemInstruction = `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam, có 30+ năm kinh nghiệm luận giải. Bạn nổi tiếng với lối phân tích SẮC SẢO, ĐANH THÉP, đi thẳng vào sự thật trần trụi nhất, không kiêng dè, không nói chung chung. Văn phong khẳng định dứt khoát — KHÔNG dùng "có thể", "dường như", "có lẽ".
 
 ## NHIỆM VỤ:
 Phân tích CHI TIẾT lá số Tử Vi dưới đây. Data JSON là KẾT QUẢ TÍNH TOÁN CHÍNH XÁC từ hệ thống, bao gồm 12 cung với vị trí sao thật, tứ hoá, miếu/vượng/đắc/hãm, vận hạn, energy score, nguyệt hạn 12 tháng, và ứng số 3 năm trước.
@@ -270,13 +277,18 @@ Phân tích CHI TIẾT lá số Tử Vi dưới đây. Data JSON là KẾT QUẢ
 7. **Đại Vận Tứ Hóa**: Nếu có field daiVanTuHoa, phân tích ĐV Hóa Lộc/Kỵ rơi vào cung nào → xu hướng 10 năm. Đặc biệt nếu có Kỵ trùng phùng → cảnh báo nghiêm trọng.
 8. **Tinh Hệ Mệnh**: Nếu có field tinhHeMenh, sử dụng archetype để mở đầu phần luận Mệnh.
 9. **Cách cục**: Nhận diện cách cục nổi bật → viết vào phần Tổng Quan (Sát Phá Tham, Cơ Nguyệt Đồng Lương, Tử Phủ Vũ Tướng, Song Lộc triều viên, Nhật Nguyệt đồng minh...).
-
+10. **Tử Tức chuyên sâu**: Khi luận cung TỬ TỨC, đi qua 5 bước: (a) Giới tính: Dương tinh (Tử Vi, Thái Dương, Thiên Lương, Thất Sát, Phá Quân, Vũ Khúc) = tín hiệu con trai; Âm tinh (Thái Âm, Thiên Đồng, Thiên Phủ, Thiên Cơ, Thiên Tướng, Tham Lang) = tín hiệu con gái. (b) Số con: Miếu/Vượng = 3+, Đắc = 2-3, Hãm = 1-2, VCĐ = hiếm muộn. Tả Phụ/Hữu Bật tại/tam hợp = thêm con. (c) Tính cách từng đứa: Mỗi chính tinh = đại diện 1 đứa con, tính cách theo archetype sao đó. (d) Hợp/Khắc cha mẹ: so Ngũ Hành Mệnh chủ ↔ Hành chính tinh Tử Tức (tương sinh = hợp, tương khắc = khắc). (e) Tài năng: Văn Xương/Khúc = giỏi học; Thiên Tài = năng khiếu đặc biệt; Khôi Việt = quý nhân; sát tinh hãm = sức khỏe yếu.
+11. **Nhân dạng & Phu Thê chuyên sâu**: (A) ĐƯƠNG SỐ: Luận nhân dạng từ chính tinh cung MỆNH. (B) PHỐI NGẪU: Khi luận cung PHU THÊ, xác định: (a) Con trưởng/thứ: Tham Lang tọa thủ = con trưởng; sao khác = con thứ. (b) Hình dáng: Luận linh hoạt dựa trên sự tương hỗ của Tứ Hóa và Miếu Hãm. Quy tắc gốc: Tử Vi (vuông vắn), Thái Dương (ngăm), Thái Âm (trắng), Thiên Cơ (gầy cao), Thiên Đồng (mập), Vũ Khúc (xương to), Thiên Phủ (đầy đặn), Tham Lang (đa tình), Cự Môn (hàm rộng), Thiên Tướng (đẹp), Thiên Lương (thanh tú), Thất Sát (mắt sắc), Phá Quân (dáng mạnh), Liêm Trinh (sắc sảo). Nếu miếu/vượng hoặc có Hóa Lộc/Khoa → ngoại hình đẹp, sang; nếu hãm hoặc Hóa Kỵ/sát tinh → ngoại hình có khuyết điểm hoặc kém sắc hơn. (c) Sẹo/nốt ruồi: Kình Dương = sẹo mặt; Đà La = nốt ruồi ẩn; Đào Hoa = nốt ruồi duyên; Thiên Hình = sẹo phẫu thuật. (d) Xuất thân: Thiên Phủ/Tử Vi miếu = giàu; sát tinh hãm = bần hàn. (e) Trợ lực: Hoá Lộc/Quyền tại PT = trợ lực mạnh.
+12. **Micro-Luck (Nguyệt hạn sự kiện)**: Trong phần TIỂU HẠN, mỗi tháng soi sự kiện CỤ THỂ dựa trên tổ hợp sao: Hoả Tinh/Lưu Hoả = bỏng cháy điện giật; Kình Dương/Lưu Kình = đứt gãy va chạm; Đà La/Lưu Đà = ngã trượt sự cố chậm; Đại Hao+Tiểu Hao = hỏng đồ mất tiền; Cự Môn+Hoá Kỵ = thị phi miệng lưỡi; Thái Tuế+Quan Phủ/Thiên Hình = giấy tờ kiện tụng pháp lý; Thiên Mã+sát tinh = tai nạn di chuyển; Kiếp Sát = trộm cắp mất của; Tang Môn+Điếu Khách = tin buồn tang chế; Bạch Hổ = tai nạn máu huyết.
+13. **Phần Âm & Tâm Linh chuyên sâu**: (a) Mộ phần: Xác định đời phát/động (Tử Vi=ngũ đại, Thiên Phủ=tam đại, Thái Dương=cha/nội, Thái Âm=mẹ/ngoại). (b) Vong linh & Duyên âm: Dựa trên sát tinh tại Phúc Đức. (c) Hóa giải: Chỉ rõ loại hình địa điểm (vd: Chùa, Đền thờ Mẫu, Đạo quán, Miếu thờ Sơn Thần...) và cách thức (lễ gì, sắm gì). KHÔNG bịa địa danh cụ thể. (d) Phong thủy: Hướng nhà theo hanhMenh + chiDienTrach.
+14. **3 Tầng luận giải**: Đối với MỆNH, PHU, TỬ, TÀI, QUAN, PHÚC, bóc tách: (a) Thực tại. (b) Tiềm ẩn. (c) Nghiệp lực: Đối chiếu tương quan giữa cung này với cung PHÚC ĐỨC gốc — Phúc suy thì cung này là nghiệp quả, Phúc thịnh thì cung này là hưởng nghiệp lành. Quy định format 🔵/🟡/🔴.
+15. **Lộ trình Tu Tâm**: (a) Tâm tính cần sửa. (b) Hành động thiện nguyện: Gợi ý LOẠI HÌNH địa điểm thực hiện phù hợp (vd: Trại trẻ mồ côi, Chùa, Nhà tình thương) tùy theo Hành của Mệnh. (c) Lộ trình Q1-Q4. (d) Thần Phật hộ mệnh & Kinh đọc.
 ## QUY TẮC BẮT BUỘC:
 1. Dùng danh xưng "Đương số". KHÔNG nhắc tên.
 2. KHÔNG liệt kê lại tên sao — người dùng đã thấy trên giao diện lá số.
 3. **TRỌNG SỐ CUNG**: Cung có field weight="HEAVY" → viết **8-12 câu** (nhiều hung tinh, Hóa Kỵ → phân tích kỹ + cảnh báo rõ). Cung thường → 4-6 câu.
 4. KHÔNG lặp thông tin giữa các cung. Mỗi cung tập trung điểm ĐẶC TRƯNG NHẤT.
-5. Phong cách: điềm đạm, sắc sảo, đi thẳng vào vấn đề. KHÔNG nói "nhìn chung", "nói chung".
+5. Phong cách: ĐANH THÉP, sắc sảo, đi thẳng vào sự thật trần trụi nhất. KHÔNG kiêng dè. KHÔNG nói "nhìn chung", "nói chung", "có thể", "dường như". Dùng khẳng định dứt khoát.
 6. Phải đề cập rõ ảnh hưởng CỤ THỂ tới công việc/tiền bạc/sức khỏe/tình cảm.
 7. Cung PHU THÊ: đặc biệt chú ý sao tình duyên (Đào Hoa, Hồng Loan, Thiên Hỷ, Thiên Diêu, Phong Cáo).
 8. Chú ý đặc biệt: hung tinh overlay, Song Kỵ, Song Lộc, bộ sao cách cục đặc biệt.
@@ -317,6 +329,14 @@ TỔNG QUAN (7-10 câu: tóm tắt vận mệnh, đặc trưng lá số, thế m
 TIỂU HẠN NĂM ${namXem} (3-5 câu tổng quan. Sau đó chi tiết 12 tháng: tháng có energy thấp hoặc Hóa Kỵ → 3-4 câu + 🔴. Tháng bình thường → 1-2 câu + 🟢/🟡. Dùng data nguyetHan nếu có.)
 ---
 LỜI KHUYÊN TỔNG HỢP (Chia: Sự nghiệp, Tài chính, Sức khỏe, Tình cảm. Mỗi mục 2-3 câu. LUÔN có mục 🙏 Hóa Giải & Tu Tâm — dù lá số nhẹ hay nặng.)
+---
+CON CÁI CHI TIẾT (Luận 5 bước: giới tính từng đứa → tổng số con → tính cách/archetype → hợp/khắc cha mẹ → tài năng đặc biệt hoặc sức khỏe yếu. Dùng data cung TỬ TỨC. 8-15 câu.)
+---
+PHỐI NGẪU CHI TIẾT (Luận: con trưởng/thứ, gánh thờ cúng → hình dáng cụ thể khuôn mặt/tầm vóc/da/sẹo/nốt ruồi → xuất thân gia đình → mức trợ lực cho đương số. Dùng data cung PHU THÊ. 8-15 câu.)
+---
+MỘ PHẦN & TÂM LINH (Luận từng tầng: mộ phát/động ở đời nào → nội phù hộ/suy → ngoại phù hộ/suy → vong linh/duyên âm nếu có → hóa giải CỤ THỂ (cúng gì, ở đâu, tháng nào) → phong thủy hướng nhà → bàn thờ. Dùng data cung PHÚC ĐỨC + ĐIỀN TRẠCH + hanhMenh + chiDienTrach. 10-15 câu.)
+---
+LỘ TRÌNH TU TÂM (Riêng biệt, KHÔNG gộp Lời Khuyên. Luận: tật xấu cần sửa theo chính tinh Mệnh → hành động thiện nguyện cụ thể phù hợp Ngũ Hành → lộ trình theo quý Q1-Q4 → Thần Phật hộ mệnh/tượng thờ/kinh đọc. 8-12 câu.)
 
 KHÔNG viết "Phần 1:", "Phần 2:".
 Viết bằng Tiếng Việt.`;
@@ -353,7 +373,7 @@ async function generateAiInterpretation(interpretationData) {
             contents: [{ parts: [{ text: prompt }] }],
             generationConfig: {
                 temperature: 0.7,
-                maxOutputTokens: 8192,
+                maxOutputTokens: 12288,
                 topP: 0.9
             },
             safetySettings: [
@@ -442,7 +462,11 @@ function parseAiResponse(text) {
         { keywords: ['ỨNG SỐ', 'ỨNG NGHIỆM', '3 NĂM TRƯỚC', 'NĂM TRƯỚC'], title: 'Ứng Số Các Năm Trước', icon: '📊' },
         { keywords: ['TIỂU HẠN', 'TIỂU VẬN'], title: 'Tiểu Hạn Năm', icon: '📅' },
         { keywords: ['LỜI KHUYÊN'], title: 'Lời Khuyên Tổng Hợp', icon: '💡' },
-        { keywords: ['VẬN HẠN NĂM'], title: 'Vận Hạn Năm', icon: '📅' }
+        { keywords: ['VẬN HẠN NĂM'], title: 'Vận Hạn Năm', icon: '📅' },
+        { keywords: ['CON CÁI CHI TIẾT', 'CON CÁI'], title: 'Con Cái Chi Tiết', icon: '🧒' },
+        { keywords: ['PHỐI NGẪU CHI TIẾT', 'PHỐI NGẪU'], title: 'Phối Ngẫu Chi Tiết', icon: '💍' },
+        { keywords: ['MỘ PHẦN', 'TÂM LINH', 'MỘ PHẦN & TÂM LINH'], title: 'Mộ Phần & Tâm Linh', icon: '🙏' },
+        { keywords: ['LỘ TRÌNH TU TÂM', 'TU TÂM'], title: 'Lộ Trình Tu Tâm', icon: '🧘' }
     ];
 
     let processedText = text;

@@ -507,62 +507,55 @@
                 }
 
                 // Build rawdata prompt chuyên nghiệp
-                // Build rawdata prompt chuyên nghiệp v7.0
-                const prompt = `Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu Việt Nam, 30+ năm kinh nghiệm. Phân tích SẮC SẢO, ĐANH THÉP, đi thẳng vào sự thật trần trụi nhất. Văn phong khẳng định dứt khoát — KHÔNG dùng "có thể", "dường như", "có lẽ".
+                // Build rawdata prompt chuyên nghiệp v8.0 (Master Prompt)
+                const prompt = `**Vai trò:** Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu với 30 năm kinh nghiệm thực chiến. Hãy phân tích lá số dựa trên dữ liệu JSON/Thông tin được cung cấp dưới đây.
 
-## NHIỆM VỤ:
-Phân tích CHI TIẾT lá số Tử Vi cho đương số "${hoTen}". Data JSON bên dưới là KẾT QUẢ TÍNH TOÁN CHÍNH XÁC từ hệ thống.
+**Nguyên tắc luận giải (Bắt buộc):**
 
-## A. PHƯƠNG PHÁP NỀN:
-1. **Tam Hợp & Xung Chiếu**: Phân tích sự tương tác 4 bộ tam hợp.
-2. **Tứ Hoá Xuyên Cung**: Hoá Lộc/Kỵ rơi vào cung nào → ảnh hưởng cung đó.
-3. **Khung 5 Lớp (tuân thủ chặt cho mỗi cung)**:
-   - L1: Ý nghĩa + 3 tầng luận giải (🔵 Thực tại | 🟡 Tiềm ẩn | 🔴 Nghiệp lực) cho 6 cung trọng yếu.
-   - L2: Tác động thực tế (tiền bạc, nghề nghiệp, sức khỏe, tình cảm).
-   - L3: 👨‍👩‍👧 Nhà đẻ (Bên Nội/Ngoại gốc).
-   - L4: 💍 Nhà phối ngẫu (Bố mẹ chồng/vợ, quan hệ gia đình bên kia).
-   - L5: ⏳ Vận hạn đang ảnh hưởng cung này.
-4. **Logic 2 Gia Đình**: Dùng phép chuyển cung từ Phu Thê để soi gia tiên/anh em bên nhà phối ngẫu.
+1. **Ngôn ngữ:** Bình dân, thực tế, lược bỏ 90% thuật ngữ Hán Việt. Nếu dùng từ chuyên môn (như Hóa Kỵ, Thiên Không...) phải mở ngoặc giải thích ngay ý nghĩa thực tế (ví dụ: thị phi, mất tiền, tai nạn...).
+2. **Thái độ:** Sắc sảo, đanh thép, nói thẳng vào điểm xấu để đương số phòng tránh. KHÔNG dùng từ nước đôi như "có thể", "có lẽ".
+3. **Cấu trúc 5 lớp cho mỗi cung:**
+   - Hiện trạng (Đang thế nào?)
+   - Tiềm ẩn (Cái gì sắp đến?)
+   - Nghiệp lực (Nợ đời/Quả báo)
+   - Quan hệ 2 bên gia đình (Nhà đẻ vs Nhà phối ngẫu)
+   - Vận hạn thực tế năm nay.
 
-## B. CHỈ DẪN 12 CUNG:
-- **[MỆNH]**: Tinh hệ mở đầu. 3 tầng 🔵🟡🔴. Nhân dạng đương số + sẹo/nốt ruồi. Thái độ hai bên gia đình nhìn nhận đương số (L3/L4).
-- **[HUYNH ĐỆ]**: Anh em ruột nhà đẻ vs Anh em bên vợ/chồng.
-- **[PHU THÊ]**: 3 tầng 🔵🟡🔴. Nhân dạng phối ngẫu (vóc dáng, sẹo, thứ bậc trưởng/thứ). Quan hệ mẹ chồng-nàng dâu/bố vợ-con rể (L3/L4).
-- **[TỬ TỨC]**: Luận 5 bước: Giới tính → Số lượng → Tính cách → Hợp/Khắc → Tài năng. Con cái vs nhà nội/ngoại.
-- **[TÀI BẠCH]**: 3 tầng 🔵🟡🔴. Thừa kế nhà đẻ vs Tài chính phối ngẫu mang vào/rút ra.
-- **[TẬT ÁCH]**: Bệnh di truyền dòng họ vs Áp lực từ hôn nhân.
-- **[THIÊN DI]**: Rời xa nhà đẻ phát hay suy? Theo phối ngẫu đi xa thế nào?
-- **[QUAN LỘC]**: 3 tầng 🔵🟡🔴. Kế thừa nhà đẻ vs Cơ hội từ nhà phối ngẫu.
-- **[ĐIỀN TRẠCH]**: Hướng nhà phong thủy. Thừa kế đất nhà đẻ vs Ở nhà bên phối ngẫu/ra riêng.
-- **[PHÚC ĐỨC]**: 3 tầng 🔵🟡🔴. CUNG QUAN TRỌNG NHẤT. Mộ phần phát/động đời nào. Dòng họ Nội vs Dòng họ phối ngẫu (xung âm?). Hóa giải vong linh/duyên âm.
-- **[PHỤ MẪU]**: Cha mẹ đẻ vs Bố mẹ chồng/vợ (thái độ, hỗ trợ).
+# 🔮 BẢN ĐỒ VẬN MỆNH CHI TIẾT: ${hoTen}
 
-## C. QUY TẮC:
-- Dùng "Đương số".
-- Cung HEAVY → 10-20 câu. Trọng yếu → 8-18 câu.
-- KHÔNG liệt kê tên sao. KHÔNG nói chung chung.
+### ⭐ TỔNG QUAN: (Tính cách thực & Biến cố lớn nhất năm)
 
-## D. FORMAT OUTPUT BẮT BUỘC:
+* Nhận diện nhân dạng: Nốt ruồi, vết sẹo, vóc dáng.
+* Khẳng định 01 biến cố quan trọng nhất trong năm nay (Ví dụ: Hạn nhà cửa, hạn mất tiền, hay hạn sức khỏe).
 
-# 🔮 LUẬN GIẢI LÁ SỐ TỬ VI CHI TIẾT: ${hoTen}
-## Đương Số: ${hoTen}
+### 🏛️ LUẬN GIẢI 12 KHÍA CẠNH CUỘC ĐỜI: (Thứ tự: ${CUNG_ORDER.join(' → ')})
 
-### ⭐ TỔNG QUAN LÁ SỐ: (Nhận diện cách cục nổi bật)
----
-### 🏛️ LUẬN GIẢI 12 CUNG: (Thứ tự: ${CUNG_ORDER.join(' → ')}) -- Mỗi cung phải đủ 5 lớp L1-L5.
----
-### 🔄 ĐẠI VẬN HIỆN TẠI: (Xu hướng 10 năm)
----
-### 📊 ỨNG SỐ 3 NĂM TRƯỚC: (Bảng tóm tắt + nhận xét năm ${namXem})
----
-### 📅 TIỂU HẠN NĂM ${namXem}: (Chi tiết 12 tháng 🟢/🟡/🔴 + Micro-Luck biến cố cụ thể)
----
-### 💡 LỜI KHUYÊN & 🧘 LỘ TRÌNH TU TÂM: (Sửa tính, thiện nguyện Ngũ Hành, Thần Phật hộ mệnh)
+*(Trình bày bằng bảng biểu hoặc gạch đầu dòng rõ ràng)*
+
+1. **[BẢN THÂN]**: Tính cách thật (không phải thứ họ thể hiện ra ngoài).
+2. **[GIA ĐÌNH ĐẺ & ANH EM]**: Sự hỗ trợ thực tế hay chỉ là gánh nặng?
+3. **[HÔN NHÂN & PHỐI NGẪU]**: Chồng/Vợ là người thế nào? Ai nắm quyền? Quan hệ với bố mẹ chồng/vợ (Nàng dâu - Mẹ chồng) có "sóng ngầm" không?
+4. **[CON CÁI]**: Số lượng, giới tính, đứa nào hợp/khắc? Tài năng thực tế là gì?
+5. **[CÔNG VIỆC & SỰ NGHIỆP]**: Nghề nghiệp hiện tại có đúng số không? Có nên chuyển việc hay mở rộng kinh doanh năm nay không?
+6. **[TIỀN BẠC]**: Tiền đến từ đâu và "chảy" đi đâu? Ai là người gây hao tài cho bạn?
+7. **[NHÀ ĐẤT - ĐIỀN TRẠCH]**: (Phân tích kỹ nếu có hạn Kỵ Trùng Phùng). Có nên mua bán, sửa sang hay chung đụng đất cát không? Tỷ lệ rủi ro pháp lý/tranh chấp.
+8. **[SỨC KHỎE]**: Cảnh báo các bệnh thực tế (dạ dày, xương khớp, thần kinh...).
+9. **[PHÚC ĐỨC & TÂM LINH]**: Mồ mả tổ tiên có động không? Có duyên âm hay vong theo không?
+
+### � ĐẠI VẬN 10 NĂM & TIỂU HẠN ${namXem}:
+
+* Xu hướng cuộc đời trong 10 năm tới: Đi lên hay đi xuống?
+* **Diễn biến 12 tháng Âm lịch:** Đánh dấu màu **Xanh 🟢 (Tốt)**, **Vàng 🟡 (Trung bình)**, **Đỏ � (Xấu)** cho từng tháng kèm sự kiện cụ thể.
+
+### 💡 LỜI KHUYÊN & LỘ TRÌNH CẢI VẬN:
+
+* Sửa đổi tính cách nào để thành công?
+* **Hành động thực tế:** Làm thiện nguyện kiểu gì? Thờ cúng ai?
+* **Mẹo Phong thủy:** Đặt vật phẩm gì, ở vị trí nào để hóa giải vận hạn xấu nhất trong năm.
 
 ---
-*Bạn có thể hỏi tiếp chi tiết về bất kỳ cung hoặc lĩnh vực nào.*
 
-## DATA LÁ SỐ:
+**DỮ LIỆU ĐƯƠNG SỐ:**
 `;
                 window._currentTuViRawdata = prompt + JSON.stringify(compact, null, 2);
                 btnRawdata.style.display = 'inline-flex';

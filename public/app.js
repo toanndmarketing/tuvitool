@@ -507,7 +507,7 @@
                 }
 
                 // Build rawdata prompt chuyên nghiệp
-                // Build rawdata prompt chuyên nghiệp v8.0 (Master Prompt - Loaded from file)
+                // Build rawdata prompt chuyên nghiệp v9.0 (Master Prompt - Loaded from file)
                 (async () => {
                     try {
                         const promptResp = await fetch('/prompts/tuvi_master.v9.prompt?v=9.0');

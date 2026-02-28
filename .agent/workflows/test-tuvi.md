@@ -2,78 +2,33 @@
 description: Chạy test Tử Vi full analysis với data chuẩn Nguyễn Đức Toàn, output ra JSON + Markdown
 ---
 
-# Test Tử Vi Full Analysis
+# 🧪 Workflow Test Luận Giải Tử Vi
 
-## Thông tin test data
+Workflow này giúp kiểm tra tính ổn định và chất lượng luận giải của AI sau khi nâng cấp Prompt.
 
-| Trường | Giá trị |
-|---|---|
-| Họ tên | Nguyễn Đức Toàn |
-| Ngày sinh DL | 28/01/1991 |
-| Giờ sinh | Ngọ (11h-13h) - index 6 |
-| Giới tính | Nam |
-| Năm xem | 2026 |
-| Mệnh | Lộ Bàng Thổ |
-| Cục | Thổ ngũ cục (5) |
-| Cung Mệnh | Mùi (index 7) |
-| Thuận/Nghịch | THUẬN |
+## Các bước thực hiện
 
-## Data chuẩn để verify
+1. **Chuẩn bị file test**: Đảm bảo file `server/test-tuvi-toan.js` tồn tại với data mẫu của đương số Nguyễn Đức Toàn.
+// turbo
+2. **Rebuild Container**: Đồng bộ code mới vào Docker container.
 
-- File gốc: `data/TEST_CHUAN_NGUYEN_DUC_TOAN.md`
-- 14 Chính tinh verified ✓
-- Tứ Hóa gốc (Can Canh) + Lưu Tứ Hóa (Can Bính) verified ✓
-- Đại Vận hiện tại: Tuất (ĐIỀN TRẠCH) 35-44 tuổi ✓
-- Tiểu Vận 2026: Dần (TẬT ÁCH) ✓
-
-## Các bước chạy test
-
-### 1. Copy test script vào container
+   ```powershell
+   docker compose build tuvi-app; docker compose up -d
+   ```
 
 // turbo
+3. **Chạy Test**: Thực thi script test trong môi trường Docker.
 
-```
-docker cp .agent/scripts/test-tuvi-full.js tuvi-la-so:/app/test-tuvi-full.js
-```
+   ```powershell
+   docker compose exec tuvi-app node server/test-tuvi-toan.js
+   ```
 
-### 2. Chạy test trong Docker
+4. **Kiểm tra kết quả**: AI phải trả về bản luận giải có đủ các phần:
+   - Nhân dạng (Nốt ruồi, vết sẹo).
+   - Âm phần, mộ phần (Cung Phúc Đức).
+   - Tai nạn đích danh (Cung Tật ÁCH).
+   - Vận hạn 12 tháng năm 2026.
 
-// turbo
+## Kết quả lưu trữ
 
-```
-docker exec -w /app tuvi-la-so node test-tuvi-full.js
-```
-
-### 3. Copy kết quả ra local
-
-// turbo
-
-```
-docker cp tuvi-la-so:/app/data/test-output.json data/test-output.json; docker cp tuvi-la-so:/app/data/test-output.md data/test-output.md
-```
-
-### 4. Mở file kết quả
-
-Sau khi chạy xong, kiểm tra 2 file:
-
-- `data/test-output.json` — Data thô JSON đầy đủ
-- `data/test-output.md` — Báo cáo Markdown dễ đọc
-
-## Output bao gồm
-
-| Module | Nội dung |
-|---|---|
-| P1 | Sao Lưu Niên (Tang Môn, Bạch Hổ, Điếu Khách, Hồng Loan, Đào Hoa, Thiên Hỷ, Hoả Tinh, Linh Tinh) |
-| P2 | Lưu Tứ Hóa luận giải theo từng cung |
-| P3 | Trigger Logic - Hung tinh chồng overlay (severity + multiplier) |
-| P4 | Lưu Thái Tuế tương tác (Đại Vận, Tiểu Vận conflicts) |
-| P5 | Nguyệt Hạn 12 tháng (energy 0-100, level, Hóa Lộc/Kỵ flags) |
-| P6 | Energy Score Dashboard (Tài chính, Sức khỏe, Tình cảm, Overall) |
-| Events | Event Scanner + 31 rules (RS, H, RC, C + EXTRA) |
-| Patterns | Star Patterns detection |
-
-## Troubleshooting
-
-- Nếu lỗi `Cannot find module`: Kiểm tra container `tuvi-la-so` đang chạy (`docker ps`)
-- Nếu module undefined: Copy lại source files vào container trước khi test
-- Nếu cần rebuild: `docker compose up -d --build` tại `d:\Project\tu-vi-la-so`
+Kết quả sau khi chạy được lưu tại: `server/test_output_nguyen_duc_toan.md` trong container (và máy host nếu có mount volume).

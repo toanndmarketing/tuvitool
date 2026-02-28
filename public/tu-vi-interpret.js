@@ -1411,7 +1411,12 @@ const TuViInterpret = (function () {
         getAiInterpretation,
         renderAiAnalysis,
         analyzeVanHan,
-        buildPrevYearSummary
+        buildPrevYearSummary,
+        setData: function (data) {
+            _saoData = data.sao || {};
+            _cungData = data.cung || {};
+            _specialData = data.special || {};
+        }
     };
 })();
 

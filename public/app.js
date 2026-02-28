@@ -507,57 +507,26 @@
                 }
 
                 // Build rawdata prompt chuyên nghiệp
-                // Build rawdata prompt chuyên nghiệp v8.0 (Master Prompt)
-                const prompt = `**Vai trò:** Bạn là chuyên gia Tử Vi Đẩu Số hàng đầu với 30 năm kinh nghiệm thực chiến. Hãy phân tích lá số dựa trên dữ liệu JSON/Thông tin được cung cấp dưới đây.
+                // Build rawdata prompt chuyên nghiệp v8.0 (Master Prompt - Loaded from file)
+                (async () => {
+                    try {
+                        const promptResp = await fetch('/prompts/tuvi_master.v8.prompt?v=8.0');
+                        let promptTemplate = await promptResp.text();
 
-**Nguyên tắc luận giải (Bắt buộc):**
+                        // Replace placeholders
+                        const promptMerged = promptTemplate
+                            .replace(/{{hoTen}}/g, hoTen)
+                            .replace(/{{CUNG_ORDER}}/g, CUNG_ORDER.join(' → '))
+                            .replace(/{{namXem}}/g, namXem);
 
-1. **Ngôn ngữ:** Bình dân, thực tế, lược bỏ 90% thuật ngữ Hán Việt. Nếu dùng từ chuyên môn (như Hóa Kỵ, Thiên Không...) phải mở ngoặc giải thích ngay ý nghĩa thực tế (ví dụ: thị phi, mất tiền, tai nạn...).
-2. **Thái độ:** Sắc sảo, đanh thép, nói thẳng vào điểm xấu để đương số phòng tránh. KHÔNG dùng từ nước đôi như "có thể", "có lẽ".
-3. **Cấu trúc 5 lớp cho mỗi cung:**
-   - Hiện trạng (Đang thế nào?)
-   - Tiềm ẩn (Cái gì sắp đến?)
-   - Nghiệp lực (Nợ đời/Quả báo)
-   - Quan hệ 2 bên gia đình (Nhà đẻ vs Nhà phối ngẫu)
-   - Vận hạn thực tế năm nay.
-
-# 🔮 BẢN ĐỒ VẬN MỆNH CHI TIẾT: ${hoTen}
-
-### ⭐ TỔNG QUAN: (Tính cách thực & Biến cố lớn nhất năm)
-
-* Nhận diện nhân dạng: Nốt ruồi, vết sẹo, vóc dáng.
-* Khẳng định 01 biến cố quan trọng nhất trong năm nay (Ví dụ: Hạn nhà cửa, hạn mất tiền, hay hạn sức khỏe).
-
-### 🏛️ LUẬN GIẢI 12 KHÍA CẠNH CUỘC ĐỜI: (Thứ tự: ${CUNG_ORDER.join(' → ')})
-
-*(Trình bày bằng bảng biểu hoặc gạch đầu dòng rõ ràng)*
-
-1. **[BẢN THÂN]**: Tính cách thật (không phải thứ họ thể hiện ra ngoài).
-2. **[GIA ĐÌNH ĐẺ & ANH EM]**: Sự hỗ trợ thực tế hay chỉ là gánh nặng?
-3. **[HÔN NHÂN & PHỐI NGẪU]**: Chồng/Vợ là người thế nào? Ai nắm quyền? Quan hệ với bố mẹ chồng/vợ (Nàng dâu - Mẹ chồng) có "sóng ngầm" không?
-4. **[CON CÁI]**: Số lượng, giới tính, đứa nào hợp/khắc? Tài năng thực tế là gì?
-5. **[CÔNG VIỆC & SỰ NGHIỆP]**: Nghề nghiệp hiện tại có đúng số không? Có nên chuyển việc hay mở rộng kinh doanh năm nay không?
-6. **[TIỀN BẠC]**: Tiền đến từ đâu và "chảy" đi đâu? Ai là người gây hao tài cho bạn?
-7. **[NHÀ ĐẤT - ĐIỀN TRẠCH]**: (Phân tích kỹ nếu có hạn Kỵ Trùng Phùng). Có nên mua bán, sửa sang hay chung đụng đất cát không? Tỷ lệ rủi ro pháp lý/tranh chấp.
-8. **[SỨC KHỎE]**: Cảnh báo các bệnh thực tế (dạ dày, xương khớp, thần kinh...).
-9. **[PHÚC ĐỨC & TÂM LINH]**: Mồ mả tổ tiên có động không? Có duyên âm hay vong theo không?
-
-### � ĐẠI VẬN 10 NĂM & TIỂU HẠN ${namXem}:
-
-* Xu hướng cuộc đời trong 10 năm tới: Đi lên hay đi xuống?
-* **Diễn biến 12 tháng Âm lịch:** Đánh dấu màu **Xanh 🟢 (Tốt)**, **Vàng 🟡 (Trung bình)**, **Đỏ � (Xấu)** cho từng tháng kèm sự kiện cụ thể.
-
-### 💡 LỜI KHUYÊN & LỘ TRÌNH CẢI VẬN:
-
-* Sửa đổi tính cách nào để thành công?
-* **Hành động thực tế:** Làm thiện nguyện kiểu gì? Thờ cúng ai?
-* **Mẹo Phong thủy:** Đặt vật phẩm gì, ở vị trí nào để hóa giải vận hạn xấu nhất trong năm.
-
----
-
-**DỮ LIỆU ĐƯƠNG SỐ:**
-`;
-                window._currentTuViRawdata = prompt + JSON.stringify(compact, null, 2);
+                        window._currentTuViRawdata = promptMerged + JSON.stringify(compact, null, 2);
+                        btnRawdata.style.display = 'inline-flex';
+                    } catch (promptErr) {
+                        console.warn('[Rawdata] Could not load prompt file, using fallback');
+                        window._currentTuViRawdata = "DATA LÁ SỐ:\n" + JSON.stringify(compact, null, 2);
+                        btnRawdata.style.display = 'inline-flex';
+                    }
+                })();
                 btnRawdata.style.display = 'inline-flex';
             } catch (e) {
                 console.warn('[Rawdata] Error building rawdata:', e);

@@ -510,7 +510,7 @@
                 // Build rawdata prompt chuyên nghiệp v9.0 (Master Prompt - Loaded from file)
                 (async () => {
                     try {
-                        const promptResp = await fetch('/prompts/tuvi_master.v9.prompt?v=9.0');
+                        const promptResp = await fetch('/prompts/tuvi_master.v10.prompt?v=10.0');
                         let promptTemplate = await promptResp.text();
 
                         // Replace placeholders

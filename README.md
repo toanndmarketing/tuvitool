@@ -9,6 +9,7 @@
 - ✅ **Phân tích AI** - Tích hợp Google Gemini AI để phân tích sâu (yêu cầu đăng nhập)
 - ✅ **Xác thực người dùng** - Hệ thống đăng nhập bảo mật
 - ✅ **Giao diện thân thiện** - UI hiện đại, dễ sử dụng
+- ✅ **Trường phái đa dạng** - Kết hợp Nam Phái, Bắc Phái (Tứ Hóa) và Khâm Thiên Môn ([Chi tiết](ASTROLOGY_METHODOLOGY.md))
 
 ## 🛠️ Tech Stack
 

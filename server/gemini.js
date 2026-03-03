@@ -265,7 +265,7 @@ function buildPrompt(data) {
 
     let systemInstruction = '';
     try {
-        const promptPath = path.join(__dirname, 'prompts', 'tuvi_system.v9.prompt');
+        const promptPath = path.join(__dirname, 'prompts', 'tuvi_system.v10.prompt');
         systemInstruction = fs.readFileSync(promptPath, 'utf8');
 
         // Replace placeholders

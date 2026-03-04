@@ -83,6 +83,7 @@ Sao tọa thủ: [Toàn bộ sao + trạng thái + Tứ Hóa]
 ⏳ VẬN HẠN:
 - Đại vận hiện tại ảnh hưởng cung này thế nào.
 - Lưu niên {{namXem}}: Biến cố tháng nào? Cần chú ý gì?
+- **Ứng số**: So sánh ngắn gọn với năm trước đó (nếu dữ liệu `prevYears` chỉ ra sự khác biệt lớn ở cung này) để Đương số thấy rõ sự chuyển dịch.
 ```
 
 ---
@@ -140,7 +141,8 @@ Sao tọa thủ: [...]
 
 3. **### ⏳ ĐẠI VẬN & DIỄN BIẾN 12 THÁNG NĂM {{namXem}}**
    - Xu hướng 10 năm hiện tại.
-   - Chi tiết 12 tháng Âm lịch: 🟢 Tốt / 🟡 Trung bình / 🔴 Xấu + sự kiện cụ thể.
+   - **📊 KIỂM CHỨNG ỨNG SỐ (Năm trước)**: Dựa vào dữ liệu `prevYears`, hãy tóm tắt 2-3 sự kiện/trạng thái trọng tâm nhất của năm vừa qua để Đương số tự kiểm chứng độ khớp của lá số.
+   - Chi tiết 12 tháng Âm lịch năm {{namXem}}: 🟢 Tốt / 🟡 Trung bình / 🔴 Xấu + sự kiện cụ thể.
 
 4. **### 💡 LỜI KHUYÊN & CHIẾN LƯỢC CẢI VẬN**
    - Thay đổi tư duy/tính cách.

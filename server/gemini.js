@@ -22,7 +22,7 @@ if (!GEMINI_API_KEY) {
  * Prompt version — tăng khi thay đổi prompt format/structure
  * Cache cũ sẽ tự động bị miss khi version thay đổi
  */
-const PROMPT_VERSION = 'v9.0';
+const PROMPT_VERSION = 'v11.0';
 
 /**
  * Tạo cache key dựa trên cấu trúc "DNA" của lá số
@@ -265,7 +265,7 @@ function buildPrompt(data) {
 
     let systemInstruction = '';
     try {
-        const promptPath = path.join(__dirname, 'prompts', 'tuvi_system.v10.prompt');
+        const promptPath = path.join(__dirname, 'prompts', 'tuvi_system.v11.prompt');
         systemInstruction = fs.readFileSync(promptPath, 'utf8');
 
         // Replace placeholders

@@ -51,15 +51,15 @@
     });
 
     // =====================
-    // DATE TOGGLE LOGIC
+    // DATE SYNC LOGIC
     // =====================
-    const dateTypeRadios = document.querySelectorAll('input[name="dateType"]');
-    const solarInputGroup = document.getElementById('solarInputGroup');
-    const lunarInputGroup = document.getElementById('lunarInputGroup');
-    const lunarPreview = document.getElementById('lunarPreview');
     const solarDaySelect = document.getElementById('solarDay');
     const solarMonthSelect = document.getElementById('solarMonth');
     const solarYearInput = document.getElementById('solarYear');
+    const lDayInput = document.getElementById('lDay');
+    const lMonthInput = document.getElementById('lMonth');
+    const lYearInput = document.getElementById('lYear');
+    const lLeapCheckbox = document.getElementById('lLeap');
 
     // Populate day options (1-31)
     for (let d = 1; d <= 31; d++) {
@@ -68,49 +68,133 @@
         opt.textContent = d < 10 ? '0' + d : d;
         solarDaySelect.appendChild(opt);
     }
-    solarDaySelect.value = '19';
 
-    // Populate month options (1-12)
+    // Populate solar month options (1-12) - Only numbers
     for (let m = 1; m <= 12; m++) {
         const opt = document.createElement('option');
         opt.value = m;
-        opt.textContent = 'Tháng ' + (m < 10 ? '0' + m : m);
+        opt.textContent = m < 10 ? '0' + m : m;
         solarMonthSelect.appendChild(opt);
     }
-    solarMonthSelect.value = '8';
 
-    dateTypeRadios.forEach(r => {
-        r.addEventListener('change', function () {
-            if (this.value === 'solar') {
-                solarInputGroup.style.display = 'grid';
-                lunarInputGroup.style.display = 'none';
-            } else {
-                solarInputGroup.style.display = 'none';
-                lunarInputGroup.style.display = 'grid';
-            }
-        });
-    });
+    // Populate lunar day options (1-30)
+    for (let d = 1; d <= 30; d++) {
+        const opt = document.createElement('option');
+        opt.value = d;
+        opt.textContent = d < 10 ? '0' + d : d;
+        lDayInput.appendChild(opt);
+    }
 
-    const updateLunarPreview = () => {
+    // Populate lunar month options (1-12)
+    for (let m = 1; m <= 12; m++) {
+        const opt = document.createElement('option');
+        opt.value = m;
+        opt.textContent = m < 10 ? '0' + m : m;
+        lMonthInput.appendChild(opt);
+    }
+
+    let isSyncing = false;
+
+    const syncSolarToLunar = () => {
+        if (isSyncing) return;
+        isSyncing = true;
         const d = parseInt(solarDaySelect.value);
         const m = parseInt(solarMonthSelect.value);
         const y = parseInt(solarYearInput.value);
-        if (!d || !m || !y) return;
-        const res = AmLich.solarToLunar(d, m, y);
-        lunarPreview.textContent = `Ngày ${res.day}/${res.month}/${res.year}${res.leap ? ' (Nhuận)' : ''}`;
+        if (d && m && y) {
+            const res = AmLich.solarToLunar(d, m, y);
+            // Cập nhật select box Âm lịch
+            lDayInput.value = res.day;
+            lMonthInput.value = res.month;
+            lYearInput.value = res.year;
+            lLeapCheckbox.checked = res.leap === 1;
+        }
+        isSyncing = false;
     };
 
-    solarDaySelect.addEventListener('change', updateLunarPreview);
-    solarMonthSelect.addEventListener('change', updateLunarPreview);
-    solarYearInput.addEventListener('change', updateLunarPreview);
-    solarYearInput.addEventListener('input', updateLunarPreview);
-    updateLunarPreview();
+    const syncLunarToSolar = () => {
+        if (isSyncing) return;
+        isSyncing = true;
+        const ld = parseInt(lDayInput.value);
+        const lm = parseInt(lMonthInput.value);
+        const ly = parseInt(lYearInput.value);
+        const isLeap = lLeapCheckbox.checked;
+        if (ld && lm && ly) {
+            const jd = AmLich.lunarToSolarJd(ld, lm, ly, isLeap ? 1 : 0);
+            const res = AmLich.jdToDate(jd);
+            // Cập nhật select box và input Dương lịch
+            solarDaySelect.value = res[0];
+            solarMonthSelect.value = res[1];
+            solarYearInput.value = res[2];
+        }
+        isSyncing = false;
+    };
+
+    // Attach listeners
+    [solarDaySelect, solarMonthSelect, solarYearInput].forEach(el => {
+        el.addEventListener('change', syncSolarToLunar);
+    });
+    solarYearInput.addEventListener('input', syncSolarToLunar);
+
+    [lDayInput, lMonthInput, lYearInput, lLeapCheckbox].forEach(el => {
+        el.addEventListener('change', syncLunarToSolar);
+    });
+    [lDayInput, lMonthInput, lYearInput].forEach(el => {
+        el.addEventListener('input', syncLunarToSolar);
+    });
+
+    // Populate initial default if not provided by URL
+    const setDefaultValues = () => {
+        solarDaySelect.value = '19';
+        solarMonthSelect.value = '8';
+        solarYearInput.value = '2004';
+        syncSolarToLunar();
+    };
+
+    // =====================
+    // URL STATE LOGIC
+    // =====================
+    const updateUrlFromForm = () => {
+        const params = new URLSearchParams();
+        params.set('hoTen', document.getElementById('hoTen').value);
+        params.set('gioiTinh', document.getElementById('gioiTinh').value);
+        params.set('ngay', solarDaySelect.value);
+        params.set('thang', solarMonthSelect.value);
+        params.set('nam', solarYearInput.value);
+        params.set('gioSinh', document.getElementById('gioSinh').value);
+        params.set('namXem', document.getElementById('namXem').value);
+
+        const newUrl = window.location.pathname + '?' + params.toString();
+        window.history.pushState({ path: newUrl }, '', newUrl);
+    };
+
+    const loadFormFromUrl = () => {
+        const params = new URLSearchParams(window.location.search);
+        if (params.has('hoTen')) {
+            document.getElementById('hoTen').value = params.get('hoTen');
+            document.getElementById('gioiTinh').value = params.get('gioiTinh');
+            solarDaySelect.value = params.get('ngay');
+            solarMonthSelect.value = params.get('thang');
+            solarYearInput.value = params.get('nam');
+            document.getElementById('gioSinh').value = params.get('gioSinh');
+            document.getElementById('namXem').value = params.get('namXem');
+
+            // Sync lunar side
+            syncSolarToLunar();
+            return true;
+        }
+
+        // No URL params, use defaults
+        setDefaultValues();
+        return false;
+    };
 
     // =====================
     // EVENT HANDLERS
     // =====================
     form.addEventListener('submit', function (e) {
         e.preventDefault();
+        updateUrlFromForm();
         generateChart();
     });
 
@@ -259,31 +343,18 @@
             const gioiTinh = document.getElementById('gioiTinh').value;
             const gioSinh = parseInt(document.getElementById('gioSinh').value);
             const namXem = parseInt(document.getElementById('namXem').value);
-            const dateType = document.querySelector('input[name="dateType"]:checked').value;
 
-            let ngay, thang, nam, isLunar, isLeap;
-            let jd;
+            const ngay = parseInt(document.getElementById('solarDay').value);
+            const thang = parseInt(document.getElementById('solarMonth').value);
+            const nam = parseInt(document.getElementById('solarYear').value);
 
-            if (dateType === 'solar') {
-                ngay = parseInt(document.getElementById('solarDay').value);
-                thang = parseInt(document.getElementById('solarMonth').value);
-                nam = parseInt(document.getElementById('solarYear').value);
-                if (!ngay || !thang || !nam) {
-                    alert('Vui lòng nhập đầy đủ ngày tháng năm sinh!');
-                    resetButton();
-                    return;
-                }
-                isLunar = false;
-                isLeap = false;
-                jd = AmLich.jdFromDate(ngay, thang, nam);
-            } else {
-                ngay = parseInt(document.getElementById('lDay').value);
-                thang = parseInt(document.getElementById('lMonth').value);
-                nam = parseInt(document.getElementById('lYear').value);
-                isLeap = document.getElementById('lLeap').checked;
-                isLunar = true;
-                jd = AmLich.lunarToSolarJd(ngay, thang, nam, isLeap ? 1 : 0);
+            if (!ngay || !thang || !nam) {
+                alert('Vui lòng nhập đầy đủ ngày tháng năm sinh!');
+                resetButton();
+                return;
             }
+
+            const jd = AmLich.jdFromDate(ngay, thang, nam);
 
             // 2. Chuyển đổi sang object chuẩn của engine
             // Nếu là Solar, engine sẽ tự convert sang Lunar. 
@@ -510,7 +581,7 @@
                 // Build rawdata prompt chuyên nghiệp v9.0 (Master Prompt - Loaded from file)
                 (async () => {
                     try {
-                        const promptResp = await fetch('/prompts/tuvi_master.v10.prompt?v=10.0');
+                        const promptResp = await fetch('/prompts/tuvi_master.v11.prompt?v=11.0');
                         let promptTemplate = await promptResp.text();
 
                         // Replace placeholders
@@ -647,10 +718,16 @@ Dựa trên dữ liệu JSON bên dưới, hãy viết một bản Luận giải
         btnSubmit.disabled = false;
     }
 
-    // Auto-fill defaults
+    // Auto-fill defaults & Load from URL
     document.addEventListener('DOMContentLoaded', function () {
         const currentYear = new Date().getFullYear();
         document.getElementById('namXem').value = currentYear;
+
+        // Nếu có URL params, tự động lập lá số
+        if (loadFormFromUrl()) {
+            console.log('[App] Detected URL params, auto-generating chart...');
+            generateChart();
+        }
     });
 
 })();

@@ -135,12 +135,17 @@ Sao tọa thủ: [...]
    - Mỗi cung: ✅ Cát → ❌ Hung → 🔍 Tổng hợp → ⏳ Vận hạn.
    - Không giới hạn độ dài. Phải chi tiết, sâu sắc.
 
-3. **### ⏳ ĐẠI VẬN & DIỄN BIẾN 12 THÁNG NĂM {{namXem}}**
+3. **### 🔍 PHÂN TÍCH GÓC KHUẤT & ĐIỂM NÓNG CUỘC ĐỜI**
+   - **Xác định 2-3 mâu thuẫn lớn nhất**: Kết nối các tinh hệ giữa các cung (ví dụ: Phu Thê hội Khốc Hư hội Tài Bạch có Phục Binh -> Tranh chấp tài sản trong hôn nhân).
+   - **Lý giải "Tại sao?"**: Dùng logic sao để giải thích hành vi (ví dụ: "Tại sao chồng thờ ơ?", "Tại sao tiền bạc thất thoát?").
+   - **Chiến lược "Quản trị rủi ro"**: Đưa ra hành động cụ thể về Pháp lý, Tài chính hoặc Tâm lý để giải quyết mâu thuẫn đó.
+
+4. **### ⏳ ĐẠI VẬN & DIỄN BIẾN 12 THÁNG NĂM {{namXem}}**
    - Xu hướng 10 năm hiện tại.
-   - **📊 KIỂM CHỨNG ỨNG SỐ (Năm trước)**: Dựa vào dữ liệu `prevYears`, hãy tóm tắt 2-3 sự kiện/trạng thái trọng tâm nhất của năm vừa qua để Đương số tự kiểm chứng độ khớp của lá số.
+   - **📊 KIỂM CHỨNG & ỨNG SỐ (Năm trước)**: Dựa vào dữ liệu `prevYears`, hãy tóm tắt 2-3 sự kiện/trạng thái trọng tâm nhất của năm vừa qua để Đương số tự kiểm chứng độ khớp của lá số.
    - Chi tiết 12 tháng Âm lịch năm {{namXem}}: 🟢 Tốt / 🟡 Trung bình / 🔴 Xấu + sự kiện cụ thể.
 
-4. **### 💡 LỜI KHUYÊN & CHIẾN LƯỢC CẢI VẬN**
+5. **### 💡 LỜI KHUYÊN & CHIẾN LƯỢC CẢI VẬN**
    - Thay đổi tư duy/tính cách.
    - Hành động: Thiện nguyện, thờ cúng, phong thủy (vật phẩm, màu sắc, hướng).
 

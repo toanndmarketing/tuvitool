@@ -274,6 +274,34 @@ app.post('/api/interpret/ai', aiLimiter, requireAuth, async (req, res) => {
     }
 });
 
+
+// --- Kinh Dịch: Gieo Quẻ ---
+const { cast: castHexagram } = require('./iching/hexagramService');
+
+const ichingLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 30,
+    message: { error: 'Quá nhiều yêu cầu gieo quẻ, thử lại sau.' }
+});
+
+app.post('/api/iching/cast', ichingLimiter, (req, res) => {
+    try {
+        const method = req.body?.method || 'coin';
+        const throws = Number(req.body?.throws) || 3;
+        if (method !== 'coin') {
+            return res.status(400).json({ error: 'Chỉ hỗ trợ phương thức "coin"' });
+        }
+        if (![3, 6].includes(throws)) {
+            return res.status(400).json({ error: 'throws phải là 3 (3 đồng xu) hoặc 6 (6 đồng xu)' });
+        }
+        const result = castHexagram({ method, throws });
+        res.json(result);
+    } catch (err) {
+        console.error('[IChing] Cast error:', err.message);
+        res.status(500).json({ error: 'Lỗi khi gieo quẻ: ' + err.message });
+    }
+});
+
 // --- Health check ---
 app.get('/api/health', (req, res) => {
     res.json({
@@ -281,6 +309,11 @@ app.get('/api/health', (req, res) => {
         timestamp: new Date().toISOString(),
         geminiConfigured: !!process.env.GEMINI_API_KEY
     });
+});
+
+// --- Kinh Dịch page ---
+app.get('/iching', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'iching.html'));
 });
 
 // --- Fallback: serve index.html ---

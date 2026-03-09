@@ -6,7 +6,7 @@ const path = require('path');
 
 // Load hexagram data (expects JSON file defined by ICHING_DATA_PATH env var)
 function loadHexagrams() {
-    const dataPath = process.env.ICHING_DATA_PATH || path.resolve(__dirname, '../../../data/iching/hexagrams.json');
+    const dataPath = process.env.ICHING_DATA_PATH || path.resolve(__dirname, '../../data/iching/hexagrams.json');
     if (!fs.existsSync(dataPath)) {
         throw new Error(`Hexagram data file not found at ${dataPath}`);
     }

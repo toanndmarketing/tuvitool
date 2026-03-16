@@ -430,6 +430,9 @@
             const chartHtml = TuViRender.render(lasoData, hoTen);
             chartWrapper.innerHTML = chartHtml;
 
+            // Khởi tạo soi cung đối diện & tam hợp
+            TuViRender.initSoiCung();
+
             // Tinh Hệ Mệnh section (sau chart, trước interpretation)
             if (typeof TuViRender.renderTinhHe === 'function') {
                 const tinhHeHtml = TuViRender.renderTinhHe(lasoData);

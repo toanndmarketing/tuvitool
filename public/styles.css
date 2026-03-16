@@ -831,6 +831,134 @@ body {
 }
 
 /* =====================
+   SOI CUNG ĐỐI DIỆN & TAM HỢP
+   ===================== */
+.center-cell {
+    position: relative;
+}
+
+.soi-cung-svg {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 10;
+    opacity: 0;
+    transition: opacity 0.25s ease;
+    overflow: visible;
+}
+
+.palace-cell {
+    transition: box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.palace-cell.palace-active {
+    box-shadow: inset 0 0 0 2px #FF6B4A, 0 0 12px rgba(255, 107, 74, 0.3);
+    z-index: 5;
+}
+
+.palace-cell.palace-highlight-doi {
+    box-shadow: inset 0 0 0 2px #FF6B4A, 0 0 8px rgba(255, 107, 74, 0.2);
+}
+
+.palace-cell.palace-highlight-tam {
+    box-shadow: inset 0 0 0 2px #38BDF8, 0 0 8px rgba(56, 189, 248, 0.2);
+}
+
+/* =====================
+   STAR TOOLTIP (hover mô tả sao)
+   ===================== */
+.star-tooltip-wrap {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.star-tooltip {
+    display: none;
+    position: absolute;
+    bottom: calc(100% + 6px);
+    left: 50%;
+    transform: translateX(-50%);
+    width: max-content;
+    max-width: 14rem;
+    padding: 8px 10px;
+    background: #1a1a2e;
+    color: #e0e0e0;
+    font-size: 0.68rem;
+    font-weight: 400;
+    font-style: normal;
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    border-radius: 6px;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.4);
+    z-index: 60;
+    pointer-events: none;
+    white-space: normal;
+}
+
+/* Arrow */
+.star-tooltip::after {
+    content: '';
+    position: absolute;
+    top: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    border: 5px solid transparent;
+    border-top-color: #1a1a2e;
+}
+
+/* Show on hover */
+.star-tooltip-wrap:hover .star-tooltip {
+    display: block;
+}
+
+/* Mobile: show on tap/active */
+@media (hover: none) {
+    .star-tooltip-wrap:active .star-tooltip {
+        display: block;
+    }
+}
+
+/* Tooltip positioned below (for top-row cells) */
+.star-tooltip.tooltip-below {
+    bottom: auto;
+    top: calc(100% + 6px);
+}
+
+.star-tooltip.tooltip-below::after {
+    top: auto;
+    bottom: 100%;
+    border-top-color: transparent;
+    border-bottom-color: #1a1a2e;
+}
+
+/* Tooltip bold star name */
+.star-tooltip b {
+    color: #fbbf24;
+}
+
+/* Cung tooltip */
+.cung-tooltip-wrap {
+    position: relative;
+    display: inline-block;
+    cursor: help;
+}
+
+.cung-tooltip-wrap:hover .star-tooltip {
+    display: block;
+}
+
+@media (hover: none) {
+    .cung-tooltip-wrap:active .star-tooltip {
+        display: block;
+    }
+}
+
+/* =====================
    INTERPRETATION
    ===================== */
 .interpretation-section {

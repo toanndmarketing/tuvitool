@@ -66,6 +66,59 @@ const TuViRender = (function () {
     }
 
     /**
+     * Render sao với tooltip mô tả
+     * @param {boolean} isTopRow - true nếu ô thuộc hàng trên cùng (tooltip hiện xuống dưới)
+     */
+    function renderStarWithTooltip(sao, cssClass, isTopRow) {
+        const desc = (typeof STAR_DESCRIPTIONS !== 'undefined') ? STAR_DESCRIPTIONS[sao.name] : null;
+        const starText = `${sao.name}${getHoaSuffixHtml(sao)}`;
+        if (!desc) {
+            return `<span class="${cssClass}">${starText}</span>`;
+        }
+        const tipCls = isTopRow ? 'star-tooltip tooltip-below' : 'star-tooltip';
+        const tooltipContent = `<b>${sao.name}</b> — ${desc.nguHanh} | ${desc.loai}<br>${desc.moTa}`;
+        return `<span class="star-tooltip-wrap"><span class="${cssClass}">${starText}</span><span class="${tipCls}">${tooltipContent}</span></span>`;
+    }
+
+    /**
+     * Render tooltip cho tên cung
+     */
+    function renderCungTooltip(cungName, isTopRow) {
+        const desc = (typeof CUNG_DESCRIPTIONS !== 'undefined') ? CUNG_DESCRIPTIONS[cungName] : null;
+        if (!desc) {
+            return `<span class="palace-name">${cungName}</span>`;
+        }
+        const tipCls = isTopRow ? 'star-tooltip tooltip-below' : 'star-tooltip';
+        return `<span class="cung-tooltip-wrap"><span class="palace-name">${cungName}</span><span class="${tipCls}"><b>${cungName}</b><br>${desc}</span></span>`;
+    }
+
+    /**
+     * Render tooltip cho Trường Sinh
+     */
+    function renderTruongSinhTooltip(truongSinh, isTopRow) {
+        if (!truongSinh) return '';
+        const desc = (typeof TRUONG_SINH_DESCRIPTIONS !== 'undefined') ? TRUONG_SINH_DESCRIPTIONS[truongSinh] : null;
+        if (!desc) {
+            return `<span class="palace-truongsinh">${truongSinh}</span>`;
+        }
+        const tipCls = isTopRow ? 'star-tooltip tooltip-below' : 'star-tooltip';
+        return `<span class="cung-tooltip-wrap"><span class="palace-truongsinh">${truongSinh}</span><span class="${tipCls}"><b>${truongSinh}</b><br>${desc}</span></span>`;
+    }
+
+    /**
+     * Render tooltip cho Tuần/Triệt
+     */
+    function renderTuanTrietTooltip(type, label, isTopRow) {
+        const desc = (typeof TUAN_TRIET_DESCRIPTIONS !== 'undefined') ? TUAN_TRIET_DESCRIPTIONS[type] : null;
+        const cls = type === 'Triệt' ? 'marker-triet' : 'marker-tuan';
+        if (!desc) {
+            return `<span class="${cls}">${label}</span>`;
+        }
+        const tipCls = isTopRow ? 'star-tooltip tooltip-below' : 'star-tooltip';
+        return `<span class="cung-tooltip-wrap"><span class="${cls}">${label}</span><span class="${tipCls}">${desc}</span></span>`;
+    }
+
+    /**
      * Render một ô cung (palace cell) with explicit grid placement
      */
     function renderPalaceCell(chiIndex, lasoData) {
@@ -76,6 +129,7 @@ const TuViRender = (function () {
         const cungThanPos = lasoData.cungThanPos;
 
         const placement = GRID_PLACEMENT[chiIndex];
+        const isTopRow = placement.row === 1;
         const cungName = cungMap[chiIndex] || '';
         const truongSinh = truongSinhMap[chiIndex] || '';
         const thangNum = THANG_MAP[chiIndex];
@@ -96,7 +150,8 @@ const TuViRender = (function () {
         // Header
         html += `<div class="palace-header">`;
         html += `<span class="palace-dizhi">${prefix}</span>`;
-        html += `<span class="palace-name">${cungName}${isThan ? ' &lt;THÂN&gt;' : ''}</span>`;
+        const thanLabel = isThan ? ' &lt;THÂN&gt;' : '';
+        html += renderCungTooltip(cungName, isTopRow) + thanLabel;
         html += `<span class="palace-number"></span>`;
         html += `</div>`;
 
@@ -104,7 +159,7 @@ const TuViRender = (function () {
         if (chinhTinh.length > 0) {
             html += `<div class="palace-main-stars">`;
             chinhTinh.forEach(s => {
-                html += `<span class="star-main">${s.name}${getHoaSuffixHtml(s)}</span> `;
+                html += renderStarWithTooltip(s, 'star-main', isTopRow) + ' ';
             });
             html += `</div>`;
         }
@@ -117,7 +172,7 @@ const TuViRender = (function () {
                 for (let j = i; j < Math.min(i + 2, phuTinh.length); j++) {
                     const s = phuTinh[j];
                     const cls = getSaoClass(s);
-                    html += `<span class="star-item ${cls}">${s.name}${getHoaSuffixHtml(s)}</span>`;
+                    html += renderStarWithTooltip(s, `star-item ${cls}`, isTopRow);
                 }
                 html += `</div>`;
             }
@@ -128,12 +183,12 @@ const TuViRender = (function () {
         html += `<div class="palace-footer">`;
         html += `<span>${CHI_NAMES[chiIndex]}</span>`;
         let markers = '';
-        if (truongSinh) markers += `<span class="palace-truongsinh">${truongSinh}</span>`;
+        if (truongSinh) markers += renderTruongSinhTooltip(truongSinh, isTopRow);
         html += markers;
 
         let footerRight = `Tháng ${thangNum}`;
-        if (isTuan) footerRight += ` <span class="marker-tuan">Tuần</span>`;
-        if (isTriet) footerRight += ` <span class="marker-triet">Triệt</span>`;
+        if (isTuan) footerRight += ` ${renderTuanTrietTooltip('Tuần', 'Tuần', isTopRow)}`;
+        if (isTriet) footerRight += ` ${renderTuanTrietTooltip('Triệt', 'Triệt', isTopRow)}`;
         html += `<span>${footerRight}</span>`;
 
         html += `</div>`;
@@ -211,6 +266,10 @@ const TuViRender = (function () {
 
         html += `</div>`; // center-menh-info
         html += `</div>`; // center-info
+
+        // SVG overlay cho soi cung
+        html += `<svg class="soi-cung-svg" id="soiCungSvg"></svg>`;
+
         html += `</div>`; // center-cell
 
         return html;
@@ -370,9 +429,161 @@ const TuViRender = (function () {
         return html;
     }
 
+    // =====================
+    // SOI CUNG ĐỐI DIỆN & TAM HỢP
+    // =====================
+
+    // Nhóm Tam Hợp theo Địa Chi index
+    const TAM_HOP = [
+        [2, 6, 10],  // Dần-Ngọ-Tuất
+        [8, 0, 4],   // Thân-Tý-Thìn
+        [5, 9, 1],   // Tỵ-Dậu-Sửu
+        [11, 3, 7]   // Hợi-Mão-Mùi
+    ];
+
+    function getDoiCung(chiIndex) {
+        return (chiIndex + 6) % 12;
+    }
+
+    function getTamHop(chiIndex) {
+        for (const group of TAM_HOP) {
+            if (group.includes(chiIndex)) {
+                return group.filter(c => c !== chiIndex);
+            }
+        }
+        return [];
+    }
+
+    /**
+     * Khởi tạo tính năng soi cung
+     * Gọi sau khi chart đã render vào DOM
+     */
+    function initSoiCung() {
+        const chartGrid = document.querySelector('.chart-grid');
+        const svg = document.getElementById('soiCungSvg');
+        if (!chartGrid || !svg) return;
+
+        let activeCell = null;
+
+        function drawLines(chiIndex) {
+            svg.innerHTML = '';
+            const centerCell = chartGrid.querySelector('.center-cell');
+            if (!centerCell) return;
+
+            const centerRect = centerCell.getBoundingClientRect();
+            const cx = centerRect.width / 2;
+            const cy = centerRect.height / 2;
+
+            const doiCung = getDoiCung(chiIndex);
+            const tamHop = getTamHop(chiIndex);
+
+            // Vẽ lines tới 4 cung: active + đối cung (cam), 2 tam hợp (xanh)
+            const targets = [
+                { chi: chiIndex, color: '#FF6B4A' },
+                { chi: doiCung, color: '#FF6B4A' },
+                { chi: tamHop[0], color: '#38BDF8' },
+                { chi: tamHop[1], color: '#38BDF8' }
+            ];
+
+            targets.forEach(t => {
+                const targetCell = chartGrid.querySelector(`.palace-cell[data-cung="${t.chi}"]`);
+                if (!targetCell) return;
+
+                const targetRect = targetCell.getBoundingClientRect();
+                // Toạ độ tâm target relative to center-cell
+                const tx = (targetRect.left + targetRect.width / 2) - centerRect.left;
+                const ty = (targetRect.top + targetRect.height / 2) - centerRect.top;
+
+                const line = document.createElementNS('http://www.w3.org/2000/svg', 'line');
+                line.setAttribute('x1', cx);
+                line.setAttribute('y1', cy);
+                line.setAttribute('x2', tx);
+                line.setAttribute('y2', ty);
+                line.setAttribute('stroke', t.color);
+                line.setAttribute('stroke-width', '2');
+                line.setAttribute('stroke-opacity', '0.85');
+                line.setAttribute('stroke-linecap', 'round');
+                svg.appendChild(line);
+            });
+
+            svg.style.opacity = '1';
+        }
+
+        function clearLines() {
+            svg.innerHTML = '';
+            svg.style.opacity = '0';
+            if (activeCell) {
+                activeCell.classList.remove('palace-active');
+                // Clear related highlights
+                chartGrid.querySelectorAll('.palace-highlight-doi, .palace-highlight-tam').forEach(el => {
+                    el.classList.remove('palace-highlight-doi', 'palace-highlight-tam');
+                });
+                activeCell = null;
+            }
+        }
+
+        function highlightCells(chiIndex) {
+            const doiCung = getDoiCung(chiIndex);
+            const tamHop = getTamHop(chiIndex);
+
+            const doiCell = chartGrid.querySelector(`.palace-cell[data-cung="${doiCung}"]`);
+            if (doiCell) doiCell.classList.add('palace-highlight-doi');
+
+            tamHop.forEach(chi => {
+                const cell = chartGrid.querySelector(`.palace-cell[data-cung="${chi}"]`);
+                if (cell) cell.classList.add('palace-highlight-tam');
+            });
+        }
+
+        // Event delegation
+        chartGrid.addEventListener('mouseenter', function (e) {
+            const cell = e.target.closest('.palace-cell');
+            if (!cell) return;
+            const chi = parseInt(cell.dataset.cung, 10);
+            if (isNaN(chi)) return;
+
+            clearLines();
+            activeCell = cell;
+            cell.classList.add('palace-active');
+            highlightCells(chi);
+            drawLines(chi);
+        }, true);
+
+        chartGrid.addEventListener('mouseleave', function (e) {
+            const cell = e.target.closest('.palace-cell');
+            if (!cell) return;
+            // Check if we're leaving to another palace cell
+            const related = e.relatedTarget ? e.relatedTarget.closest('.palace-cell') : null;
+            if (!related) {
+                clearLines();
+            }
+        }, true);
+
+        // Mobile: tap toggle
+        chartGrid.addEventListener('click', function (e) {
+            if (window.matchMedia('(hover: none)').matches) {
+                const cell = e.target.closest('.palace-cell');
+                if (!cell) { clearLines(); return; }
+                const chi = parseInt(cell.dataset.cung, 10);
+                if (isNaN(chi)) return;
+
+                if (activeCell === cell) {
+                    clearLines();
+                } else {
+                    clearLines();
+                    activeCell = cell;
+                    cell.classList.add('palace-active');
+                    highlightCells(chi);
+                    drawLines(chi);
+                }
+            }
+        });
+    }
+
     return {
         render,
         renderDaiVanTimeline,
-        renderTinhHe
+        renderTinhHe,
+        initSoiCung
     };
 })();

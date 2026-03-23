@@ -16,3 +16,8 @@ data/
 .amazonq/
 .github/copilot/
 .kittify/.dashboard
+
+# Ignore CLI test outputs
+server/cli_result_*.md
+server/cli_output.md
+tuvi_lt_data.json

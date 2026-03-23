@@ -114,3 +114,4 @@ output += `\n\`\`\`\n`;
 
 console.log(output);
 fs.writeFileSync(path.join(__dirname, 'cli_output.md'), output);
+process.exit(0);

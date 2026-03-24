@@ -284,6 +284,36 @@ const ichingLimiter = rateLimit({
     message: { error: 'Quá nhiều yêu cầu gieo quẻ, thử lại sau.' }
 });
 
+// --- Soi Bài 52 Lá ---
+const soiBai = require('./soi-bai');
+
+const soiBaiLimiter = rateLimit({
+    windowMs: 1 * 60 * 1000,
+    max: 30,
+    message: { error: 'Quá nhiều yêu cầu soi bài, thử lại sau.' }
+});
+
+app.post('/api/soi-bai/draw', soiBaiLimiter, (req, res) => {
+    try {
+        const { count, name, year, gender, topic } = req.body;
+        const result = soiBai.performSoiBai({ count, name, year, gender, topic });
+        res.json(result);
+    } catch (err) {
+        console.error('[SoiBai] Draw error:', err.message);
+        res.status(500).json({ error: 'Lỗi khi soi bài: ' + err.message });
+    }
+});
+
+app.get('/api/soi-bai/decode/:suit/:rank', (req, res) => {
+    try {
+        const { suit, rank } = req.params;
+        const result = soiBai.getCardMeaning({ suit, rank });
+        res.json(result);
+    } catch (err) {
+        res.status(404).json({ error: 'Không tìm thấy lá bài' });
+    }
+});
+
 app.post('/api/iching/cast', ichingLimiter, (req, res) => {
     try {
         const method = req.body?.method || 'coin';
@@ -314,6 +344,11 @@ app.get('/api/health', (req, res) => {
 // --- Kinh Dịch page ---
 app.get('/iching', (req, res) => {
     res.sendFile(path.join(__dirname, '..', 'public', 'iching.html'));
+});
+
+// --- Soi Bài page ---
+app.get('/soi-bai', (req, res) => {
+    res.sendFile(path.join(__dirname, '..', 'public', 'soi-bai.html'));
 });
 
 // --- Fallback: serve index.html ---

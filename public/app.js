@@ -612,9 +612,17 @@
             if (isTwin && profileB) {
                 state.results.B = await buildResultForProfile(profileB, profileA, namXem);
                 state.raw.B = state.results.B.raw;
-            }
 
-            window._currentTuViRawdata = { A: state.raw.A, B: state.raw.B || '' };
+                const combinedRaw = `====================================================\n` +
+                                    `       BÁO CÁO TỬ VI SINH ĐÔI (A VÀ B)\n` +
+                                    `====================================================\n\n` +
+                                    `>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${state.raw.A}\n\n` +
+                                    `----------------------------------------------------\n` +
+                                    `>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${state.raw.B}`;
+                window._currentTuViRawdata = { A: combinedRaw, B: combinedRaw };
+            } else {
+                window._currentTuViRawdata = { A: state.raw.A, B: '' };
+            }
 
             renderChart('A');
             if (isTwin && state.results.B) renderChart('B');
@@ -773,7 +781,7 @@
                 h.textContent = isTSH
                     ? 'Raw Data - Thần Số Học'
                     : (state.mode === 'twin'
-                        ? `Raw Data - Tử Vi (${key === 'A' ? 'Đương Số A' : 'Đương Số B'})`
+                        ? `Raw Data - Tử Vi (Cặp Sinh Đôi A & B)`
                         : 'Raw Data - Tử Vi');
             }
             els.rawModal.style.display = 'flex';

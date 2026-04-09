@@ -4716,3 +4716,57 @@ body {
         display: none !important;
     }
 }
+
+/* Custom Radio Styles */
+.twin-order-title {
+    font-weight: 500;
+    color: var(--text-secondary);
+    margin-bottom: 8px;
+    display: block !important;
+    font-size: 0.85rem !important;
+}
+
+.custom-radio {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    font-size: 0.9rem;
+    color: var(--text-primary);
+    position: relative;
+    user-select: none;
+}
+
+.custom-radio input[type="radio"] {
+    display: none;
+}
+
+.custom-radio .radio-mark {
+    width: 18px;
+    height: 18px;
+    border-radius: 50%;
+    border: 2px solid var(--text-muted);
+    background: var(--bg-primary);
+    position: relative;
+    transition: all 0.2s ease;
+}
+
+.custom-radio:hover .radio-mark {
+    border-color: var(--accent-purple);
+}
+
+.custom-radio input[type="radio"]:checked + .radio-mark {
+    border-color: var(--accent-purple);
+}
+
+.custom-radio input[type="radio"]:checked + .radio-mark::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--accent-purple);
+}

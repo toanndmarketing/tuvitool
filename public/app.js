@@ -1,736 +1,823 @@
-/**
- * ============================================
- * APP.JS - Điều phối chính
- * Kết nối form → API → render → AI
- * Hỗ trợ 2 tab: Tử Vi + Thần Số Học
- * ============================================
- */
-
 (function () {
     'use strict';
 
-    const form = document.getElementById('tuViForm');
-    const inputSection = document.getElementById('inputSection');
-    const resultsSection = document.getElementById('resultsSection');
-    const chartWrapper = document.getElementById('chartWrapper');
-    const interpretationContent = document.getElementById('interpretationContent');
-    const tshContainer = document.getElementById('tshContainer');
-    const btnBack = document.getElementById('btnBack');
-    const btnPrint = document.getElementById('btnPrint');
-    const btnSubmit = document.getElementById('btnSubmit');
-    const btnRawdata = document.getElementById('btnRawdata');
-    const rawdataModal = document.getElementById('rawdataModal');
-    const rawdataTextarea = document.getElementById('rawdataTextarea');
-    const rawdataCopyBtn = document.getElementById('rawdataCopyBtn');
-    const rawdataCloseBtn = document.getElementById('rawdataCloseBtn');
+    const $ = (id) => document.getElementById(id);
+    const toInt = (v) => parseInt(v, 10);
+    const pad2 = (n) => String(n).padStart(2, '0');
 
-    // Tab elements
-    const tabBtns = document.querySelectorAll('.tab-btn');
-    const tabContents = document.querySelectorAll('.tab-content');
+    const state = {
+        mode: 'single',
+        activeMainTab: 'tuvi',
+        activeProfile: 'A',
+        results: { A: null, B: null },
+        aiLoading: { A: false, B: false },
+        aiResult: { A: null, B: null },
+        raw: { A: '', B: '' },
+        promptTemplate: '',
+        bManualOverride: false
+    };
 
-    // =====================
-    // TAB SWITCHING
-    // =====================
-    tabBtns.forEach(btn => {
-        btn.addEventListener('click', function () {
-            const targetTab = this.dataset.tab;
+    const els = {
+        form: $('tuViForm'),
+        inputSection: $('inputSection'),
+        resultsSection: $('resultsSection'),
+        twinMode: $('twinMode'),
+        namXem: $('namXem'),
+        profileB: $('profileCardB'),
+        twinTabs: $('twinResultsTabs'),
+        chartA: $('chartWrapperA'),
+        chartB: $('chartWrapperB'),
+        tinhHe: $('tinhHeWrapper'),
+        interp: $('interpretationContent'),
+        tsh: $('tshContainer'),
+        btnSubmit: $('btnSubmit'),
+        btnBack: $('btnBack'),
+        btnPrint: $('btnPrint'),
+        btnDownload: $('btnDownload'),
+        btnRaw: $('btnRawdata'),
+        tabTSH: $('tabTSH'),
+        rawModal: $('rawdataModal'),
+        rawText: $('rawdataTextarea'),
+        rawCopy: $('rawdataCopyBtn'),
+        rawClose: $('rawdataCloseBtn')
+    };
 
-            // Update active button
-            tabBtns.forEach(b => b.classList.remove('active'));
-            this.classList.add('active');
+    const tabBtns = Array.from(document.querySelectorAll('.tab-btn'));
+    const tabContents = Array.from(document.querySelectorAll('.tab-content'));
+    const twinBtns = Array.from(document.querySelectorAll('.twin-tab-btn'));
+    const syncers = {};
 
-            // Update active content
-            tabContents.forEach(tc => tc.classList.remove('active'));
-            const targetContent = document.querySelector(`[data-tab-content="${targetTab}"]`);
-            if (targetContent) {
-                targetContent.classList.add('active');
-                // Smooth scroll to top of results
-                targetContent.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    const A_SOURCE_FIELDS = [
+        'hoTenA', 'gioiTinhA',
+        'solarDayA', 'solarMonthA', 'solarYearA',
+        'birthHourA', 'birthMinuteA'
+    ];
+    const B_MANUAL_FIELDS = [
+        'hoTenB', 'gioiTinhB',
+        'solarDayB', 'solarMonthB', 'solarYearB',
+        'lDayB', 'lMonthB', 'lYearB', 'lLeapB',
+        'birthHourB', 'birthMinuteB'
+    ];
+
+    function canhFromHourMinute(hour, minute) {
+        if (!Number.isInteger(hour) || hour < 0 || hour > 23) {
+            throw new Error('Giờ sinh phải từ 0-23');
+        }
+        if (!Number.isInteger(minute) || minute < 0 || minute > 59) {
+            throw new Error('Phút sinh phải từ 0-59');
+        }
+        if (hour === 23) return 0;
+        return Math.floor((hour + 1) / 2) % 12;
+    }
+
+    function hourFromCanh(canh) {
+        if (canh === 0) return 23;
+        return canh * 2 - 1;
+    }
+
+    function populateDateOptions(suffix) {
+        const sd = $('solarDay' + suffix);
+        const sm = $('solarMonth' + suffix);
+        const ld = $('lDay' + suffix);
+        const lm = $('lMonth' + suffix);
+
+        if (sd.options.length > 0) return;
+
+        for (let i = 1; i <= 31; i++) {
+            sd.add(new Option(pad2(i), String(i)));
+        }
+        for (let i = 1; i <= 12; i++) {
+            sm.add(new Option(pad2(i), String(i)));
+        }
+        for (let i = 1; i <= 30; i++) {
+            ld.add(new Option(pad2(i), String(i)));
+        }
+        for (let i = 1; i <= 12; i++) {
+            lm.add(new Option(pad2(i), String(i)));
+        }
+    }
+
+    function bindSolarLunarSync(suffix) {
+        const sd = $('solarDay' + suffix);
+        const sm = $('solarMonth' + suffix);
+        const sy = $('solarYear' + suffix);
+        const ld = $('lDay' + suffix);
+        const lm = $('lMonth' + suffix);
+        const ly = $('lYear' + suffix);
+        const leap = $('lLeap' + suffix);
+
+        let lock = false;
+
+        const solarToLunar = () => {
+            if (lock) return;
+            lock = true;
+            const d = toInt(sd.value);
+            const m = toInt(sm.value);
+            const y = toInt(sy.value);
+            if (d && m && y) {
+                const r = AmLich.solarToLunar(d, m, y);
+                ld.value = String(r.day);
+                lm.value = String(r.month);
+                ly.value = String(r.year);
+                leap.checked = r.leap === 1;
             }
-        });
-    });
+            lock = false;
+        };
 
-    // =====================
-    // DATE SYNC LOGIC
-    // =====================
-    const solarDaySelect = document.getElementById('solarDay');
-    const solarMonthSelect = document.getElementById('solarMonth');
-    const solarYearInput = document.getElementById('solarYear');
-    const lDayInput = document.getElementById('lDay');
-    const lMonthInput = document.getElementById('lMonth');
-    const lYearInput = document.getElementById('lYear');
-    const lLeapCheckbox = document.getElementById('lLeap');
-
-    // Populate day options (1-31)
-    for (let d = 1; d <= 31; d++) {
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = d < 10 ? '0' + d : d;
-        solarDaySelect.appendChild(opt);
-    }
-
-    // Populate solar month options (1-12) - Only numbers
-    for (let m = 1; m <= 12; m++) {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m < 10 ? '0' + m : m;
-        solarMonthSelect.appendChild(opt);
-    }
-
-    // Populate lunar day options (1-30)
-    for (let d = 1; d <= 30; d++) {
-        const opt = document.createElement('option');
-        opt.value = d;
-        opt.textContent = d < 10 ? '0' + d : d;
-        lDayInput.appendChild(opt);
-    }
-
-    // Populate lunar month options (1-12)
-    for (let m = 1; m <= 12; m++) {
-        const opt = document.createElement('option');
-        opt.value = m;
-        opt.textContent = m < 10 ? '0' + m : m;
-        lMonthInput.appendChild(opt);
-    }
-
-    let isSyncing = false;
-
-    const syncSolarToLunar = () => {
-        if (isSyncing) return;
-        isSyncing = true;
-        const d = parseInt(solarDaySelect.value);
-        const m = parseInt(solarMonthSelect.value);
-        const y = parseInt(solarYearInput.value);
-        if (d && m && y) {
-            const res = AmLich.solarToLunar(d, m, y);
-            // Cập nhật select box Âm lịch
-            lDayInput.value = res.day;
-            lMonthInput.value = res.month;
-            lYearInput.value = res.year;
-            lLeapCheckbox.checked = res.leap === 1;
-        }
-        isSyncing = false;
-    };
-
-    const syncLunarToSolar = () => {
-        if (isSyncing) return;
-        isSyncing = true;
-        const ld = parseInt(lDayInput.value);
-        const lm = parseInt(lMonthInput.value);
-        const ly = parseInt(lYearInput.value);
-        const isLeap = lLeapCheckbox.checked;
-        if (ld && lm && ly) {
-            const jd = AmLich.lunarToSolarJd(ld, lm, ly, isLeap ? 1 : 0);
-            const res = AmLich.jdToDate(jd);
-            // Cập nhật select box và input Dương lịch
-            solarDaySelect.value = res[0];
-            solarMonthSelect.value = res[1];
-            solarYearInput.value = res[2];
-        }
-        isSyncing = false;
-    };
-
-    // Attach listeners
-    [solarDaySelect, solarMonthSelect, solarYearInput].forEach(el => {
-        el.addEventListener('change', syncSolarToLunar);
-    });
-    solarYearInput.addEventListener('input', syncSolarToLunar);
-
-    [lDayInput, lMonthInput, lYearInput, lLeapCheckbox].forEach(el => {
-        el.addEventListener('change', syncLunarToSolar);
-    });
-    [lDayInput, lMonthInput, lYearInput].forEach(el => {
-        el.addEventListener('input', syncLunarToSolar);
-    });
-
-    // Populate initial default if not provided by URL
-    const setDefaultValues = () => {
-        solarDaySelect.value = '19';
-        solarMonthSelect.value = '8';
-        solarYearInput.value = '2004';
-        syncSolarToLunar();
-    };
-
-    // =====================
-    // URL STATE LOGIC
-    // =====================
-    const updateUrlFromForm = () => {
-        const params = new URLSearchParams();
-        params.set('hoTen', document.getElementById('hoTen').value);
-        params.set('gioiTinh', document.getElementById('gioiTinh').value);
-        params.set('ngay', solarDaySelect.value);
-        params.set('thang', solarMonthSelect.value);
-        params.set('nam', solarYearInput.value);
-        params.set('gioSinh', document.getElementById('gioSinh').value);
-        params.set('namXem', document.getElementById('namXem').value);
-
-        const newUrl = window.location.pathname + '?' + params.toString();
-        window.history.pushState({ path: newUrl }, '', newUrl);
-    };
-
-    const loadFormFromUrl = () => {
-        const params = new URLSearchParams(window.location.search);
-        if (params.has('hoTen')) {
-            document.getElementById('hoTen').value = params.get('hoTen');
-            document.getElementById('gioiTinh').value = params.get('gioiTinh');
-            solarDaySelect.value = params.get('ngay');
-            solarMonthSelect.value = params.get('thang');
-            solarYearInput.value = params.get('nam');
-            document.getElementById('gioSinh').value = params.get('gioSinh');
-            document.getElementById('namXem').value = params.get('namXem');
-
-            // Sync lunar side
-            syncSolarToLunar();
-            return true;
-        }
-
-        // No URL params, use defaults
-        setDefaultValues();
-        return false;
-    };
-
-    // =====================
-    // EVENT HANDLERS
-    // =====================
-    form.addEventListener('submit', function (e) {
-        e.preventDefault();
-        updateUrlFromForm();
-        generateChart();
-    });
-
-    btnBack.addEventListener('click', function () {
-        resultsSection.style.display = 'none';
-        inputSection.style.display = 'block';
-        window.scrollTo({ top: 0, behavior: 'smooth' });
-    });
-
-    btnPrint.addEventListener('click', function () {
-        window.print();
-    });
-
-    // Rawdata Modal
-    btnRawdata.addEventListener('click', function () {
-        const activeBtn = document.querySelector('.tab-btn.active');
-        if (!activeBtn) {
-            console.warn('[Rawdata] No active tab button found');
-            return;
-        }
-
-        const activeTab = activeBtn.dataset.tab;
-        let data = '';
-        let title = '';
-
-        console.log('[Rawdata] Clicked. Active Tab:', activeTab);
-
-        if (activeTab === 'tuvi') {
-            data = window._currentTuViRawdata;
-            title = '📋 Raw Data - Lá Số Tử Vi';
-        } else if (activeTab === 'thanSoHoc') {
-            data = window._currentTSHRawdata;
-            title = '📋 Raw Data - Thần Số Học';
-        }
-
-        if (data) {
-            rawdataTextarea.value = data;
-            const titleEl = document.querySelector('.rawdata-modal-header h3');
-            if (titleEl) titleEl.textContent = title;
-            rawdataModal.style.display = 'flex';
-            rawdataTextarea.scrollTop = 0;
-        } else {
-            console.warn('[Rawdata] No data available for tab:', activeTab);
-            alert('Vui lòng đợi hệ thống tính toán xong dữ liệu cho tab này.');
-        }
-    });
-
-    rawdataCloseBtn.addEventListener('click', function () {
-        rawdataModal.style.display = 'none';
-    });
-
-    rawdataModal.addEventListener('click', function (e) {
-        if (e.target === rawdataModal) rawdataModal.style.display = 'none';
-    });
-
-    rawdataCopyBtn.addEventListener('click', function () {
-        rawdataTextarea.select();
-        navigator.clipboard.writeText(rawdataTextarea.value).then(() => {
-            rawdataCopyBtn.textContent = '✅ Đã copy!';
-            setTimeout(() => { rawdataCopyBtn.textContent = '📋 Copy'; }, 2000);
-        }).catch(() => {
-            document.execCommand('copy');
-            rawdataCopyBtn.textContent = '✅ Đã copy!';
-            setTimeout(() => { rawdataCopyBtn.textContent = '📋 Copy'; }, 2000);
-        });
-    });
-
-    // Download chart as image
-    const btnDownload = document.getElementById('btnDownload');
-    if (btnDownload) {
-        btnDownload.addEventListener('click', async function () {
-            const chartEl = document.querySelector('.chart-grid');
-            if (!chartEl) {
-                alert('Không tìm thấy vùng dữ liệu lá số');
-                return;
+        const lunarToSolar = () => {
+            if (lock) return;
+            lock = true;
+            const d = toInt(ld.value);
+            const m = toInt(lm.value);
+            const y = toInt(ly.value);
+            if (d && m && y) {
+                const jd = AmLich.lunarToSolarJd(d, m, y, leap.checked ? 1 : 0);
+                const r = AmLich.jdToDate(jd);
+                sd.value = String(r[0]);
+                sm.value = String(r[1]);
+                sy.value = String(r[2]);
             }
+            lock = false;
+        };
 
-            const originalText = btnDownload.innerHTML;
-            btnDownload.innerHTML = '⏳ Đang xử lý...';
-            btnDownload.disabled = true;
+        [sd, sm, sy].forEach((el) => el.addEventListener('change', solarToLunar));
+        sy.addEventListener('input', solarToLunar);
+        [ld, lm, ly, leap].forEach((el) => el.addEventListener('change', lunarToSolar));
+        [ld, lm, ly].forEach((el) => el.addEventListener('input', lunarToSolar));
 
-            try {
-                // Đảm bảo các font đã được load
-                await document.fonts.ready;
+        return {
+            solarToLunar,
+            setDefault: () => {
+                sd.value = '19';
+                sm.value = '8';
+                sy.value = '2004';
+                solarToLunar();
+            }
+        };
+    }
 
-                const canvas = await html2canvas(chartEl, {
-                    scale: 2, // Tăng chất lượng ảnh
-                    useCORS: true,
-                    allowTaint: true,
-                    backgroundColor: '#fffcf2', // Khớp với --chart-bg
-                    logging: false,
-                    onclone: (clonedDoc) => {
-                        // Đảm bảo watermark hiển thị trong bản clone
-                        const centerCell = clonedDoc.querySelector('.center-cell');
-                        if (centerCell) centerCell.style.overflow = 'hidden';
+    function cloneAtoB(force) {
+        if (!els.twinMode.checked) return;
+        if (!force && state.bManualOverride) return;
+
+        $('hoTenB').value = $('hoTenA').value || '';
+        $('gioiTinhB').value = $('gioiTinhA').value || 'nam';
+        $('solarDayB').value = $('solarDayA').value;
+        $('solarMonthB').value = $('solarMonthA').value;
+        $('solarYearB').value = $('solarYearA').value;
+        $('birthHourB').value = $('birthHourA').value;
+        $('birthMinuteB').value = $('birthMinuteA').value;
+        syncers.B.solarToLunar();
+    }
+
+    function bindAutoCloneAtoB() {
+        A_SOURCE_FIELDS.forEach((id) => {
+            const el = $(id);
+            if (!el) return;
+            ['change', 'input'].forEach((evt) => {
+                el.addEventListener(evt, () => cloneAtoB(false));
+            });
+        });
+
+        B_MANUAL_FIELDS.forEach((id) => {
+            const el = $(id);
+            if (!el) return;
+            ['change', 'input'].forEach((evt) => {
+                el.addEventListener(evt, () => {
+                    if (els.twinMode.checked) {
+                        state.bManualOverride = true;
                     }
                 });
-
-                // Watermark text ở góc dưới (phụ trợ cho watermark nền)
-                const ctx = canvas.getContext('2d');
-                ctx.font = 'bold 12px Inter, sans-serif';
-                ctx.fillStyle = 'rgba(0,0,0,0.15)';
-                ctx.textAlign = 'right';
-                ctx.fillText('tuvi.demowebest.site', canvas.width - 20, canvas.height - 20);
-
-                // Chuyển sang Blob để tải file ổn định hơn trên mobile/tablet
-                canvas.toBlob((blob) => {
-                    if (!blob) {
-                        alert('Lỗi tạo dữ liệu ảnh');
-                        return;
-                    }
-                    const url = URL.createObjectURL(blob);
-                    const link = document.createElement('a');
-                    const hoTen = document.getElementById('hoTen').value || 'laso';
-                    const safeName = hoTen.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_');
-                    link.download = `tuvi_${safeName}_${new Date().getTime()}.png`;
-                    link.href = url;
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    URL.revokeObjectURL(url);
-
-                    btnDownload.innerHTML = originalText;
-                    btnDownload.disabled = false;
-                }, 'image/png');
-
-            } catch (err) {
-                console.error('Download error:', err);
-                alert('Có lỗi xảy ra khi tạo ảnh. Vui lòng thử lại hoặc chụp màn hình trực tiếp.');
-                btnDownload.innerHTML = originalText;
-                btnDownload.disabled = false;
-            }
+            });
         });
     }
 
+    function setMode(isTwin) {
+        state.mode = isTwin ? 'twin' : 'single';
+        els.profileB.style.display = isTwin ? 'block' : 'none';
+        els.twinTabs.style.display = isTwin ? 'flex' : 'none';
+        els.tabTSH.style.display = isTwin ? 'none' : 'inline-flex';
 
-    async function generateChart() {
-        btnSubmit.innerHTML = '<span class="btn-icon">⏳</span><span>Đang tính toán...</span>';
-        btnSubmit.disabled = true;
+        if (isTwin) {
+            state.bManualOverride = false;
+            cloneAtoB(true);
+            setMainTab('tuvi');
+        }
+    }
+
+    function setMainTab(tab) {
+        state.activeMainTab = tab;
+        tabBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.tab === tab));
+        tabContents.forEach((c) => c.classList.toggle('active', c.dataset.tabContent === tab));
+        if (tab === 'tuvi') ensureAiForActiveProfile();
+    }
+
+    function setProfileTab(key) {
+        state.activeProfile = key;
+        twinBtns.forEach((btn) => btn.classList.toggle('active', btn.dataset.baby === key));
+        els.chartA.style.display = key === 'A' ? 'block' : 'none';
+        els.chartB.style.display = key === 'B' ? 'block' : 'none';
+        renderActiveInterpretation();
+        ensureAiForActiveProfile();
+    }
+
+    function resetSubmitBtn() {
+        els.btnSubmit.innerHTML = '<span class="btn-icon">✨</span><span>Lập Lá Số</span>';
+        els.btnSubmit.disabled = false;
+    }
+
+    function loadingSubmitBtn() {
+        els.btnSubmit.innerHTML = '<span class="btn-icon">⏳</span><span>Đang tính toán...</span>';
+        els.btnSubmit.disabled = true;
+    }
+
+    function collectProfile(key) {
+        const day = toInt($('solarDay' + key).value);
+        const month = toInt($('solarMonth' + key).value);
+        const year = toInt($('solarYear' + key).value);
+        const hour = toInt($('birthHour' + key).value);
+        const minute = toInt($('birthMinute' + key).value);
+        const fullName = ($('hoTen' + key).value || '').trim();
+        const gender = $('gioiTinh' + key).value || 'nam';
+
+        if (!day || !month || !year) {
+            throw new Error('Thiếu ngày sinh Đương Số ' + key);
+        }
+        if (!fullName) {
+            throw new Error('Thiếu họ tên Đương Số ' + key);
+        }
+
+        const canh = canhFromHourMinute(hour, minute);
+        const dateObj = new Date(year, month - 1, day, hour, minute, 0, 0);
+
+        return {
+            key,
+            label: key === 'A' ? 'Đương Số A' : 'Đương Số B',
+            fullName,
+            gender,
+            day,
+            month,
+            year,
+            hour,
+            minute,
+            birthTimeExact: `${pad2(hour)}:${pad2(minute)}`,
+            canhOriginal: canh,
+            canhResolved: canh,
+            dateObj
+        };
+    }
+
+    function applyTwinCanhResolution(a, b) {
+        if (!b) return;
+        // Bỏ tà thuật Dịch Giờ. Cả 2 giữ nguyên giờ gốc.
+        a.canhResolved = a.canhOriginal;
+        b.canhResolved = b.canhOriginal;
+    }
+
+    function buildTwinMeta(self, other, isTwinB_SameGender) {
+        if (!other) return null;
+        const minuteDelta = Math.abs(Math.round((self.dateObj.getTime() - other.dateObj.getTime()) / 60000));
+        let birthOrder = 'dong_thoi_diem';
+        if (self.dateObj.getTime() < other.dateObj.getTime()) {
+            birthOrder = self.key + '_truoc';
+        } else if (self.dateObj.getTime() > other.dateObj.getTime()) {
+            birthOrder = other.key + '_truoc';
+        } else {
+            birthOrder = self.key === 'A' ? 'A_truoc_mac_dinh' : 'B_sau_mac_dinh';
+        }
+        return {
+            birthTimeExact: self.birthTimeExact,
+            gioSinhIndex: self.canhOriginal,
+            gioSinhIndexResolved: self.canhResolved,
+            minuteDelta,
+            sameGender: self.gender === other.gender,
+            isDiCung: isTwinB_SameGender || false,
+            birthOrder
+        };
+    }
+
+    function updateUrl() {
+        const p = new URLSearchParams();
+        p.set('mode', els.twinMode.checked ? 'twin' : 'single');
+        p.set('namXem', els.namXem.value || String(new Date().getFullYear()));
+
+        ['A', 'B'].forEach((k) => {
+            if (k === 'B' && !els.twinMode.checked) return;
+            p.set(`${k.toLowerCase()}_name`, $('hoTen' + k).value || '');
+            p.set(`${k.toLowerCase()}_gender`, $('gioiTinh' + k).value || 'nam');
+            p.set(`${k.toLowerCase()}_ngay`, $('solarDay' + k).value);
+            p.set(`${k.toLowerCase()}_thang`, $('solarMonth' + k).value);
+            p.set(`${k.toLowerCase()}_nam`, $('solarYear' + k).value);
+            p.set(`${k.toLowerCase()}_hour`, $('birthHour' + k).value);
+            p.set(`${k.toLowerCase()}_minute`, $('birthMinute' + k).value);
+        });
+
+        history.pushState({}, '', location.pathname + '?' + p.toString());
+    }
+
+    function loadUrl() {
+        const p = new URLSearchParams(location.search);
+        if (!p.toString()) return false;
+
+        els.twinMode.checked = (p.get('mode') || 'single') === 'twin';
+        setMode(els.twinMode.checked);
+        if (p.has('namXem')) els.namXem.value = p.get('namXem') || String(new Date().getFullYear());
+
+        const fillProfile = (k) => {
+            const q = k.toLowerCase() + '_';
+            if (p.has(q + 'name')) $('hoTen' + k).value = p.get(q + 'name') || '';
+            if (p.has(q + 'gender')) $('gioiTinh' + k).value = p.get(q + 'gender') || 'nam';
+            if (p.has(q + 'ngay')) $('solarDay' + k).value = p.get(q + 'ngay');
+            if (p.has(q + 'thang')) $('solarMonth' + k).value = p.get(q + 'thang');
+            if (p.has(q + 'nam')) $('solarYear' + k).value = p.get(q + 'nam');
+            if (p.has(q + 'hour')) $('birthHour' + k).value = p.get(q + 'hour');
+            if (p.has(q + 'minute')) $('birthMinute' + k).value = p.get(q + 'minute');
+        };
+
+        fillProfile('A');
+        if (els.twinMode.checked) fillProfile('B');
+
+        if (!p.has('a_ngay') && p.has('ngay')) {
+            $('solarDayA').value = p.get('ngay') || '19';
+            $('solarMonthA').value = p.get('thang') || '8';
+            $('solarYearA').value = p.get('nam') || '2004';
+            if (p.has('hoTen')) $('hoTenA').value = p.get('hoTen') || '';
+            if (p.has('gioiTinh')) $('gioiTinhA').value = p.get('gioiTinh') || 'nam';
+            if (p.has('gioSinh')) $('birthHourA').value = String(hourFromCanh(toInt(p.get('gioSinh'))));
+        }
+
+        syncers.A.solarToLunar();
+        if (els.twinMode.checked) {
+            syncers.B.solarToLunar();
+        }
+        return true;
+    }
+
+    async function loadPromptTemplate() {
+        if (state.promptTemplate) return state.promptTemplate;
+        const resp = await fetch('/prompts/tuvi_master.v11.prompt?v=11.0');
+        state.promptTemplate = await resp.text();
+        return state.promptTemplate;
+    }
+
+    function applyEnhancements(lasoData) {
+        if (typeof TuViDaiVanHoa !== 'undefined' && lasoData.daiVanHienTai) {
+            try {
+                lasoData.daiVanTuHoa = TuViDaiVanHoa.calculate(
+                    lasoData.canChiNam.canIndex,
+                    lasoData.daiVanHienTai,
+                    lasoData.saoMap,
+                    lasoData.cungMap
+                );
+                if (lasoData.daiVanTuHoa) {
+                    lasoData.kyTrungPhung = TuViDaiVanHoa.detectKyTrungPhung(lasoData.daiVanTuHoa, lasoData);
+                }
+            } catch (err) {
+                console.warn('[DaiVanTuHoa] Error:', err.message);
+            }
+        }
+
+        if (typeof TuViTinhHe !== 'undefined') {
+            try {
+                lasoData.tinhHeMenh = TuViTinhHe.getTinhHe(lasoData.cungMenhPos, lasoData.saoMap);
+                lasoData.allTinhHe = TuViTinhHe.getAllTinhHe(lasoData.saoMap);
+            } catch (err) {
+                console.warn('[TinhHe] Error:', err.message);
+            }
+        }
+    }
+
+    function buildPrevYears(profile, namXem) {
+        const arr = [];
+        for (let offset = 1; offset <= 3; offset++) {
+            try {
+                const prevLaso = TuViCalc.calculate({
+                    ngay: profile.day,
+                    thang: profile.month,
+                    nam: profile.year,
+                    gioSinh: profile.canhResolved,
+                    gioiTinh: profile.gender,
+                    namXem: namXem - offset
+                });
+                TuViSao.anSao(prevLaso);
+                arr.push(TuViInterpret.buildPrevYearSummary(prevLaso));
+            } catch (err) {
+                console.warn('[PrevYear] Error:', err.message);
+            }
+        }
+        return arr;
+    }
+
+    function buildChartSignature(lasoData) {
+        const saoMap = lasoData.saoMap || {};
+        const sao = Array.from({ length: 12 }, (_, i) => {
+            const list = Array.isArray(saoMap) ? saoMap[i] : saoMap[i];
+            return (list || [])
+                .map((s) => `${s.name}|${s.type}|${s.hoa || ''}|${s.luuHoa || ''}`)
+                .join(',');
+        }).join('||');
+        const truongSinh = Array.from({ length: 12 }, (_, i) => (lasoData.truongSinhMap || {})[i] || '').join('|');
+        const tuan = ((lasoData.tuanTriet || {}).tuan || []).join(',');
+        const triet = ((lasoData.tuanTriet || {}).triet || []).join(',');
+        return [
+            lasoData.cungMenhPos,
+            lasoData.cungThanPos,
+            truongSinh,
+            tuan,
+            triet,
+            sao
+        ].join('::');
+    }
+
+    async function buildResultForProfile(profile, otherProfile, namXem) {
+        const lasoData = TuViCalc.calculate({
+            ngay: profile.day,
+            thang: profile.month,
+            nam: profile.year,
+            gioSinh: profile.canhResolved,
+            gioiTinh: profile.gender,
+            namXem
+        });
+        TuViSao.anSao(lasoData);
+        applyEnhancements(lasoData);
+
+        // --- HỆ THỐNG XỬ LÝ SINH ĐÔI CHUYỂN CUNG ---
+        const isTwinB_SameGender = otherProfile && profile.key === 'B' && (profile.gender === otherProfile.gender);
+        if (isTwinB_SameGender) {
+            // Dịch chuyển Cung Mệnh và Cung Thân sang mượn cung Thiên Di
+            lasoData.cungMenhPos = (lasoData.cungMenhPos + 6) % 12;
+            lasoData.cungThanPos = (lasoData.cungThanPos + 6) % 12;
+            
+            // Vẽ lại tên 12 cung theo Mệnh mới
+            lasoData.cungMap = TuViCalc.anCung(lasoData.cungMenhPos);
+            
+            // Tính lại Đại Vận theo Mệnh mới (Tuổi bắt đầu giữ nguyên theo Cục gốc để bảo toàn tọa độ sao)
+            lasoData.daiVan = TuViCalc.tinhDaiVan(lasoData.cucValue, lasoData.cungMenhPos, lasoData.thuan, lasoData.lunarDate.year);
+            lasoData.daiVanHienTai = TuViCalc.getDaiVanHienTai(lasoData.daiVan, namXem);
+        }
+
+        const prevYears = buildPrevYears(profile, namXem);
+        const interpretation = TuViInterpret.interpret(lasoData);
+        interpretation.prevYear = prevYears[0] || null;
+
+        const chartHtml = TuViRender.render(lasoData, profile.fullName, {
+            chartId: 'baby-' + profile.key,
+            babyLabel: profile.label,
+            birthTimeExact: profile.birthTimeExact
+        });
+        const tinhHeHtml = typeof TuViRender.renderTinhHe === 'function' ? (TuViRender.renderTinhHe(lasoData) || '') : '';
+        const interpretationHtml = TuViInterpret.renderInterpretation(interpretation);
+
+        const lunar = lasoData.lunarDate;
+        const aiPayload = {
+            ...interpretation,
+            name: profile.fullName,
+            dob: `${lunar.day}/${lunar.month}/${lunar.year}${lunar.leap ? ' (Nhuận)' : ''}`,
+            hour: profile.canhResolved,
+            yearView: namXem,
+            tinhHeMenh: lasoData.tinhHeMenh ? `${lasoData.tinhHeMenh.name} (${lasoData.tinhHeMenh.archetype})` : undefined,
+            prevYears
+        };
+
+        const compact = {
+            profile: profile.label,
+            hoTen: profile.fullName,
+            gioiTinh: profile.gender,
+            ngaySinhDL: `${profile.day}/${profile.month}/${profile.year}`,
+            birthTimeExact: profile.birthTimeExact,
+            gioSinhIndex: profile.canhOriginal,
+            gioSinhIndexResolved: profile.canhResolved,
+            amDuong: lasoData.amDuong,
+            menhNapAm: lasoData.menhNapAm,
+            cucName: lasoData.cucName,
+            cungMenh: lasoData.cungMap[lasoData.cungMenhPos],
+            cungThan: lasoData.cungMap[lasoData.cungThanPos],
+            twin: buildTwinMeta(profile, otherProfile, isTwinB_SameGender)
+        };
+
+        let twinContext = "";
+        if (otherProfile && profile.key === 'B') {
+            twinContext = `\n[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là lá số của Đương Số B trong Cặp Sinh Đôi.\n`;
+            if (isTwinB_SameGender) {
+                twinContext += `- Hệ thống áp dụng Di Cung (Mượn cung Thiên Di làm cung Mệnh), giữ nguyên tọa độ 108 sao gốc của Đương Số A. Khi luận hãy so sánh với lá số B, chú ý mối quan hệ anh em đồng giới.\n`;
+            } else {
+                twinContext += `- Hai đương số khác giới tính (Nam/Nữ) nên hệ thống giữ nguyên Mệnh gốc (Không cần Di Cung). Đại vận chạy ngược chiều nhau tạo ra cách cục khác nhau ngay từ đầu.\n`;
+            }
+        }
+
+        let raw;
+        try {
+            const template = await loadPromptTemplate();
+            raw = template
+                .replace(/{{hoTen}}/g, profile.fullName)
+                .replace(/{{CUNG_ORDER}}/g, 'MỆNH -> ...')
+                .replace(/{{namXem}}/g, String(namXem))
+                + twinContext + '\nDATA JSON:\n' + JSON.stringify(compact, null, 2);
+        } catch (err) {
+            raw = twinContext + '\nDATA JSON:\n' + JSON.stringify(compact, null, 2);
+        }
+
+        return {
+            chartHtml,
+            tinhHeHtml,
+            interpretationHtml,
+            aiPayload,
+            raw,
+            signature: buildChartSignature(lasoData)
+        };
+    }
+
+    function renderChart(key) {
+        const wrapper = key === 'A' ? els.chartA : els.chartB;
+        const rs = state.results[key];
+        if (!wrapper || !rs) return;
+        wrapper.innerHTML = rs.chartHtml;
+        const grid = wrapper.querySelector('.chart-grid');
+        if (grid) {
+            TuViRender.initSoiCung({
+                chartGrid: grid,
+                svgId: 'soiCungSvg-baby-' + key
+            });
+        }
+    }
+
+    function renderActiveInterpretation() {
+        const rs = state.results[state.activeProfile];
+        if (!rs) return;
+
+        els.interp.innerHTML = rs.interpretationHtml;
+        els.tinhHe.innerHTML = rs.tinhHeHtml || '';
+        window._currentInterpretation = rs.aiPayload;
+
+        const aiBody = document.getElementById('aiAnalysisBody');
+        if (!aiBody) return;
+        if (state.aiResult[state.activeProfile]) {
+            TuViInterpret.renderAiAnalysis(state.aiResult[state.activeProfile]);
+        } else {
+            aiBody.innerHTML = '<div class="ai-loading"><div class="ai-spinner"></div><p>Sẵn sàng tải phân tích AI</p></div>';
+        }
+    }
+
+    async function ensureAiForActiveProfile() {
+        const key = state.activeProfile;
+        if (state.activeMainTab !== 'tuvi') return;
+        if (!state.results[key]) return;
+        if (state.aiLoading[key] || state.aiResult[key]) return;
+
+        state.aiLoading[key] = true;
+        try {
+            const ai = await TuViInterpret.getAiInterpretation(state.results[key].aiPayload);
+            state.aiResult[key] = ai;
+            if (state.activeProfile === key && state.activeMainTab === 'tuvi') {
+                TuViInterpret.renderAiAnalysis(ai);
+            }
+        } catch (err) {
+            state.aiResult[key] = { error: 'Không thể kết nối AI', fallback: true };
+            if (state.activeProfile === key && state.activeMainTab === 'tuvi') {
+                TuViInterpret.renderAiAnalysis(state.aiResult[key]);
+            }
+        }
+        state.aiLoading[key] = false;
+    }
+
+    function buildTSHRawData(data) {
+        return 'DATA THAN SO HOC:\n' + JSON.stringify(data, null, 2);
+    }
+
+    async function generateCharts() {
+        loadingSubmitBtn();
+        state.results = { A: null, B: null };
+        state.aiResult = { A: null, B: null };
+        state.aiLoading = { A: false, B: false };
+        state.raw = { A: '', B: '' };
+        window._currentTuViRawdata = { A: '', B: '' };
+        window._currentTSHRawdata = '';
 
         try {
             await TuViInterpret.loadInterpretationData();
 
-            // 1. Collect basic input
-            const hoTen = document.getElementById('hoTen').value || 'Không xác định';
-            const gioiTinh = document.getElementById('gioiTinh').value;
-            const gioSinh = parseInt(document.getElementById('gioSinh').value);
-            const namXem = parseInt(document.getElementById('namXem').value);
+            const namXem = toInt(els.namXem.value);
+            const isTwin = els.twinMode.checked;
+            // Khong goi setMode() o day de tranh clone A->B de len du lieu B da sua tay.
+            updateUrl();
 
-            const ngay = parseInt(document.getElementById('solarDay').value);
-            const thang = parseInt(document.getElementById('solarMonth').value);
-            const nam = parseInt(document.getElementById('solarYear').value);
+            const profileA = collectProfile('A');
+            const profileB = isTwin ? collectProfile('B') : null;
 
-            if (!ngay || !thang || !nam) {
-                alert('Vui lòng nhập đầy đủ ngày tháng năm sinh!');
-                resetButton();
+            applyTwinCanhResolution(profileA, profileB);
+
+            state.results.A = await buildResultForProfile(profileA, profileB, namXem);
+            state.raw.A = state.results.A.raw;
+
+            if (isTwin && profileB) {
+                state.results.B = await buildResultForProfile(profileB, profileA, namXem);
+                state.raw.B = state.results.B.raw;
+            }
+
+            window._currentTuViRawdata = { A: state.raw.A, B: state.raw.B || '' };
+
+            renderChart('A');
+            if (isTwin && state.results.B) renderChart('B');
+
+            if (!isTwin) {
+                const tshData = ThanSoHoc.calculate({
+                    day: profileA.day,
+                    month: profileA.month,
+                    year: profileA.year,
+                    fullName: profileA.fullName,
+                    currentYear: namXem
+                });
+                els.tsh.innerHTML = ThanSoHocRender.render(tshData);
+                window._currentTSHRawdata = buildTSHRawData(tshData);
+            } else {
+                els.tsh.innerHTML = '';
+            }
+
+            els.inputSection.style.display = 'none';
+            els.resultsSection.style.display = 'block';
+            els.btnRaw.style.display = 'inline-flex';
+            setMainTab('tuvi');
+            setProfileTab('A');
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        } catch (err) {
+            alert('Lỗi khi tính lá số: ' + err.message);
+        }
+
+        resetSubmitBtn();
+    }
+
+    async function captureChart(grid) {
+        await document.fonts.ready;
+        return html2canvas(grid, {
+            scale: 2,
+            useCORS: true,
+            allowTaint: true,
+            backgroundColor: '#fffcf2',
+            logging: false
+        });
+    }
+
+    function saveCanvas(canvas, name) {
+        canvas.toBlob((blob) => {
+            if (!blob) {
+                alert('Lỗi tạo dữ liệu ảnh');
                 return;
             }
-
-            const jd = AmLich.jdFromDate(ngay, thang, nam);
-
-            // 2. Chuyển đổi sang object chuẩn của engine
-            // Nếu là Solar, engine sẽ tự convert sang Lunar. 
-            // Nếu là Lunar, ta tính JD rồi lát nữa TuViCalc sẽ dùng.
-
-            // ĐỂ ĐẢM BẢO ENGINE ĐÚNG: Ta luôn đưa về Solar date tương ứng
-            const solarParts = AmLich.jdToDate(jd); // [d, m, y]
-            const params = {
-                ngay: solarParts[0],
-                thang: solarParts[1],
-                nam: solarParts[2],
-                gioSinh,
-                gioiTinh,
-                namXem
-            };
-
-            const lasoData = TuViCalc.calculate(params);
-
-
-            // An sao
-            TuViSao.anSao(lasoData);
-
-            // === ĐẠI VẬN TỨ HÓA (Giai đoạn 3: Trung Châu Phái) ===
-            if (typeof TuViDaiVanHoa !== 'undefined' && lasoData.daiVanHienTai) {
-                try {
-                    lasoData.daiVanTuHoa = TuViDaiVanHoa.calculate(
-                        lasoData.canChiNam.canIndex,
-                        lasoData.daiVanHienTai,
-                        lasoData.saoMap,
-                        lasoData.cungMap
-                    );
-                    // Phát hiện Kỵ trùng phùng
-                    if (lasoData.daiVanTuHoa) {
-                        lasoData.kyTrungPhung = TuViDaiVanHoa.detectKyTrungPhung(
-                            lasoData.daiVanTuHoa, lasoData
-                        );
-                    }
-                    console.log('[DaiVanTuHoa] Calculated:', lasoData.daiVanTuHoa);
-                } catch (err) {
-                    console.warn('[DaiVanTuHoa] Error:', err.message);
-                }
-            }
-
-            // === TINH HỆ (Lục Thập Tinh Hệ v1.0) ===
-            if (typeof TuViTinhHe !== 'undefined') {
-                try {
-                    lasoData.tinhHeMenh = TuViTinhHe.getTinhHe(lasoData.cungMenhPos, lasoData.saoMap);
-                    lasoData.allTinhHe = TuViTinhHe.getAllTinhHe(lasoData.saoMap);
-                    console.log('[TinhHe] Mệnh:', lasoData.tinhHeMenh?.name);
-                } catch (err) {
-                    console.warn('[TinhHe] Error:', err.message);
-                }
-            }
-
-            // === TÍNH 3 NĂM TRƯỚC (N-1, N-2, N-3) ĐỂ SO SÁNH ỨNG SỐ ===
-            let prevYearsSummaries = [];
-            for (let offset = 1; offset <= 3; offset++) {
-                try {
-                    const prevParams = { ngay, thang, nam, gioSinh, gioiTinh, namXem: namXem - offset };
-                    const prevLasoData = TuViCalc.calculate(prevParams);
-                    TuViSao.anSao(prevLasoData);
-                    const summary = TuViInterpret.buildPrevYearSummary(prevLasoData);
-                    prevYearsSummaries.push(summary);
-                    console.log('[PrevYear] Đã tính năm', namXem - offset);
-                } catch (err) {
-                    console.warn('[PrevYear] Không tính được năm', namXem - offset, ':', err.message);
-                }
-            }
-            // Backward compat: giữ prevYearSummary = năm gần nhất
-            const prevYearSummary = prevYearsSummaries.length > 0 ? prevYearsSummaries[0] : null;
-
-            // Render chart
-            const chartHtml = TuViRender.render(lasoData, hoTen);
-            chartWrapper.innerHTML = chartHtml;
-
-            // Khởi tạo soi cung đối diện & tam hợp
-            TuViRender.initSoiCung();
-
-            // Tinh Hệ Mệnh section (sau chart, trước interpretation)
-            if (typeof TuViRender.renderTinhHe === 'function') {
-                const tinhHeHtml = TuViRender.renderTinhHe(lasoData);
-                if (tinhHeHtml) {
-                    chartWrapper.insertAdjacentHTML('afterend', tinhHeHtml);
-                }
-            }
-
-            // Generate interpretation (từ API data)
-            const interpretation = TuViInterpret.interpret(lasoData);
-            interpretation.prevYear = prevYearSummary;
-            const interpHtml = TuViInterpret.renderInterpretation(interpretation);
-            interpretationContent.innerHTML = interpHtml;
-
-            // Build rawdata cho nút "Xem Rawdata"
-            try {
-                const DIA_CHI = ["Tý", "Sửu", "Dần", "Mão", "Thìn", "Tỵ", "Ngọ", "Mùi", "Thân", "Dậu", "Tuất", "Hợi"];
-                const HUNG_TINH_NANG = ['Kình Dương', 'Đà La', 'Hoả Tinh', 'Linh Tinh', 'Địa Không', 'Địa Kiếp'];
-                const lunar = lasoData.lunarDate;
-                const lunarDateStr = `Ngày ${lunar.day} tháng ${lunar.month} năm ${lunar.year}${lunar.leap ? ' (Nhuận)' : ''} (${lasoData.canChiNam.full})`;
-                const gioSinhStr = `Giờ ${DIA_CHI[gioSinh]}`;
-                const ngayDL = `${ngay}/${thang}/${nam}`;
-
-                // Thứ tự cung chuẩn Tử Vi
-                const CUNG_ORDER = ['MỆNH', 'HUYNH ĐỆ', 'PHU THÊ', 'TỬ TỨC', 'TÀI BẠCH', 'TẬT ÁCH',
-                    'THIÊN DI', 'NÔ BỘC', 'QUAN LỘC', 'ĐIỀN TRẠCH', 'PHÚC ĐỨC', 'PHỤ MẪU'];
-
-                const compact = {
-                    hoTen: hoTen,
-                    gioiTinh: gioiTinh,
-                    ngaySinhAL: lunarDateStr,
-                    ngaySinhDL: ngayDL,
-                    gioSinh: gioSinhStr,
-                    namXem: namXem,
-                    amDuong: lasoData.amDuong,
-                    menhNapAm: lasoData.menhNapAm,
-                    hanhMenh: lasoData.hanhMenh,
-                    cucName: lasoData.cucName,
-                    cungMenh: lasoData.cungMap[lasoData.cungMenhPos] + ' tại cung ' + DIA_CHI[lasoData.cungMenhPos],
-                    cungThan: lasoData.cungMap[lasoData.cungThanPos] + ' tại cung ' + DIA_CHI[lasoData.cungThanPos],
-                    thuan: lasoData.thuan ? 'Thuận lý' : 'Nghịch lý',
-                    cung: {}
-                };
-
-                // Tinh Hệ Mệnh
-                if (lasoData.tinhHeMenh && lasoData.tinhHeMenh.id !== 'vcd') {
-                    compact.tinhHeMenh = lasoData.tinhHeMenh.name + ' (' + lasoData.tinhHeMenh.archetype + ')';
-                }
-
-                // 12 cung: sao + trạng thái + hoá + TRỌNG SỐ (weight)
-                for (let i = 0; i < 12; i++) {
-                    const pos = (lasoData.cungMenhPos + i) % 12;
-                    const cungName = lasoData.cungMap[pos];
-                    const saoList = lasoData.saoMap[pos] || [];
-
-                    // Tính trọng số cung
-                    let heavyCount = 0;
-                    saoList.forEach(s => {
-                        if (HUNG_TINH_NANG.includes(s.name)) heavyCount++;
-                        if (s.hoa === 'Kỵ') heavyCount++;
-                        if (s.luuHoa === 'Kỵ') heavyCount++;
-                    });
-                    // Tuần/Triệt
-                    if (lasoData.tuanTriet) {
-                        if (lasoData.tuanTriet.triet && lasoData.tuanTriet.triet.indexOf(pos) >= 0) heavyCount++;
-                    }
-
-                    const chinh = saoList.filter(s => s.type === 'chinh').map(s => {
-                        let label = s.name;
-                        const st = typeof TuViStarPatterns !== 'undefined' ? TuViStarPatterns.getStarStatus(s.name, pos) : '';
-                        if (st) label += '(' + st + ')';
-                        if (s.hoa) label += '[' + s.hoa + ']';
-                        if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
-                        return label;
-                    });
-                    const phu = saoList.filter(s => s.type !== 'chinh' && s.type !== 'luu').map(s => {
-                        let label = s.name;
-                        if (s.hoa) label += '[' + s.hoa + ']';
-                        if (s.luuHoa) label += '[Lưu' + s.luuHoa + ']';
-                        return label;
-                    });
-                    const cungEntry = {
-                        chinh: chinh.length > 0 ? chinh.join(', ') : 'Vô Chính Diệu',
-                        phu: phu.join(', ')
-                    };
-                    if (heavyCount >= 3) cungEntry.weight = 'HEAVY';
-                    compact.cung[cungName + ' (' + DIA_CHI[pos] + ')'] = cungEntry;
-                }
-
-                // Đại vận + Tiểu vận
-                const dv = lasoData.daiVanHienTai;
-                const tv = lasoData.tieuVan;
-                if (dv) {
-                    const dvSao = (lasoData.saoMap[dv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
-                    compact.daiVan = {
-                        cung: lasoData.cungMap[dv.cungPos] + ' (' + DIA_CHI[dv.cungPos] + ')',
-                        tuoi: dv.tuoiFrom + ' đến ' + dv.tuoiTo + ' tuổi',
-                        saoChinhTinh: dvSao.join(', ') || 'Vô Chính Diệu'
-                    };
-                }
-                if (tv) {
-                    const tvSao = (lasoData.saoMap[tv.cungPos] || []).filter(s => s.type === 'chinh').map(s => s.name);
-                    compact.tieuVan = {
-                        cung: lasoData.cungMap[tv.cungPos] + ' (' + DIA_CHI[tv.cungPos] + ')',
-                        tuoi: tv.tuoi + ' tuổi',
-                        saoChinhTinh: tvSao.join(', ') || 'Vô Chính Diệu'
-                    };
-                }
-                // Lưu Tứ Hoá
-                if (lasoData.luuTuHoa && lasoData.luuTuHoa.length > 0) {
-                    compact.luuTuHoa = lasoData.luuTuHoa.map(h => h.hoaName + ': ' + h.saoName + ' → ' + lasoData.cungMap[h.cungPos]);
-                }
-                // Đại Vận Tứ Hóa
-                if (lasoData.daiVanTuHoa) {
-                    compact.daiVanTuHoa = {
-                        canDaiVan: lasoData.daiVanTuHoa.canDaiVan,
-                        tuHoa: lasoData.daiVanTuHoa.details.map(d => d.hoaName + ': ' + d.saoName + ' → ' + d.cungName)
-                    };
-                    if (lasoData.kyTrungPhung) {
-                        compact.daiVanTuHoa.kyTrungPhung = lasoData.kyTrungPhung.description;
-                    }
-                }
-
-                // Nguyệt hạn 12 tháng
-                if (interpretation.vanHan && interpretation.vanHan.luuNienAnalysis && interpretation.vanHan.luuNienAnalysis.nguyetHan) {
-                    compact.nguyetHan = interpretation.vanHan.luuNienAnalysis.nguyetHan.map(m => ({
-                        thang: m.thang,
-                        cung: m.cungName,
-                        energy: m.energy,
-                        level: m.level,
-                        chinh: m.chinhTinh ? m.chinhTinh.join(', ') : 'VCĐ',
-                        hoaKy: m.hasHoaKy ? true : undefined
-                    }));
-                }
-
-                // 3 năm trước (tóm tắt điểm nhấn)
-                if (prevYearsSummaries.length > 0) {
-                    compact.ungSo3NamTruoc = prevYearsSummaries.map(s => ({
-                        nam: s.nam,
-                        daiVan: s.daiVan ? s.daiVan.cungName : null,
-                        tieuVan: s.tieuVan ? s.tieuVan.cungName : null,
-                        nangLuong: s.nangLuong ? s.nangLuong.tongHop : null,
-                        suKien: s.suKien ? s.suKien.slice(0, 3) : null,
-                        rating: s.rating || null
-                    }));
-                }
-
-                // Build rawdata prompt chuyên nghiệp
-                // Build rawdata prompt chuyên nghiệp v9.0 (Master Prompt - Loaded from file)
-                (async () => {
-                    try {
-                        const promptResp = await fetch('/prompts/tuvi_master.v11.prompt?v=11.0');
-                        let promptTemplate = await promptResp.text();
-
-                        // Replace placeholders
-                        const promptMerged = promptTemplate
-                            .replace(/{{hoTen}}/g, hoTen)
-                            .replace(/{{CUNG_ORDER}}/g, CUNG_ORDER.join(' → '))
-                            .replace(/{{namXem}}/g, namXem);
-
-                        window._currentTuViRawdata = promptMerged + JSON.stringify(compact, null, 2);
-                        btnRawdata.style.display = 'inline-flex';
-                    } catch (promptErr) {
-                        console.warn('[Rawdata] Could not load prompt file, using fallback');
-                        window._currentTuViRawdata = "DATA LÁ SỐ:\n" + JSON.stringify(compact, null, 2);
-                        btnRawdata.style.display = 'inline-flex';
-                    }
-                })();
-                btnRawdata.style.display = 'inline-flex';
-            } catch (e) {
-                console.warn('[Rawdata] Error building rawdata:', e);
-            }
-
-
-            // =====================
-            // THẦN SỐ HỌC CALCULATION
-            // =====================
-            const tshResult = ThanSoHoc.calculate({
-                day: ngay,
-                month: thang,
-                year: nam,
-                fullName: hoTen,
-                currentYear: namXem
-            });
-
-            // Render Thần Số Học
-            const tshHtml = ThanSoHocRender.render(tshResult);
-            tshContainer.innerHTML = tshHtml;
-
-            console.log('Thần Số Học data:', tshResult);
-
-            // Build TSH Rawdata
-            try {
-                const tshPrompt = `Bạn là một chuyên gia Thần Số Học (Numerologist) hàng đầu với hơn 20 năm kinh nghiệm, am hiểu sâu sắc trường phái Pythagoras. Bản luận giải này cần sự sâu sắc, thấu cảm và mang tính định hướng cao.
-
-## NHIỆM VỤ:
-Dựa trên dữ liệu JSON bên dưới, hãy viết một bản Luận giải Thần Số Học chi tiết (khoảng 2000-3000 từ). 
-
-## CẤU TRÚC BÀI LUẬN GIẢI YÊU CẦU:
-1. **LỜI DẪN**: Giới thiệu về ý nghĩa các con số và thông điệp chung cho Đương số.
-2. **CON SỐ CHỦ ĐẠO (Life Path)**: Phân tích bài học, năng lực và con đường phát triển.
-3. **BIỂU ĐỒ NGÀY SINH**: Phân tích các bộ số, Mũi tên Sức mạnh và Mũi tên Trống. Đưa ra giải pháp "điền số ảo" để hóa giải.
-4. **LINH HỒN (Soul Urge) & NHÂN CÁCH (Personality)**: Sự mâu thuẫn hoặc cộng hưởng giữa khao khát nội tâm và biểu hiện bên ngoài.
-5. **SỨ MỆNH (Expression) & TRƯỞNG THÀNH (Maturity)**: Tài năng thiên bẩm và vận mệnh hậu vận.
-6. **CHỈ SỐ CẦU NỐI**: Cách hài hòa các khía cạnh cuộc sống.
-7. **NĂM CÁ NHÂN & CHU KỲ ĐỈNH CAO**: Phân tích vận trình năm hiện tại và 4 đỉnh cao vinh quang.
-8. **LỜI KHUYÊN CHIẾN LƯỢC**: 3 bước hành động cụ thể.
-
-## QUY TẮC BẮT BUỘC:
-- Gọi là "Đương số".
-- Phải phân tích sự TƯƠNG TÁC giữa các con số (ví dụ: Số Chủ Đạo 4 gặp Linh Hồn 1 thì sẽ thế nào).
-- KHÔNG nói chung chung, hãy dùng ngôn từ tinh tế, truyền cảm hứng.
-
-## DATA THẦN SỐ HỌC:
-`;
-                window._currentTSHRawdata = tshPrompt + JSON.stringify(tshResult, null, 2);
-            } catch (e) {
-                console.warn('[Rawdata TSH] Error building rawdata:', e);
-            }
-
-            // =====================
-            // SHOW RESULTS
-            // =====================
-            inputSection.style.display = 'none';
-            resultsSection.style.display = 'block';
-
-            // Ensure first tab is active
-            tabBtns.forEach(b => b.classList.remove('active'));
-            tabContents.forEach(tc => tc.classList.remove('active'));
-            document.getElementById('tabTuVi').classList.add('active');
-            document.getElementById('tabContentTuVi').classList.add('active');
-
-            // Scroll + animation
-            window.scrollTo({ top: 0, behavior: 'smooth' });
-            chartWrapper.style.opacity = '0';
-            chartWrapper.style.transform = 'translateY(20px)';
-            requestAnimationFrame(() => {
-                chartWrapper.style.transition = 'opacity 0.6s, transform 0.6s';
-                chartWrapper.style.opacity = '1';
-                chartWrapper.style.transform = 'translateY(0)';
-            });
-
-            // Async: Gọi AI interpretation (không block UI)
-            const lunarStr = `${lasoData.lunarDate.day}/${lasoData.lunarDate.month}/${lasoData.lunarDate.year}${lasoData.lunarDate.leap ? ' (Nhuận)' : ''}`;
-            loadAiAnalysis(interpretation, { hoTen, ngaySinhStr: lunarStr, gioSinh, namXem, tinhHeMenh: lasoData.tinhHeMenh, prevYears: prevYearsSummaries });
-
-
-            console.log('Lá số data:', lasoData);
-
-        } catch (error) {
-            console.error('Error generating chart:', error);
-            alert('Lỗi khi tính lá số: ' + error.message);
-        }
-
-        resetButton();
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.download = name;
+            a.href = url;
+            document.body.appendChild(a);
+            a.click();
+            document.body.removeChild(a);
+            URL.revokeObjectURL(url);
+        }, 'image/png');
     }
 
-    /**
-     * Load AI analysis async (không block)
-     */
-    async function loadAiAnalysis(interpretation, metadata) {
+    async function downloadImage() {
+        const old = els.btnDownload.innerHTML;
+        els.btnDownload.innerHTML = '⏳ Đang xử lý...';
+        els.btnDownload.disabled = true;
+
         try {
-            const payload = {
-                ...interpretation,
-                name: metadata.hoTen,
-                dob: metadata.ngaySinhStr,
-                hour: metadata.gioSinh,
-                yearView: metadata.namXem,
-                tinhHeMenh: metadata.tinhHeMenh ? metadata.tinhHeMenh.name + ' (' + metadata.tinhHeMenh.archetype + ')' : undefined,
-                prevYears: metadata.prevYears || []
-            };
+            const sourceName = state.mode === 'single'
+                ? (($('hoTenA').value || 'laso'))
+                : ((($('hoTenA').value || 'duongsoA') + '_' + ($('hoTenB').value || 'duongsoB')));
+            const safe = sourceName.replace(/[^a-zA-Z0-9\u00C0-\u024F\u1E00-\u1EFF]/g, '_');
 
-            // Lưu vào global để dùng lại sau khi login
-            window._currentInterpretation = payload;
+            if (state.mode === 'single') {
+                const c = await captureChart(els.chartA.querySelector('.chart-grid'));
+                saveCanvas(c, `tuvi_${safe}_${Date.now()}.png`);
+            } else {
+                const prev = state.activeProfile;
+                setProfileTab('A');
+                await new Promise((r) => requestAnimationFrame(r));
+                const ca = await captureChart(els.chartA.querySelector('.chart-grid'));
 
-            const aiResult = await TuViInterpret.getAiInterpretation(payload);
-            TuViInterpret.renderAiAnalysis(aiResult);
+                setProfileTab('B');
+                await new Promise((r) => requestAnimationFrame(r));
+                const cb = await captureChart(els.chartB.querySelector('.chart-grid'));
+
+                setProfileTab(prev);
+
+                const m = 20;
+                const lh = 34;
+                const w = Math.max(ca.width, cb.width) + m * 2;
+                const h = ca.height + cb.height + m * 3 + lh * 2;
+                const out = document.createElement('canvas');
+                out.width = w;
+                out.height = h;
+                const ctx = out.getContext('2d');
+                ctx.fillStyle = '#fffcf2';
+                ctx.fillRect(0, 0, w, h);
+                ctx.fillStyle = '#5d4037';
+                ctx.font = 'bold 28px Inter, sans-serif';
+                ctx.fillText('Đương Số A', m, m + 24);
+                ctx.drawImage(ca, m, m + lh);
+                const yB = m + lh + ca.height + m;
+                ctx.fillText('Đương Số B', m, yB + 24);
+                ctx.drawImage(cb, m, yB + lh);
+                saveCanvas(out, `tuvi_sinhdoi_${safe}_${Date.now()}.png`);
+            }
         } catch (err) {
-            console.error('AI Error:', err);
-            TuViInterpret.renderAiAnalysis({ error: 'Không thể kết nối AI', fallback: true });
+            alert('Có lỗi khi tạo ảnh: ' + err.message);
+        }
+
+        els.btnDownload.innerHTML = old;
+        els.btnDownload.disabled = false;
+    }
+
+    function bindEvents() {
+        els.form.addEventListener('submit', (e) => {
+            e.preventDefault();
+            generateCharts();
+        });
+
+        els.btnBack.addEventListener('click', () => {
+            els.resultsSection.style.display = 'none';
+            els.inputSection.style.display = 'block';
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+
+        els.btnPrint.addEventListener('click', () => window.print());
+        els.btnDownload.addEventListener('click', downloadImage);
+
+        tabBtns.forEach((b) => {
+            b.addEventListener('click', () => {
+                if (b.dataset.tab === 'thanSoHoc' && state.mode === 'twin') return;
+                setMainTab(b.dataset.tab);
+            });
+        });
+
+        twinBtns.forEach((b) => {
+            b.addEventListener('click', () => setProfileTab(b.dataset.baby));
+        });
+
+        els.twinMode.addEventListener('change', () => {
+            setMode(els.twinMode.checked);
+        });
+
+        bindAutoCloneAtoB();
+
+        els.btnRaw.addEventListener('click', () => {
+            const isTSH = state.activeMainTab === 'thanSoHoc';
+            const key = state.activeProfile;
+            const data = isTSH ? window._currentTSHRawdata : ((window._currentTuViRawdata || {})[key] || '');
+            if (!data) {
+                alert('Vui lòng đợi hệ thống tính xong rawdata.');
+                return;
+            }
+            els.rawText.value = data;
+            const h = document.querySelector('.rawdata-modal-header h3');
+            if (h) {
+                h.textContent = isTSH
+                    ? 'Raw Data - Thần Số Học'
+                    : (state.mode === 'twin'
+                        ? `Raw Data - Tử Vi (${key === 'A' ? 'Đương Số A' : 'Đương Số B'})`
+                        : 'Raw Data - Tử Vi');
+            }
+            els.rawModal.style.display = 'flex';
+            els.rawText.scrollTop = 0;
+        });
+
+        els.rawClose.addEventListener('click', () => {
+            els.rawModal.style.display = 'none';
+        });
+        els.rawModal.addEventListener('click', (e) => {
+            if (e.target === els.rawModal) els.rawModal.style.display = 'none';
+        });
+        els.rawCopy.addEventListener('click', () => {
+            els.rawText.select();
+            navigator.clipboard.writeText(els.rawText.value).then(() => {
+                els.rawCopy.textContent = '✅ Đã copy!';
+                setTimeout(() => {
+                    els.rawCopy.textContent = '📋 Copy';
+                }, 2000);
+            }).catch(() => {
+                document.execCommand('copy');
+            });
+        });
+    }
+
+    function init() {
+        populateDateOptions('A');
+        populateDateOptions('B');
+        syncers.A = bindSolarLunarSync('A');
+        syncers.B = bindSolarLunarSync('B');
+
+        els.namXem.value = String(new Date().getFullYear());
+        if (!loadUrl()) {
+            syncers.A.setDefault();
+            syncers.B.setDefault();
+        }
+
+        setMode(els.twinMode.checked);
+        bindEvents();
+
+        if (new URLSearchParams(location.search).toString()) {
+            generateCharts();
         }
     }
 
-    function resetButton() {
-        btnSubmit.innerHTML = '<span class="btn-icon">✨</span><span>Lập Lá Số</span>';
-        btnSubmit.disabled = false;
-    }
-
-    // Auto-fill defaults & Load from URL
-    document.addEventListener('DOMContentLoaded', function () {
-        const currentYear = new Date().getFullYear();
-        document.getElementById('namXem').value = currentYear;
-
-        // Nếu có URL params, tự động lập lá số
-        if (loadFormFromUrl()) {
-            console.log('[App] Detected URL params, auto-generating chart...');
-            generateChart();
-        }
-    });
-
+    document.addEventListener('DOMContentLoaded', init);
 })();

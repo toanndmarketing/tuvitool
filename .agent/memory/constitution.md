@@ -36,3 +36,8 @@
 - **Tự động hóa**: Tạo script khi gặp lỗi hoặc task lặp lại.
 - **Git**: Lưu script vào `.agent/scripts`, commit vào hệ thống version control.
 - **Update**: Cập nhật workflow tương ứng sau khi tạo script mới.
+
+## §5 Tu-Vi Knowledge Engine (MANDATORY)
+
+- **AUTO-LOAD SKILLS**: Trước khi code bất cứ tính năng nào liên quan đến Tử Vi (như giao diện lá số, thuật toán an sao, Lịch Âm, luận giải), AI **BẮT BUỘC** phải tự động dùng công cụ `view_file` hoặc kỹ năng đọc file để tra cứu các file `SKILL.md` trong thư mục `.agent/skills/speckit.domain.*` và `.agent/skills/speckit.uiux` để "nạp" kiến thức chuyên ngành TRƯỚC khi lập trình.
+- **BẢO TOÀN NGHIỆP VỤ**: Không tự ý dùng kiến thức LLM có sẵn để tự định nghĩa các sao hay cách cục. Tuyệt đối tuân thủ Naming Convention bằng Pinyin/English trong Domain Skills.

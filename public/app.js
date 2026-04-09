@@ -197,6 +197,9 @@
         els.profileB.style.display = isTwin ? 'block' : 'none';
         els.twinTabs.style.display = isTwin ? 'flex' : 'none';
         els.tabTSH.style.display = isTwin ? 'none' : 'inline-flex';
+        
+        const twinOrderRow = document.getElementById('twinOrderRow');
+        if (twinOrderRow) twinOrderRow.style.display = isTwin ? 'block' : 'none';
 
         if (isTwin) {
             state.bManualOverride = false;
@@ -274,25 +277,17 @@
         b.canhResolved = b.canhOriginal;
     }
 
-    function buildTwinMeta(self, other, isTwinB_SameGender) {
+    function buildTwinMeta(self, other, isEmCungGioi, isOlder) {
         if (!other) return null;
         const minuteDelta = Math.abs(Math.round((self.dateObj.getTime() - other.dateObj.getTime()) / 60000));
-        let birthOrder = 'dong_thoi_diem';
-        if (self.dateObj.getTime() < other.dateObj.getTime()) {
-            birthOrder = self.key + '_truoc';
-        } else if (self.dateObj.getTime() > other.dateObj.getTime()) {
-            birthOrder = other.key + '_truoc';
-        } else {
-            birthOrder = self.key === 'A' ? 'A_truoc_mac_dinh' : 'B_sau_mac_dinh';
-        }
         return {
             birthTimeExact: self.birthTimeExact,
             gioSinhIndex: self.canhOriginal,
             gioSinhIndexResolved: self.canhResolved,
             minuteDelta,
             sameGender: self.gender === other.gender,
-            isDiCung: isTwinB_SameGender || false,
-            birthOrder
+            isDiCung: isEmCungGioi || false,
+            role: isOlder ? 'Anh/Chị (Sinh trước)' : 'Em (Sinh sau)'
         };
     }
 
@@ -442,8 +437,18 @@
         applyEnhancements(lasoData);
 
         // --- HỆ THỐNG XỬ LÝ SINH ĐÔI CHUYỂN CUNG ---
-        const isTwinB_SameGender = otherProfile && profile.key === 'B' && (profile.gender === otherProfile.gender);
-        if (isTwinB_SameGender) {
+        const isTwinMode = !!otherProfile;
+        let isOlder = false;
+        let isEmCungGioi = false;
+        
+        if (isTwinMode) {
+            const twinOrderRadio = document.querySelector('input[name="twinOrder"]:checked');
+            const olderKey = twinOrderRadio ? twinOrderRadio.value : 'A';
+            isOlder = (olderKey === profile.key);
+            isEmCungGioi = (!isOlder) && (profile.gender === otherProfile.gender);
+        }
+
+        if (isEmCungGioi) {
             // Dịch chuyển Cung Mệnh và Cung Thân sang mượn cung Thiên Di
             lasoData.cungMenhPos = (lasoData.cungMenhPos + 6) % 12;
             lasoData.cungThanPos = (lasoData.cungThanPos + 6) % 12;
@@ -492,16 +497,22 @@
             cucName: lasoData.cucName,
             cungMenh: lasoData.cungMap[lasoData.cungMenhPos],
             cungThan: lasoData.cungMap[lasoData.cungThanPos],
-            twin: buildTwinMeta(profile, otherProfile, isTwinB_SameGender)
+            twin: buildTwinMeta(profile, otherProfile, isEmCungGioi, isOlder)
         };
 
         let twinContext = "";
-        if (otherProfile && profile.key === 'B') {
-            twinContext = `\n[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là lá số của Đương Số B trong Cặp Sinh Đôi.\n`;
-            if (isTwinB_SameGender) {
-                twinContext += `- Hệ thống áp dụng Di Cung (Mượn cung Thiên Di làm cung Mệnh), giữ nguyên tọa độ 108 sao gốc của Đương Số A. Khi luận hãy so sánh với lá số B, chú ý mối quan hệ anh em đồng giới.\n`;
-            } else {
+        if (isTwinMode) {
+            const pronoun = isOlder ? (profile.gender === 'nam' ? 'Anh' : 'Chị') : 'Em';
+            twinContext = `\n[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là lá số của Đương Số ${profile.key} trong Cặp Sinh Đôi.\n`;
+            twinContext += `- Vai vế thiết lập: Đương số là ${pronoun} (${isOlder ? 'Sinh trước' : 'Sinh sau'}).\n`;
+            twinContext += `- Giới tính hai người: ${profile.gender === otherProfile.gender ? 'Cùng giới tính' : 'Khác giới tính'}.\n`;
+
+            if (isEmCungGioi) {
+                twinContext += `- Hệ thống áp dụng Di Cung (Mượn cung Thiên Di làm cung Mệnh cho người sinh sau), giữ nguyên tọa độ 108 sao gốc. Khi luận hãy so sánh với lá số gốc, chú ý mối quan hệ anh em đồng giới.\n`;
+            } else if (!isOlder && profile.gender !== otherProfile.gender) {
                 twinContext += `- Hai đương số khác giới tính (Nam/Nữ) nên hệ thống giữ nguyên Mệnh gốc (Không cần Di Cung). Đại vận chạy ngược chiều nhau tạo ra cách cục khác nhau ngay từ đầu.\n`;
+            } else if (isOlder) {
+                twinContext += `- Đương số là người sinh trước nên giữ nguyên trục Mệnh gốc.\n`;
             }
         }
 

@@ -12,14 +12,13 @@
     <link
         href="https://fonts.googleapis.com/css2?family=Noto+Serif:ital,wght@0,400;0,700;1,400&family=Inter:wght@300;400;500;600;700&display=swap"
         rel="stylesheet">
-    <link rel="stylesheet" href="styles.css?v=10.0">
+    <link rel="stylesheet" href="styles.css?v=11.0">
 </head>
 
 <body>
     <div class="print-watermark">Webest.asia - Nguyễn Đức Toàn - Lập trình WEB, APP, AI</div>
     <div class="print-watermark-middle"></div>
     <div class="app-container">
-        <!-- Header -->
         <header class="app-header">
             <div class="header-glow"></div>
             <h1 class="header-title">
@@ -33,89 +32,178 @@
             </div>
         </header>
 
-        <!-- Input Form -->
         <section class="input-section" id="inputSection">
             <div class="form-container">
                 <h2 class="form-title">Thông Tin Lập Lá Số</h2>
                 <form id="tuViForm" class="tuvi-form">
                     <div class="form-row">
-                        <div class="form-group">
-                            <label for="hoTen">Họ và Tên</label>
-                            <input type="text" id="hoTen" placeholder="Nhập họ tên..." value="Nguyễn Đình Bắc">
-                        </div>
-                        <div class="form-group">
-                            <label for="gioiTinh">Giới Tính</label>
-                            <select id="gioiTinh">
-                                <option value="nam" selected>Nam</option>
-                                <option value="nu">Nữ</option>
-                            </select>
+                        <div class="form-group twin-toggle-group twin-toggle-top">
+                            <label class="checkbox-label" for="twinMode">
+                                <input type="checkbox" id="twinMode">
+                                <span>Chế độ Sinh đôi (Đương Số A/B)</span>
+                            </label>
                         </div>
                     </div>
-                    <div class="form-row date-input-grid">
-                        <div class="date-group-box solar-box">
-                            <h3 class="date-group-title">Dương Lịch</h3>
-                            <div class="date-inputs-row">
-                                <div class="form-group">
-                                    <label for="solarDay">Ngày</label>
-                                    <select id="solarDay"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="solarMonth">Tháng</label>
-                                    <select id="solarMonth"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="solarYear">Năm</label>
-                                    <input type="number" id="solarYear" min="1920" max="2030" value="2004">
-                                </div>
-                            </div>
-                        </div>
-                        <div class="date-group-box lunar-box">
-                            <h3 class="date-group-title">Âm Lịch</h3>
-                            <div class="date-inputs-row">
-                                <div class="form-group">
-                                    <label for="lDay">Ngày</label>
-                                    <select id="lDay"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="lMonth">Tháng</label>
-                                    <select id="lMonth"></select>
-                                </div>
-                                <div class="form-group">
-                                    <label for="lYear">Năm</label>
-                                    <input type="number" id="lYear" value="2004" min="1900" max="2100">
-                                </div>
-                                <div class="form-group checkbox-group">
-                                    <label class="checkbox-label">
-                                        <input type="checkbox" id="lLeap">
-                                        <span>Nhuận</span>
-                                    </label>
-                                </div>
+
+                    <div class="form-row" id="twinOrderRow" style="display:none; padding-left: 28px; margin-top: -10px; margin-bottom: 15px;">
+                        <div class="form-group">
+                            <label style="font-weight: 600; color: #1e293b; margin-bottom: 8px; display: block;">Vai vế sinh trước (Anh/Chị):</label>
+                            <div style="display:flex; gap:20px;">
+                                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="radio" name="twinOrder" value="A" checked> Đương Số A sinh trước
+                                </label>
+                                <label class="radio-label" style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+                                    <input type="radio" name="twinOrder" value="B"> Đương Số B sinh trước
+                                </label>
                             </div>
                         </div>
                     </div>
-                    <div class="form-row">
-                        <div class="form-group">
-                            <label for="gioSinh">Giờ Sinh (Canh giờ)</label>
-                            <select id="gioSinh">
-                                <option value="0">Tý (23h-1h)</option>
-                                <option value="1">Sửu (1h-3h)</option>
-                                <option value="2">Dần (3h-5h)</option>
-                                <option value="3" selected>Mão (5h-7h)</option>
-                                <option value="4">Thìn (7h-9h)</option>
-                                <option value="5">Tỵ (9h-11h)</option>
-                                <option value="6">Ngọ (11h-13h)</option>
-                                <option value="7">Mùi (13h-15h)</option>
-                                <option value="8">Thân (15h-17h)</option>
-                                <option value="9">Dậu (17h-19h)</option>
-                                <option value="10">Tuất (19h-21h)</option>
-                                <option value="11">Hợi (21h-23h)</option>
-                            </select>
-                        </div>
+
+                    <div class="form-row form-row-single">
                         <div class="form-group">
                             <label for="namXem">Năm Xem (Lưu niên)</label>
                             <input type="number" id="namXem" value="2026" min="1900" max="2100">
                         </div>
                     </div>
+
+                    <div class="profile-card" id="profileCardA">
+                        <h3 class="profile-title">Đương Số A</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hoTenA">Họ và Tên</label>
+                                <input type="text" id="hoTenA" placeholder="Nhập họ tên đương số A..." value="Nguyễn Đình Bắc">
+                            </div>
+                            <div class="form-group">
+                                <label for="gioiTinhA">Giới Tính</label>
+                                <select id="gioiTinhA">
+                                    <option value="nam" selected>Nam</option>
+                                    <option value="nu">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row date-input-grid">
+                            <div class="date-group-box solar-box">
+                                <h3 class="date-group-title">Dương Lịch</h3>
+                                <div class="date-inputs-row">
+                                    <div class="form-group">
+                                        <label for="solarDayA">Ngày</label>
+                                        <select id="solarDayA"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="solarMonthA">Tháng</label>
+                                        <select id="solarMonthA"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="solarYearA">Năm</label>
+                                        <input type="number" id="solarYearA" min="1920" max="2030" value="2004">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="date-group-box lunar-box">
+                                <h3 class="date-group-title">Âm Lịch</h3>
+                                <div class="date-inputs-row">
+                                    <div class="form-group">
+                                        <label for="lDayA">Ngày</label>
+                                        <select id="lDayA"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lMonthA">Tháng</label>
+                                        <select id="lMonthA"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lYearA">Năm</label>
+                                        <input type="number" id="lYearA" value="2004" min="1900" max="2100">
+                                    </div>
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="lLeapA">
+                                            <span>Nhuận</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="birthHourA">Giờ sinh (0-23)</label>
+                                <input type="number" id="birthHourA" min="0" max="23" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="birthMinuteA">Phút sinh (0-59)</label>
+                                <input type="number" id="birthMinuteA" min="0" max="59" value="0">
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="profile-card" id="profileCardB" style="display:none;">
+                        <h3 class="profile-title">Đương Số B</h3>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="hoTenB">Họ và Tên</label>
+                                <input type="text" id="hoTenB" placeholder="Nhập họ tên đương số B..." value="Nguyễn Đình Bắc (B)">
+                            </div>
+                            <div class="form-group">
+                                <label for="gioiTinhB">Giới Tính</label>
+                                <select id="gioiTinhB">
+                                    <option value="nam" selected>Nam</option>
+                                    <option value="nu">Nữ</option>
+                                </select>
+                            </div>
+                        </div>
+                        <div class="form-row date-input-grid">
+                            <div class="date-group-box solar-box">
+                                <h3 class="date-group-title">Dương Lịch</h3>
+                                <div class="date-inputs-row">
+                                    <div class="form-group">
+                                        <label for="solarDayB">Ngày</label>
+                                        <select id="solarDayB"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="solarMonthB">Tháng</label>
+                                        <select id="solarMonthB"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="solarYearB">Năm</label>
+                                        <input type="number" id="solarYearB" min="1920" max="2030" value="2004">
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="date-group-box lunar-box">
+                                <h3 class="date-group-title">Âm Lịch</h3>
+                                <div class="date-inputs-row">
+                                    <div class="form-group">
+                                        <label for="lDayB">Ngày</label>
+                                        <select id="lDayB"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lMonthB">Tháng</label>
+                                        <select id="lMonthB"></select>
+                                    </div>
+                                    <div class="form-group">
+                                        <label for="lYearB">Năm</label>
+                                        <input type="number" id="lYearB" value="2004" min="1900" max="2100">
+                                    </div>
+                                    <div class="form-group checkbox-group">
+                                        <label class="checkbox-label">
+                                            <input type="checkbox" id="lLeapB">
+                                            <span>Nhuận</span>
+                                        </label>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="form-row">
+                            <div class="form-group">
+                                <label for="birthHourB">Giờ sinh (0-23)</label>
+                                <input type="number" id="birthHourB" min="0" max="23" value="5">
+                            </div>
+                            <div class="form-group">
+                                <label for="birthMinuteB">Phút sinh (0-59)</label>
+                                <input type="number" id="birthMinuteB" min="0" max="59" value="5">
+                            </div>
+                        </div>
+                    </div>
+
                     <button type="submit" class="btn-submit" id="btnSubmit">
                         <span class="btn-icon">✨</span>
                         <span>Lập Lá Số</span>
@@ -124,9 +212,7 @@
             </div>
         </section>
 
-        <!-- Results Section with Tabs -->
         <section class="results-section" id="resultsSection" style="display:none;">
-            <!-- Tab Navigation -->
             <div class="results-tabs">
                 <button class="tab-btn active" id="tabTuVi" data-tab="tuvi">
                     <span class="tab-icon">🔮</span>
@@ -138,7 +224,6 @@
                 </button>
             </div>
 
-            <!-- Back/Print Actions -->
             <div class="chart-actions">
                 <button class="btn-back" id="btnBack">← Nhập lại</button>
                 <button class="btn-rawdata" id="btnRawdata" style="display:none;">📋 Xem Rawdata</button>
@@ -146,7 +231,6 @@
                 <button class="btn-print" id="btnPrint">🖨️ In kết quả</button>
             </div>
 
-            <!-- Rawdata Modal -->
             <div class="rawdata-modal" id="rawdataModal" style="display:none;">
                 <div class="rawdata-modal-content">
                     <div class="rawdata-modal-header">
@@ -161,25 +245,22 @@
                 </div>
             </div>
 
-            <!-- Tab: Tử Vi -->
             <div class="tab-content active" id="tabContentTuVi" data-tab-content="tuvi">
-                <div class="chart-wrapper" id="chartWrapper">
-                    <!-- The 4x4 grid chart will be rendered here by JS -->
+                <div class="twin-results-tabs" id="twinResultsTabs" style="display:none;">
+                    <button class="twin-tab-btn active" data-baby="A">Đương Số A</button>
+                    <button class="twin-tab-btn" data-baby="B">Đương Số B</button>
                 </div>
-                <!-- Interpretation Section -->
+                <div class="chart-wrapper twin-panel active" id="chartWrapperA"></div>
+                <div class="chart-wrapper twin-panel" id="chartWrapperB" style="display:none;"></div>
+                <div id="tinhHeWrapper"></div>
                 <div class="interpretation-section" id="interpretationSection">
                     <h2 class="section-title">📖 Diễn Giải Lá Số</h2>
-                    <div id="interpretationContent" class="interpretation-content">
-                        <!-- Rendered by JS -->
-                    </div>
+                    <div id="interpretationContent" class="interpretation-content"></div>
                 </div>
             </div>
 
-            <!-- Tab: Thần Số Học -->
             <div class="tab-content" id="tabContentTSH" data-tab-content="thanSoHoc">
-                <div class="tsh-container" id="tshContainer">
-                    <!-- Rendered by ThanSoHocRender.render() -->
-                </div>
+                <div class="tsh-container" id="tshContainer"></div>
             </div>
         </section>
     </div>
@@ -197,12 +278,12 @@
     <script src="tu-vi-event-scanner.js"></script>
     <script src="tu-vi-luu-nien.js"></script>
     <script src="tu-vi-star-descriptions.js"></script>
-    <script src="tu-vi-render.js"></script>
+    <script src="tu-vi-render.js?v=11.1"></script>
     <script src="tu-vi-interpret.js?v=10.0"></script>
     <script src="than-so-hoc.js"></script>
     <script src="than-so-hoc-data.js"></script>
     <script src="than-so-hoc-render.js"></script>
-    <script src="app.js?v=10.0"></script>
+    <script src="app.js?v=11.6"></script>
 </body>
 
 </html>

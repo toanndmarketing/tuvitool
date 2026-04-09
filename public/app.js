@@ -459,6 +459,15 @@
             // Tính lại Đại Vận theo Mệnh mới (Tuổi bắt đầu giữ nguyên theo Cục gốc để bảo toàn tọa độ sao)
             lasoData.daiVan = TuViCalc.tinhDaiVan(lasoData.cucValue, lasoData.cungMenhPos, lasoData.thuan, lasoData.lunarDate.year);
             lasoData.daiVanHienTai = TuViCalc.getDaiVanHienTai(lasoData.daiVan, namXem);
+            
+            // Tính lại Tinh Hệ Mệnh theo vị trí Mệnh mới
+            if (typeof TuViTinhHe !== 'undefined') {
+                try {
+                    lasoData.tinhHeMenh = TuViTinhHe.getTinhHe(lasoData.cungMenhPos, lasoData.saoMap);
+                } catch (err) {
+                    console.warn('[TinhHe] Error after Di Cung:', err.message);
+                }
+            }
         }
 
         const prevYears = buildPrevYears(profile, namXem);

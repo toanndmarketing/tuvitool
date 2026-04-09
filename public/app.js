@@ -449,9 +449,9 @@
         }
 
         if (isEmCungGioi) {
-            // Dịch chuyển Cung Mệnh và Cung Thân sang mượn cung Thiên Di
+            // Dịch chuyển Cung Mệnh sang mượn cung Thiên Di
+            // LƯU Ý: Vị trí Thân (cungThanPos) và các sao được giữ nguyên, KHÔNG DỊCH CHUYỂN
             lasoData.cungMenhPos = (lasoData.cungMenhPos + 6) % 12;
-            lasoData.cungThanPos = (lasoData.cungThanPos + 6) % 12;
             
             // Vẽ lại tên 12 cung theo Mệnh mới
             lasoData.cungMap = TuViCalc.anCung(lasoData.cungMenhPos);

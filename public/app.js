@@ -506,7 +506,25 @@
             cucName: lasoData.cucName,
             cungMenh: lasoData.cungMap[lasoData.cungMenhPos],
             cungThan: lasoData.cungMap[lasoData.cungThanPos],
-            twin: buildTwinMeta(profile, otherProfile, isEmCungGioi, isOlder)
+            twin: buildTwinMeta(profile, otherProfile, isEmCungGioi, isOlder),
+            cungDetail: Array.from({ length: 12 }).map((_, i) => {
+                const p = (lasoData.cungMenhPos + i) % 12;
+                return {
+                    name: lasoData.cungMap[p],
+                    chi: AmLich.DIA_CHI[p],
+                    truongSinh: (lasoData.truongSinhMap && lasoData.truongSinhMap[p]) || null,
+                    tuan: lasoData.tuanTriet && lasoData.tuanTriet.tuan.includes(p),
+                    triet: lasoData.tuanTriet && lasoData.tuanTriet.triet.includes(p),
+                    sao: (lasoData.saoMap[p] || []).map(s => {
+                        let sn = s.name;
+                        if (s.type === 'chinh' && typeof TuViStarPatterns !== 'undefined') {
+                            const st = TuViStarPatterns.getStarStatus(s.name, p);
+                            if (st && st !== 'binh') sn += ` (${st})`;
+                        }
+                        return { name: sn, type: s.type, nature: s.nature, hoa: s.hoa || s.luuHoa || null };
+                    })
+                };
+            })
         };
 
         let twinContext = "";

@@ -230,8 +230,8 @@ const TuViRender = (function () {
         const babyLabel = options.babyLabel || '';
         const birthTimeExact = options.birthTimeExact || '';
 
-        const chuMenh = TuViSao.getChuMenh(lasoData.cungMenhPos);
-        const chuThan = TuViSao.getChuThan(lasoData.cungThanPos);
+        const chuMenh = lasoData.chuMenh || 'Tham Lang';
+        const chuThan = lasoData.chuThan || 'Thiên Tướng';
 
         const gioLabel = CHI_NAMES[lasoData.input.gioSinh];
 
@@ -282,6 +282,9 @@ const TuViRender = (function () {
 
         html += `<div>Chủ Mệnh: <strong>${chuMenh}</strong></div>`;
         html += `<div>Chủ Thân: <strong>${chuThan}</strong></div>`;
+        if (lasoData.cungPhi) {
+            html += `<div>Cung Phi: <strong>${lasoData.cungPhi}</strong></div>`;
+        }
 
         if (lasoData.amDuongNghichLy) {
             html += `<div class="center-highlight-bad">⚠ Âm Dương nghịch lý</div>`;

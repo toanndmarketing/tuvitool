@@ -658,18 +658,21 @@ const TuViSao = (function () {
         const luuHa = anLuuHaThienTru(chiNam);
         addSao(luuHa['Lưu Hà'], 'Lưu Hà', 'phu', 'trung');
         addSao(luuHa['Thiên Trù'], 'Thiên Trù', 'phu', 'cat');
-
-        // Giải Thần, Phượng Quang (dùng Phong Cáo/Quang)
+        // Giải Thần
         const giaiThan = anGiaiThan(thangAL);
         addSao(giaiThan['Giải Thần'], 'Giải Thần', 'phu', 'cat');
-
-        // Tuế Phá, Long Đức, Phượng Các sao lưu niên
-        const tuePha = anTuePha(chiNam);
 
         // Thiên Thương, Thiên Sứ
         const thuongSu = anThienThuongSu(thangAL);
         addSao(thuongSu['Thiên Thương'], 'Thiên Thương', 'phu', 'hung');
         addSao(thuongSu['Thiên Sứ'], 'Thiên Sứ', 'phu', 'hung');
+
+        // --- Cung Phi ---
+        lasoData.cungPhi = TuViCalc.getCungPhi(lasoData.input.nam, lasoData.input.gioiTinh);
+
+        // --- Chủ Mệnh / Chủ Thân ---
+        lasoData.chuMenh = getChuMenh(chiNam);
+        lasoData.chuThan = getChuThan(chiNam);
 
         // Ân Quang, Thiên Quý
         const anQuang = anAnQuangThienQuy(ngayAL, vanXuongKhuc['Văn Xương'], vanXuongKhuc['Văn Khúc']);
@@ -707,10 +710,6 @@ const TuViSao = (function () {
                 if (sao.name === tuHoa['Hoá Kỵ']) sao.hoa = 'Kỵ';
             });
         }
-
-        // Vòng Thái Tuế: Long Đức, Phúc Đức
-        addSao(tuePha['Long Đức'], 'Long Đức', 'phu', 'cat');
-        addSao(tuePha['Phúc Đức'], 'Phúc Đức', 'phu', 'cat');
 
         // --- Sao Lưu Niên (theo Can Chi năm xem) ---
         if (lasoData.canChiNamXem) {
@@ -781,27 +780,28 @@ const TuViSao = (function () {
 
     /**
      * Xác định Chủ Mệnh (sao chủ cung Mệnh)
-     * Dựa vào Địa Chi cung Mệnh
+     * Dựa vào Địa Chi của NĂM SINH (chuẩn truyền thống)
      */
-    function getChuMenh(cungMenhPos) {
+    function getChuMenh(chiNam) {
         const chuMenhMap = {
             0: 'Tham Lang', 1: 'Cự Môn', 2: 'Lộc Tồn', 3: 'Văn Khúc',
             4: 'Liêm Trinh', 5: 'Vũ Khúc', 6: 'Phá Quân', 7: 'Vũ Khúc',
             8: 'Liêm Trinh', 9: 'Văn Khúc', 10: 'Lộc Tồn', 11: 'Cự Môn'
         };
-        return chuMenhMap[cungMenhPos] || 'Tham Lang';
+        return chuMenhMap[chiNam] || 'Tham Lang';
     }
 
     /**
      * Xác định Chủ Thân (sao chủ cung Thân)
+     * Dựa vào Địa Chi của NĂM SINH (chuẩn truyền thống)
      */
-    function getChuThan(cungThanPos) {
+    function getChuThan(chiNam) {
         const chuThanMap = {
             0: 'Linh Tinh', 1: 'Thiên Tướng', 2: 'Thiên Lương', 3: 'Thiên Đồng',
             4: 'Văn Xương', 5: 'Thiên Cơ', 6: 'Hoả Tinh', 7: 'Thiên Cơ',
             8: 'Văn Xương', 9: 'Thiên Đồng', 10: 'Thiên Lương', 11: 'Thiên Tướng'
         };
-        return chuThanMap[cungThanPos] || 'Thiên Tướng';
+        return chuThanMap[chiNam] || 'Thiên Tướng';
     }
 
     return {

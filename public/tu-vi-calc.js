@@ -592,6 +592,33 @@ const TuViCalc = (function () {
         };
     }
 
+    /**
+     * Xác định Cung Phi (Bát Trạch)
+     */
+    function getCungPhi(namSinh, gioiTinh) {
+        let sum = namSinh.toString().split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+        while (sum > 9) {
+            sum = sum.toString().split('').reduce((acc, digit) => acc + parseInt(digit), 0);
+        }
+
+        const map = {
+            1: 'Khảm (Thuỷ)', 2: 'Khôn (Thổ)', 3: 'Chấn (Mộc)', 4: 'Tốn (Mộc)',
+            5: (gioiTinh === 'nam' ? 'Khôn (Thổ)' : 'Cấn (Thổ)'),
+            6: 'Càn (Kim)', 7: 'Đoài (Kim)', 8: 'Cấn (Thổ)', 9: 'Ly (Hoả)'
+        };
+
+        let resultIdx;
+        if (gioiTinh === 'nam') {
+            resultIdx = (11 - sum) % 9;
+            if (resultIdx === 0) resultIdx = 9;
+        } else {
+            resultIdx = (sum + 4) % 9;
+            if (resultIdx === 0) resultIdx = 9;
+        }
+
+        return map[resultIdx] || '';
+    }
+
     return {
         calculate,
         CUNG_NAMES,
@@ -608,6 +635,7 @@ const TuViCalc = (function () {
         tinhDaiVan,
         tinhTieuVan,
         tinhNguyetHan,
-        getDaiVanHienTai
+        getDaiVanHienTai,
+        getCungPhi
     };
 })();

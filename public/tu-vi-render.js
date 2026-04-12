@@ -61,17 +61,36 @@ const TuViRender = (function () {
     function getHoaSuffixHtml(sao) {
         if (!sao.hoa) return '';
         const hcls = sao.hoa === 'Kỵ' ? 'hoa-ky' : (sao.hoa === 'Lộc' ? 'hoa-loc' : (sao.hoa === 'Quyền' ? 'hoa-quyen' : 'hoa-khoa'));
-        const label = sao.hoa === 'Lộc' ? 'Đ' : sao.hoa === 'Quyền' ? 'B' : sao.hoa === 'Khoa' ? 'V' : 'Đ';
-        return `<span class="hoa-marker ${hcls}">(${label})</span>`;
+        return `<span class="hoa-marker ${hcls}">${sao.hoa}</span>`;
+    }
+
+    /**
+     * Render badge trạng thái Miếu/Vượng/Đắc/Hãm cho chính tinh
+     */
+    function getStatusBadgeHtml(sao, chiIndex) {
+        if (sao.type !== 'chinh') return '';
+        if (typeof TuViStarPatterns === 'undefined') return '';
+        const status = TuViStarPatterns.getStarStatus(sao.name, chiIndex);
+        if (status === 'binh') return '';
+        const statusMap = {
+            'mieu': { label: 'Miếu', cls: 'status-mieu' },
+            'vuong': { label: 'Vượng', cls: 'status-vuong' },
+            'dac': { label: 'Đắc', cls: 'status-dac' },
+            'ham': { label: 'Hãm', cls: 'status-ham' }
+        };
+        const info = statusMap[status];
+        if (!info) return '';
+        return `<span class="star-status-badge ${info.cls}">${info.label}</span>`;
     }
 
     /**
      * Render sao với tooltip mô tả
      * @param {boolean} isTopRow - true nếu ô thuộc hàng trên cùng (tooltip hiện xuống dưới)
      */
-    function renderStarWithTooltip(sao, cssClass, isTopRow) {
+    function renderStarWithTooltip(sao, cssClass, isTopRow, chiIndex) {
         const desc = (typeof STAR_DESCRIPTIONS !== 'undefined') ? STAR_DESCRIPTIONS[sao.name] : null;
-        const starText = `${sao.name}${getHoaSuffixHtml(sao)}`;
+        const statusBadge = (chiIndex !== undefined) ? getStatusBadgeHtml(sao, chiIndex) : '';
+        const starText = `${sao.name}${statusBadge}${getHoaSuffixHtml(sao)}`;
         if (!desc) {
             return `<span class="${cssClass}">${starText}</span>`;
         }
@@ -159,7 +178,7 @@ const TuViRender = (function () {
         if (chinhTinh.length > 0) {
             html += `<div class="palace-main-stars">`;
             chinhTinh.forEach(s => {
-                html += renderStarWithTooltip(s, 'star-main', isTopRow) + ' ';
+                html += renderStarWithTooltip(s, 'star-main', isTopRow, chiIndex) + ' ';
             });
             html += `</div>`;
         }
@@ -172,7 +191,7 @@ const TuViRender = (function () {
                 for (let j = i; j < Math.min(i + 2, phuTinh.length); j++) {
                     const s = phuTinh[j];
                     const cls = getSaoClass(s);
-                    html += renderStarWithTooltip(s, `star-item ${cls}`, isTopRow);
+                    html += renderStarWithTooltip(s, `star-item ${cls}`, isTopRow, chiIndex);
                 }
                 html += `</div>`;
             }

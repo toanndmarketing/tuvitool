@@ -1215,6 +1215,12 @@ body {
     border: 1px solid rgba(76, 175, 80, 0.35);
 }
 
+.status-vuong {
+    background: rgba(33, 150, 243, 0.2);
+    color: #42a5f5;
+    border: 1px solid rgba(33, 150, 243, 0.35);
+}
+
 .status-dac {
     background: rgba(255, 193, 7, 0.15);
     color: #ffc107;

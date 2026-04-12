@@ -160,23 +160,33 @@ const TuViCalc = (function () {
      * Dựa vào Can năm sinh và vị trí cung Mệnh
      */
     function getCuc(canNamIndex, cungMenhPos) {
-        // Bảng tra Cục
-        // Hàng: canNam (0-9), Cột: cungMenh (0-11, 0=Tý)
-        // Giá trị: 2=Thuỷ, 3=Mộc, 4=Kim, 5=Thổ, 6=Hoả
-        const cucTable = [
-            //Tý Sửu Dần Mão Thìn Tỵ Ngọ Mùi Thân Dậu Tuất Hợi
-            [2, 6, 3, 5, 4, 2, 6, 3, 5, 4, 2, 6], // Giáp(0) - cặp Giáp-Kỷ
-            [6, 3, 5, 4, 2, 6, 3, 5, 4, 2, 6, 3], // Ất(1)   - cặp Ất-Canh
-            [5, 4, 2, 6, 3, 5, 4, 2, 6, 3, 5, 4], // Bính(2) - cặp Bính-Tân
-            [4, 2, 6, 3, 5, 4, 2, 6, 3, 5, 4, 2], // Đinh(3) - cặp Đinh-Nhâm
-            [3, 5, 4, 2, 6, 3, 5, 4, 2, 6, 3, 5], // Mậu(4) - cặp Mậu-Quý
-            [2, 6, 3, 5, 4, 2, 6, 3, 5, 4, 2, 6], // Kỷ(5)  = Giáp(0)
-            [6, 3, 5, 4, 2, 6, 3, 5, 4, 2, 6, 3], // Canh(6) = Ất(1)
-            [5, 4, 2, 6, 3, 5, 4, 2, 6, 3, 5, 4], // Tân(7)  = Bính(2)
-            [4, 2, 6, 3, 5, 4, 2, 6, 3, 5, 4, 2], // Nhâm(8) = Đinh(3)
-            [3, 5, 4, 2, 6, 3, 5, 4, 2, 6, 3, 5], // Quý(9)  = Mậu(4)
-        ];
-        return cucTable[canNamIndex][cungMenhPos];
+        // Can khởi Dần theo can năm:
+        // Giáp/Kỷ (0,5)-> Bính(2); Ất/Canh (1,6)-> Mậu(4); Bính/Tân (2,7)-> Canh(6); Đinh/Nhâm (3,8)-> Nhâm(8); Mậu/Quý (4,9)-> Giáp(0)
+        const canDanMap = [2, 4, 6, 8, 0, 2, 4, 6, 8, 0];
+        let canDan = canDanMap[canNamIndex];
+        
+        let offset = (cungMenhPos - 2 + 12) % 12;
+        let canCungMenh = (canDan + offset) % 10;
+        
+        let pos = -1;
+        for (let i = 0; i < 60; i++) {
+            if (i % 10 === canCungMenh && i % 12 === cungMenhPos) {
+                pos = i;
+                break;
+            }
+        }
+        
+        if (pos === -1 || !NGU_HANH_MENH[pos]) return 2; // Default Thủy nhị cục
+        
+        let tenMenh = NGU_HANH_MENH[pos];
+        
+        if (tenMenh.includes('Kim')) return 4;
+        if (tenMenh.includes('Mộc')) return 3;
+        if (tenMenh.includes('Thuỷ') || tenMenh.includes('Thủy')) return 2;
+        if (tenMenh.includes('Hoả') || tenMenh.includes('Hỏa')) return 6;
+        if (tenMenh.includes('Thổ')) return 5;
+        
+        return 2;
     }
 
     /**
@@ -301,18 +311,23 @@ const TuViCalc = (function () {
      * Triệt: Triệt Lộ (2 chi nối giữa 2 tuần)
      */
     function anTuanTriet(canNamIndex, chiNamIndex) {
-        // Tuần Không: Trong một lục giáp (tuần 10 ngày), 
-        // có 10 Can nhưng 12 Chi => 2 Chi thừa = Tuần Không
-        // Tìm chi đầu tuần: chi - can 
+        // Tuần Không: Tính theo hoa giáp
         let chiDau = ((chiNamIndex - canNamIndex) % 12 + 12) % 12;
-        // 2 chi trống = chiDau + 10, chiDau + 11
         let tuan1 = (chiDau + 10) % 12;
         let tuan2 = (chiDau + 11) % 12;
 
-        // Triệt: 2 chi nối giữa tuần này và tuần trước
-        // Triệt = chiDau - 2, chiDau - 1
-        let triet1 = ((chiDau - 1) % 12 + 12) % 12;
-        let triet2 = ((chiDau - 2) % 12 + 12) % 12;
+        // Triệt (Triệt Lộ Không Vong): Phụ thuộc vào Can năm
+        // Giáp/Kỷ: Thân, Dậu (8, 9)
+        // Ất/Canh: Ngọ, Mùi (6, 7)
+        // Bính/Tân: Thìn, Tỵ (4, 5)
+        // Đinh/Nhâm: Dần, Mão (2, 3)
+        // Mậu/Quý: Tý, Sửu (0, 1)
+        const trietMap = [
+            [8, 9], [6, 7], [4, 5], [2, 3], [0, 1],
+            [8, 9], [6, 7], [4, 5], [2, 3], [0, 1]
+        ];
+        let triet1 = trietMap[canNamIndex][0];
+        let triet2 = trietMap[canNamIndex][1];
 
         return {
             tuan: [tuan1, tuan2],

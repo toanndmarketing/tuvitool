@@ -447,9 +447,11 @@ const TuViSao = (function () {
      * An Thiểu Dương, Thiểu Âm (theo chi năm)
      */
     function anThieuDuongAm(chiNam) {
+        // Vòng Thái Tuế:
+        // 0: Thái Tuế, 1: Thiếu Dương, 2: Tang Môn, 3: Thiếu Âm
         return {
-            'Thiểu Dương': (chiNam + 2) % 12,
-            'Thiểu Âm': (chiNam + 10) % 12
+            'Thiểu Dương': (chiNam + 1) % 12,
+            'Thiểu Âm': (chiNam + 3) % 12
         };
     }
 

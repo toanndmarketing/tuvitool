@@ -161,7 +161,7 @@ const TuViSao = (function () {
             ['Thái Âm', 'Thiên Đồng', 'Thiên Cơ', 'Cự Môn'],          // Đinh
             ['Tham Lang', 'Thái Âm', 'Hữu Bật', 'Thiên Cơ'],          // Mậu
             ['Vũ Khúc', 'Tham Lang', 'Thiên Lương', 'Văn Khúc'],       // Kỷ
-            ['Thái Dương', 'Vũ Khúc', 'Thái Âm', 'Thiên Đồng'],       // Canh (Thiên Phủ thay bằng Thái Âm for simplification)
+            ['Thái Dương', 'Vũ Khúc', 'Thái Âm', 'Thiên Đồng'],       // Canh — Nam Phái truyền thống (Nhật-Vũ-Âm-Đồng). Trung Châu phái dùng Thiên Phủ thay Thái Âm.
             ['Cự Môn', 'Thái Dương', 'Văn Khúc', 'Văn Xương'],        // Tân
             ['Thiên Lương', 'Tử Vi', 'Tả Phụ', 'Vũ Khúc'],            // Nhâm
             ['Phá Quân', 'Cự Môn', 'Thái Âm', 'Tham Lang']            // Quý
@@ -370,13 +370,16 @@ const TuViSao = (function () {
     }
 
     /**
-     * An Tuế Phá, Tuế Phá, Long Đức, Phượng Các (theo chi năm)
+     * An Tuế Phá, Long Đức, Phúc Đức (Vòng Thái Tuế — theo chi năm)
+     * Vòng 12 sao: Thái Tuế → Thiếu Dương → Tang Môn → Thiếu Âm → Quan Phù → Tử Phù
+     *              → Tuế Phá(+6) → Long Đức(+7=chiNam+3 mượn cách tính nhanh) → Bạch Hổ → Phúc Đức(+9) → Điếu Khách → Trực Phù
+     * LƯU Ý: "Phúc Đức" ở đây KHÁC hoàn toàn sao "Phượng Các" (bộ Tứ Linh Long-Phượng)
      */
     function anTuePha(chiNam) {
         return {
             'Tuế Phá': (chiNam + 6) % 12,
-            'Long Đức': (chiNam + 3) % 12,
-            'Phượng Các': ((chiNam + 3) % 12 + 6) % 12
+            'Long Đức': (chiNam + 7) % 12,
+            'Phúc Đức': (chiNam + 9) % 12
         };
     }
 
@@ -705,9 +708,9 @@ const TuViSao = (function () {
             });
         }
 
-        // Long Đức, Phượng Các (lưu niên) - add
+        // Vòng Thái Tuế: Long Đức, Phúc Đức
         addSao(tuePha['Long Đức'], 'Long Đức', 'phu', 'cat');
-        addSao(tuePha['Phượng Các'], 'Phượng Các', 'phu', 'cat');
+        addSao(tuePha['Phúc Đức'], 'Phúc Đức', 'phu', 'cat');
 
         // --- Sao Lưu Niên (theo Can Chi năm xem) ---
         if (lasoData.canChiNamXem) {

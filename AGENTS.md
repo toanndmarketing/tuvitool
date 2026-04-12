@@ -1,11 +1,13 @@
 # tu-vi-la-so — Agent Instructions
 
 Dự án: tu-vi-la-so
+Tech: Express.js + Vanilla JS + SQLite + Google Gemini AI
 
 ## 1. PHÁP LỆNH TỐI CAO
 - Tuân thủ nghiêm ngặt file `.agent/memory/constitution.md`.
 - Docker-First: Mọi hoạt động code và chạy app phải diễn ra trong container. KHÔNG chạy node/python trên host.
-- Ports: Chỉ sử dụng dải port 8900-8999.
+- Ports: **8950** (local), **8900** (production). Tuân thủ lấy port từ biến môi trường (.env).
+- **KHÔNG có Next.js/React/Vue** — Frontend là Vanilla HTML/JS/CSS.
 
 ## 2. WB-AGENT PROTOCOL
 - Mọi task phải đi qua quy trình: Specify → Plan → Tasks → Implement.
@@ -20,16 +22,17 @@ Dự án: tu-vi-la-so
 ## 4. AN TOÀN
 - KHÔNG chạy `docker compose down -v` trên Production.
 - Tạo script tự động (`.agent/scripts/`) cho lỗi lặp lại.
-- Kiểm tra logs ngay khi lỗi: `docker compose logs -f <service>`.
+- Kiểm tra logs ngay khi lỗi: `docker compose logs -f tuvi-app`.
+
+## 5. AGENTIC MODE SYNC (Antigravity Only)
+- **Task Tracking**: Sử dụng `task_boundary` để đồng bộ trạng thái với `@speckit.tasks` (tasks.md).
+- **Planning Artifacts**: Luôn tạo `implementation_plan.md` khi thực hiện các thay đổi lớn (atomic > 3 files).
+- **Verification**: Sau khi hoàn thành task, sử dụng `walkthrough.md` để đối chiếu kết quả với `spec.md`.
 
 
 ## Build & Test
 - Build: `docker compose build`
 - Run: `docker compose up -d`
-- Logs: `docker compose logs -f <service>`
+- Logs: `docker compose logs -f tuvi-app`
 - Stop: `docker compose down`
-
-## Project Context
-- Constitution: `.agent/memory/constitution.md`
-- Infrastructure: `.agent/knowledge_base/infrastructure.md`
-- Workflows: `.agent/workflows/`
+- Test Tử Vi: Chạy workflow `/test-tuvi`

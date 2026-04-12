@@ -1,24 +1,25 @@
-# Technology & Development Standards
+---
+name: tech
+description: Technical standards for tu-vi-la-so project
+---
 
-Project: tu-vi-la-so
-Build System: Docker (docker compose)
-Port Range: 8900-8999
-Shell: PowerShell 5.1+ (Windows)
+# Technical Standards
 
-## Development Protocol
-- Follow Spec-Driven Development (SDD): Specify → Plan → Tasks → Implement.
-- Specs directory: `.agent/specs/`
-- Constitution: `.agent/memory/constitution.md`
-- 15-Minute Rule: Each task must be atomic, ≤ 15 minutes, affecting ≤ 3 files.
+## Stack
+- Backend: Express.js 4.21 (Node.js 20 Alpine)
+- Database: SQLite (better-sqlite3)
+- Frontend: Vanilla HTML + JavaScript + CSS (NO framework)
+- AI: Google Gemini API (gemini-2.0-flash)
+- Container: Docker (tuvi-app)
 
-## Environment
-- Docker-First: All apps run inside containers. Never run npm/python on host directly.
-- ENV vars required for all sensitive config (`.env` files).
-- No hardcoded URLs, Tokens, Keys, or Credentials.
+## Ports
+- Local: 8950
+- Production: 8900
 
-## Language
-- Respond in Vietnamese (Tiếng Việt).
-
-## Safety
-- NEVER run `docker compose down -v` on Production.
-- Always check logs on error: `docker compose logs -f <service>`.
+## Rules
+- Docker-First: NO running node/python on host
+- Vietnamese language responses
+- NO hardcoded URLs, Tokens, Keys — use .env
+- Frontend: Global functions (NO import/export)
+- Backend: CommonJS require()
+- Domain accuracy: Test with /test-tuvi workflow

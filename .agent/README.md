@@ -1,8 +1,8 @@
 # 🤖 WB-Agent Configuration (ASF 3.3)
 
 > **Project**: tu-vi-la-so
-> **Type**: Web SaaS (B2B)
-> **Generated**: 2026-02-25
+> **Type**: Full-stack (Web + API)
+> **Generated**: 2026-04-12
 
 ## 🏗️ Architecture
 

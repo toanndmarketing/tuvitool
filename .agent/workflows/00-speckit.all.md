@@ -4,34 +4,26 @@ description: Full Pipeline (Specify → Clarify → Plan → Tasks → Analyze)
 
 # 🚀 Full Pipeline
 
-## Pre-conditions
-- `.agent/memory/constitution.md` đã tồn tại (chạy `/01-speckit.constitution` trước)
-
 ## Steps
 
-1. **@speckit.specify** — Tạo spec.md từ mô tả feature
-   - Input: Developer mô tả feature bằng ngôn ngữ tự nhiên
-   - Output: `.agent/specs/[feature]/spec.md`
+1. **@speckit.map** — (NẾU dự án cũ) Quét cấu trúc và hiểu codebase hiện tại.
+   - Output: `.agent/codebase/` docs.
 
-2. **GATE**: Kiểm tra spec.md có đủ User Scenarios + Success Criteria?
-   - Nếu THIẾU → quay lại step 1
+2. **@speckit.specify** — Tạo spec.md từ mô tả feature.
+   - Output: `.agent/specs/[feature]/spec.md`.
 
-3. **@speckit.clarify** — Giải quyết mơ hồ
-   - Output: Updated spec.md (mọi ambiguity resolved)
+3. **@speckit.clarify** — Giải quyết mơ hồ và chốt User Scenarios.
 
-4. **@speckit.plan** — Tạo kiến trúc kỹ thuật
-   - Output: plan.md, data-model.md, contracts/
+4. **@speckit.roadmap** — Cập nhật `.agent/ROADMAP.md` với Phase/Milestone mới.
 
-5. **GATE**: Plan có vi phạm Constitution?
-   - Nếu CÓ → báo lỗi, yêu cầu fix
+5. **@speckit.plan** — Tạo kiến trúc (Goal-Backward).
+   - Output: plan.md, must_haves.
 
-6. **@speckit.tasks** — Breakdown thành atomic tasks
-   - Output: tasks.md
+6. **@speckit.tasks** — Breakdown thành atomic tasks (Task Anatomy).
+   - Output: tasks.md.
 
-7. **@speckit.analyze** — Kiểm tra consistency
-   - Output: Coverage score + Gap analysis
+7. **@speckit.analyze** — Kiểm tra tính nhất quán 360 độ.
 
 ## Success Criteria
 - ✅ spec.md, plan.md, tasks.md tồn tại và nhất quán
-- ✅ Coverage score ≥ 90%
 - ✅ Không vi phạm Constitution

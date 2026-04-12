@@ -1,30 +1,29 @@
-# Copilot Instructions for tu-vi-la-so
+# tu-vi-la-so — Copilot Instructions
 
 Dự án: tu-vi-la-so
+Tech: Express.js + Vanilla JS + SQLite + Google Gemini AI
 
-## 1. PHÁP LỆNH TỐI CAO
-- Tuân thủ nghiêm ngặt file `.agent/memory/constitution.md`.
-- Docker-First: Mọi hoạt động code và chạy app phải diễn ra trong container. KHÔNG chạy node/python trên host.
-- Ports: Chỉ sử dụng dải port 8900-8999.
+## PHÁP LỆNH TỐI CAO
+- Tuân thủ `.agent/memory/constitution.md`.
+- Docker-First: KHÔNG chạy node/python trên host.
+- Ports: **8950** (local), **8900** (production).
+- **KHÔNG có Next.js/React/Vue** — Frontend là Vanilla HTML/JS/CSS.
+- Phản hồi bằng Tiếng Việt.
+- KHÔNG hard-code URLs, Tokens, Keys. Dùng `.env`.
 
-## 2. WB-AGENT PROTOCOL
-- Mọi task phải đi qua quy trình: Specify → Plan → Tasks → Implement.
-- Sử dụng Workflows trong `.agent/workflows/` và Skills trong `.agent/skills/`.
+## Architecture
+- `public/` — Static frontend (Vanilla HTML/JS/CSS)
+- `server/` — Express API backend (CommonJS)
+- `data/` — SQLite DB + test data
+- `server/prompts/` — AI prompt templates
+- Frontend: Global functions (NO import/export)
+- Backend: CommonJS require()
 
-## 3. NGÔN NGỮ & CODE
-- Phản hồi developer hoàn toàn bằng Tiếng Việt.
-- 15-Minute Rule: Mỗi task phải atomic, ≤ 15 phút, ảnh hưởng ≤ 3 files.
-- PowerShell 5.1+, ngăn cách lệnh bằng dấu `;` (KHÔNG dùng `&&`).
-- KHÔNG hard-code URLs, Tokens, Keys. Dùng ENV vars (`.env`).
+## Domain Rules
+- Tử Vi logic changes → MUST verify accuracy
+- Reference: `data/TEST_CHUAN_NGUYEN_DUC_TOAN.md`
 
-## 4. AN TOÀN
-- KHÔNG chạy `docker compose down -v` trên Production.
-- Tạo script tự động (`.agent/scripts/`) cho lỗi lặp lại.
-- Kiểm tra logs ngay khi lỗi: `docker compose logs -f <service>`.
-
-
-## References
-- Constitution: `.agent/memory/constitution.md`
-- Infrastructure: `.agent/knowledge_base/infrastructure.md`
-- Workflows: `.agent/workflows/`
-- Skills: `.agent/skills/`
+## Build & Test
+- Build: `docker compose build`
+- Run: `docker compose up -d`
+- Logs: `docker compose logs -f tuvi-app`

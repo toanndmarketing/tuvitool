@@ -199,13 +199,17 @@ const TuViRender = (function () {
     /**
      * Render ô trung tâm (center cell)
      */
-    function renderCenterCell(lasoData, hoTen) {
+    function renderCenterCell(lasoData, hoTen, options) {
+        options = options || {};
         const ld = lasoData.lunarDate;
         const canChiNam = lasoData.canChiNam;
         const canChiThang = lasoData.canChiThang;
         const canChiNgay = lasoData.canChiNgay;
         const canChiGio = lasoData.canChiGio;
         const canChiNamXem = lasoData.canChiNamXem;
+        const chartId = options.chartId || 'default';
+        const babyLabel = options.babyLabel || '';
+        const birthTimeExact = options.birthTimeExact || '';
 
         const chuMenh = TuViSao.getChuMenh(lasoData.cungMenhPos);
         const chuThan = TuViSao.getChuThan(lasoData.cungThanPos);
@@ -228,6 +232,9 @@ const TuViRender = (function () {
 
         // Title
         html += `<div class="center-title">LÁ SỐ TỬ VI</div>`;
+        if (babyLabel) {
+            html += `<div class="center-title">${babyLabel}</div>`;
+        }
 
         // Info
         html += `<div class="center-info">`;
@@ -236,6 +243,9 @@ const TuViRender = (function () {
         html += `<div class="center-info-row"><span class="center-info-label">Tháng:</span><span class="center-info-value">${ld.month} (${lasoData.input.thang})</span><span class="center-info-canchi">${canChiThang.full}</span></div>`;
         html += `<div class="center-info-row"><span class="center-info-label">Ngày:</span><span class="center-info-value">${ld.day} (${lasoData.input.ngay})</span><span class="center-info-canchi">${canChiNgay.full}</span></div>`;
         html += `<div class="center-info-row"><span class="center-info-label">Giờ:</span><span class="center-info-value">${gioLabel}</span><span class="center-info-canchi">${canChiGio.full}</span></div>`;
+        if (birthTimeExact) {
+            html += `<div class="center-info-row"><span class="center-info-label">Giờ (HH:mm):</span><span class="center-info-value">${birthTimeExact}</span></div>`;
+        }
 
         html += `<hr class="center-divider">`;
 
@@ -268,7 +278,7 @@ const TuViRender = (function () {
         html += `</div>`; // center-info
 
         // SVG overlay cho soi cung
-        html += `<svg class="soi-cung-svg" id="soiCungSvg"></svg>`;
+        html += `<svg class="soi-cung-svg" id="soiCungSvg-${chartId}"></svg>`;
 
         html += `</div>`; // center-cell
 
@@ -376,7 +386,8 @@ const TuViRender = (function () {
     /**
      * Render toàn bộ lá số
      */
-    function render(lasoData, hoTen) {
+    function render(lasoData, hoTen, options) {
+        options = options || {};
         let html = `<div class="chart-grid">`;
 
         // All 12 palace cells with explicit grid placement
@@ -386,7 +397,7 @@ const TuViRender = (function () {
         });
 
         // Center cell (spans col 2-3, row 2-3)
-        html += renderCenterCell(lasoData, hoTen);
+        html += renderCenterCell(lasoData, hoTen, options);
 
         html += `</div>`;
 
@@ -406,7 +417,7 @@ const TuViRender = (function () {
             : th.profile;
 
         let html = `<div class="tinh-he-section">`;
-        html += `<h3 class="tinh-he-title">☄️ Tinh Hệ Mệnh: <strong>${th.name}</strong></h3>`;
+        html += `<h3 class="tinh-he-title">☀️ Tinh Hệ Mệnh: <strong>${th.name}</strong></h3>`;
         html += `<div class="tinh-he-archetype">${th.archetype}</div>`;
         html += `<div class="tinh-he-profile">${profileText}</div>`;
 
@@ -458,9 +469,12 @@ const TuViRender = (function () {
      * Khởi tạo tính năng soi cung
      * Gọi sau khi chart đã render vào DOM
      */
-    function initSoiCung() {
-        const chartGrid = document.querySelector('.chart-grid');
-        const svg = document.getElementById('soiCungSvg');
+    function initSoiCung(options) {
+        options = options || {};
+        const chartGrid = options.chartGrid
+            || (options.root ? options.root.querySelector('.chart-grid') : document.querySelector('.chart-grid'));
+        const svg = options.svg
+            || (options.svgId ? document.getElementById(options.svgId) : (chartGrid ? chartGrid.querySelector('.soi-cung-svg') : document.getElementById('soiCungSvg')));
         if (!chartGrid || !svg) return;
 
         let activeCell = null;

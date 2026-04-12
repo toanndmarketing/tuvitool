@@ -31,16 +31,11 @@ const TuViSao = (function () {
      */
     function anTuVi(cucValue, ngayAL) {
         const tuViTable = {
-            // Thuỷ Nhị Cục (2)
-            2: [null, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4],
-            // Mộc Tam Cục (3)
-            3: [null, 2, 2, 2, 3, 2, 3, 3, 3, 4, 3, 4, 4, 4, 5, 4, 5, 5, 5, 6, 5, 6, 6, 6, 7, 6, 7, 7, 7, 8, 7],
-            // Kim Tứ Cục (4)
-            4: [null, 1, 2, 1, 2, 3, 2, 3, 4, 3, 4, 5, 4, 5, 6, 5, 6, 7, 6, 7, 8, 7, 8, 9, 8, 9, 10, 9, 10, 11, 10],
-            // Thổ Ngũ Cục (5)
-            5: [null, 2, 2, 2, 2, 2, 3, 2, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4, 4, 4, 5, 4, 5, 5, 5, 5, 5, 6, 5, 6, 6],
-            // Hoả Lục Cục (6)
-            6: [null, 1, 2, 2, 2, 1, 2, 2, 2, 3, 2, 3, 3, 3, 3, 3, 4, 3, 4, 4, 4, 4, 4, 5, 4, 5, 5, 5, 5, 5, 6]
+            "2": [null, 1, 2, 2, 3, 3, 4, 4, 5, 5, 6, 6, 7, 7, 8, 8, 9, 9, 10, 10, 11, 11, 0, 0, 1, 1, 2, 2, 3, 3, 4],
+            "3": [null, 4, 1, 2, 5, 2, 3, 6, 3, 4, 7, 4, 5, 8, 5, 6, 9, 6, 7, 10, 7, 8, 11, 8, 9, 0, 9, 10, 1, 10, 11],
+            "4": [null, 11, 4, 1, 2, 0, 5, 2, 3, 1, 6, 3, 4, 2, 7, 4, 5, 3, 8, 5, 6, 4, 9, 6, 7, 5, 10, 7, 8, 6, 11],
+            "5": [null, 6, 11, 4, 1, 2, 7, 0, 5, 2, 3, 8, 1, 6, 3, 4, 9, 2, 7, 4, 5, 10, 3, 8, 5, 6, 11, 4, 9, 6, 7],
+            "6": [null, 9, 6, 11, 4, 1, 2, 10, 7, 0, 5, 2, 3, 11, 8, 1, 6, 3, 4, 0, 9, 2, 7, 4, 5, 1, 10, 3, 8, 5, 6]
         };
 
         if (!tuViTable[cucValue] || ngayAL < 1 || ngayAL > 30) return 2;
@@ -264,20 +259,20 @@ const TuViSao = (function () {
     /**
      * An Thai, Tọa, Quang, Quý
      */
-    function anThaiToa(thangAL) {
+    function anThaiPhong(chiKhuc) {
         return {
-            'Thai Phụ': (1 + thangAL) % 12,
-            'Phong Cáo': ((11 - thangAL) % 12 + 12) % 12
+            'Thai Phụ': (chiKhuc + 2) % 12,
+            'Phong Cáo': ((chiKhuc - 2) % 12 + 12) % 12
         };
     }
 
     /**
      * An Tam Thai, Bát Tọa (theo ngày và chi giờ)
      */
-    function anTamThaiBatToa(ngayAL, chiGio) {
+    function anTamThaiBatToa(ngayAL, chiTa, chiHuu) {
         return {
-            'Tam Thai': (ngayAL - 1 + chiGio) % 12, // Simplified
-            'Bát Tọa': ((ngayAL - 1 + chiGio + 4) % 12) // Simplified
+            'Tam Thai': (chiTa + ngayAL - 1) % 12,
+            'Bát Tọa': ((chiHuu - ngayAL + 1) % 12 + 12) % 12
         };
     }
 
@@ -398,10 +393,10 @@ const TuViSao = (function () {
     /**
      * An Ân Quang, Thiên Quý (Thiên Trù) theo ngày
      */
-    function anAnQuangThienQuy(ngayAL) {
+    function anAnQuangThienQuy(ngayAL, chiXuong, chiKhuc) {
         return {
-            'Ân Quang': ((6 + ngayAL) % 12),
-            'Thiên Quý': ((6 - ngayAL + 1 + 12) % 12)
+            'Ân Quang': ((chiXuong + ngayAL - 2) % 12 + 12) % 12,
+            'Thiên Quý': ((chiKhuc - ngayAL + 2) % 12 + 12) % 12
         };
     }
 
@@ -603,9 +598,9 @@ const TuViSao = (function () {
         addSao(daoHoa['Thiên Hỷ'], 'Thiên Hỷ', 'phu', 'cat');
 
         // Thai Phụ, Phong Cáo
-        const thaiToa = anThaiToa(thangAL);
-        addSao(thaiToa['Thai Phụ'], 'Thai Phụ', 'phu', 'cat');
-        addSao(thaiToa['Phong Cáo'], 'Phong Cáo', 'phu', 'cat');
+        const thaiPhong = anThaiPhong(vanXuongKhuc['Văn Khúc']);
+        addSao(thaiPhong['Thai Phụ'], 'Thai Phụ', 'phu', 'cat');
+        addSao(thaiPhong['Phong Cáo'], 'Phong Cáo', 'phu', 'cat');
 
         // Thiên Quan, Thiên Phúc
         const quanPhuc = anThienQuanPhuc(canNam);
@@ -635,7 +630,7 @@ const TuViSao = (function () {
         addSao(coThan['Quả Tú'], 'Quả Tú', 'phu', 'hung');
 
         // Tam Thai, Bát Tọa
-        const tamThai = anTamThaiBatToa(ngayAL, chiGio);
+        const tamThai = anTamThaiBatToa(ngayAL, taPhuHuuBat['Tả Phụ'], taPhuHuuBat['Hữu Bật']);
         addSao(tamThai['Tam Thai'], 'Tam Thai', 'phu', 'cat');
         addSao(tamThai['Bát Tọa'], 'Bát Tọa', 'phu', 'cat');
 
@@ -672,7 +667,7 @@ const TuViSao = (function () {
         addSao(thuongSu['Thiên Sứ'], 'Thiên Sứ', 'phu', 'hung');
 
         // Ân Quang, Thiên Quý
-        const anQuang = anAnQuangThienQuy(ngayAL);
+        const anQuang = anAnQuangThienQuy(ngayAL, vanXuongKhuc['Văn Xương'], vanXuongKhuc['Văn Khúc']);
         addSao(anQuang['Ân Quang'], 'Ân Quang', 'phu', 'cat');
         addSao(anQuang['Thiên Quý'], 'Thiên Quý', 'phu', 'cat');
 

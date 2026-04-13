@@ -171,7 +171,11 @@ const TuViRender = (function () {
         html += `<span class="palace-dizhi">${prefix}</span>`;
         const thanLabel = isThan ? ' &lt;THÂN&gt;' : '';
         html += renderCungTooltip(cungName, isTopRow) + thanLabel;
-        html += `<span class="palace-number"></span>`;
+        
+        // Hiển thị số Đại Vận (ví dụ: 3, 13, 23...)
+        const dv = lasoData.daiVan.find(d => d.cungPos === chiIndex);
+        const dvNum = dv ? dv.tuoiFrom : '';
+        html += `<span class="palace-number">${dvNum}</span>`;
         html += `</div>`;
 
         // Main stars
@@ -200,7 +204,17 @@ const TuViRender = (function () {
 
         // Footer
         html += `<div class="palace-footer">`;
-        html += `<span>${CHI_NAMES[chiIndex]}</span>`;
+        
+        let footerLeft = `<span>${CHI_NAMES[chiIndex]}</span>`;
+        // Thêm nhãn Hạn/Năm nếu có
+        if (lasoData.tieuVan && lasoData.tieuVan.cungPos === chiIndex) {
+            footerLeft += `<span class="vanhan-label tieu-han-label">Hạn</span>`;
+        }
+        if (lasoData.luuNienPos === chiIndex) {
+            footerLeft += `<span class="vanhan-label luu-nien-label">Năm</span>`;
+        }
+        html += footerLeft;
+
         let markers = '';
         if (truongSinh) markers += renderTruongSinhTooltip(truongSinh, isTopRow);
         html += markers;
@@ -284,6 +298,14 @@ const TuViRender = (function () {
         html += `<div>Chủ Thân: <strong>${chuThan}</strong></div>`;
         if (lasoData.cungPhi) {
             html += `<div>Cung Phi: <strong>${lasoData.cungPhi}</strong></div>`;
+        }
+        if (lasoData.tieuVan) {
+            const chiTieuVan = CHI_NAMES[lasoData.tieuVan.cungPos];
+            html += `<div>Tiểu Hạn: <strong>${chiTieuVan}</strong></div>`;
+        }
+        if (lasoData.luuNienPos !== undefined) {
+            const chiLuuNien = CHI_NAMES[lasoData.luuNienPos];
+            html += `<div>Lưu Niên: <strong>${chiLuuNien}</strong></div>`;
         }
 
         if (lasoData.amDuongNghichLy) {

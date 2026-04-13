@@ -177,11 +177,8 @@ const TuViSao = (function () {
     /**
      * An Hoả Tinh, Linh Tinh (theo chi năm + giờ sinh)
      */
-    function anHoaLinh(chiNam, chiGio) {
-        // Hoả Tinh khởi cung theo chi năm (nhóm Dần Ngọ Tuất, Thân Tý Thìn, Tỵ Dậu Sửu, Hợi Mão Mùi)
+    function anHoaLinh(chiNam, chiGio, thuan) {
         let hoaStart, linhStart;
-        const nhom = chiNam % 4;
-        // Simplified: Hoả Tinh từ theo nhóm Tam Hợp
         if ([2, 6, 10].includes(chiNam)) { // Dần Ngọ Tuất
             hoaStart = 1; // Sửu
             linhStart = 3; // Mão
@@ -189,18 +186,30 @@ const TuViSao = (function () {
             hoaStart = 2; // Dần
             linhStart = 10; // Tuất
         } else if ([5, 9, 1].includes(chiNam)) { // Tỵ Dậu Sửu
-            hoaStart = 3; // Mão (actually Tuất for some traditions)
+            hoaStart = 3; // Mão
             linhStart = 10; // Tuất
         } else { // Hợi Mão Mùi
             hoaStart = 9; // Dậu
             linhStart = 10; // Tuất
         }
 
+        let hoaPos, linhPos;
+        if (thuan) {
+            // Dương Nam, Âm Nữ: Hoả Thuận, Linh Nghịch
+            hoaPos = (hoaStart + chiGio) % 12;
+            linhPos = ((linhStart - chiGio) % 12 + 12) % 12;
+        } else {
+            // Âm Nam, Dương Nữ: Hoả Nghịch, Linh Thuận
+            hoaPos = ((hoaStart - chiGio) % 12 + 12) % 12;
+            linhPos = (linhStart + chiGio) % 12;
+        }
+
         return {
-            'Hoả Tinh': (hoaStart + chiGio) % 12,
-            'Linh Tinh': (linhStart + chiGio) % 12
+            'Hoả Tinh': hoaPos,
+            'Linh Tinh': linhPos
         };
     }
+
 
     /**
      * An Không (Địa Không, Địa Kiếp) theo giờ sinh
@@ -576,7 +585,7 @@ const TuViSao = (function () {
         // (Sẽ xử lý sau khi an xong tất cả sao)
 
         // Hoả Tinh, Linh Tinh
-        const hoaLinh = anHoaLinh(chiNam, chiGio);
+        const hoaLinh = anHoaLinh(chiNam, chiGio, lasoData.thuan);
         addSao(hoaLinh['Hoả Tinh'], 'Hoả Tinh', 'phu', 'hung');
         addSao(hoaLinh['Linh Tinh'], 'Linh Tinh', 'phu', 'hung');
 

@@ -55,8 +55,9 @@ Khi phát hiện cung chứa sao xấu (Kình Dương, Đà La, Hóa Kỵ, Đị
 
 ### 📋 Thông Tin Đương Số
 - **Sơ đồ:** {{ngaySinhDL}} (Âm: {{ngaySinhAL}}) - Giờ {{gioSinh}}
-- **Bản mệnh:** {{menhNapAm}} (Hành {{hanhMenh}}) - {{cucName}}
+- **Bản mệnh:** {{menhNapAm}} (Hành {{hanhMenh}}) - {{cucName}} - **Cung Phi:** {{cungPhi}}
 - **Đặc điểm Nhân dạng:** (Dự đoán vóc dáng, nốt ruồi, vết sẹo dựa trên bộ sao Mệnh/Thân)
+- **Hệ thống Vận hạn:** Tiểu Hạn (cung {{tieuVanChi}}), Lưu Niên (cung {{luuNienChi}}).
 
 ---
 ### ⭐ TỔNG QUAN LÁ SỐ

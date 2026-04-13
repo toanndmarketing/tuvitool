@@ -507,11 +507,16 @@
             cungMenh: lasoData.cungMap[lasoData.cungMenhPos],
             cungThan: lasoData.cungMap[lasoData.cungThanPos],
             twin: buildTwinMeta(profile, otherProfile, isEmCungGioi, isOlder),
+            cungPhi: lasoData.cungPhi,
+            tieuVan: lasoData.tieuVan,
+            luuNienPos: lasoData.luuNienPos,
+            daiVan: lasoData.daiVan,
             cungDetail: Array.from({ length: 12 }).map((_, i) => {
                 const p = (lasoData.cungMenhPos + i) % 12;
                 return {
                     name: lasoData.cungMap[p],
                     chi: AmLich.DIA_CHI[p],
+                    daiVan: (lasoData.daiVan.find(d => d.cungPos === p) || {}).tuoiFrom,
                     truongSinh: (lasoData.truongSinhMap && lasoData.truongSinhMap[p]) || null,
                     tuan: lasoData.tuanTriet && lasoData.tuanTriet.tuan.includes(p),
                     triet: lasoData.tuanTriet && lasoData.tuanTriet.triet.includes(p),
@@ -550,6 +555,9 @@
                 .replace(/{{hoTen}}/g, profile.fullName)
                 .replace(/{{CUNG_ORDER}}/g, 'MỆNH -> ...')
                 .replace(/{{namXem}}/g, String(namXem))
+                .replace(/{{cungPhi}}/g, lasoData.cungPhi || '')
+                .replace(/{{tieuVanChi}}/g, lasoData.tieuVan ? AmLich.DIA_CHI[lasoData.tieuVan.cungPos] : '')
+                .replace(/{{luuNienChi}}/g, lasoData.luuNienPos !== undefined ? AmLich.DIA_CHI[lasoData.luuNienPos] : '')
                 + twinContext + '\nDATA JSON:\n' + JSON.stringify(compact, null, 2);
         } catch (err) {
             raw = twinContext + '\nDATA JSON:\n' + JSON.stringify(compact, null, 2);

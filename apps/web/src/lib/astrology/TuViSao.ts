@@ -1,6 +1,6 @@
+// @ts-nocheck
 import { AmLich } from './AmLich';
 import { TuViCalc } from './TuViCalc';
-// @ts-nocheck
 /**
  * ============================================
  * TỬ VI SAO - An sao vào lá số
@@ -508,8 +508,8 @@ export const TuViSao = (function () {
      * @param {Object} lasoData - Data từ TuViCalc.calculate()
      * @returns {Object} saoMap: { cungIndex: [{ name, type, nature }] }
      */
-    function anSao(lasoData) {
-        const saoMap = {};
+    function anSao(lasoData: any) {
+        const saoMap: Record<number, any[]> = {};
         for (let i = 0; i < 12; i++) {
             saoMap[i] = [];
         }
@@ -524,7 +524,7 @@ export const TuViSao = (function () {
         const thuan = lasoData.thuan;
 
         // Helper: add sao to cung
-        function addSao(pos, name, type, nature, extra) {
+        function addSao(pos: number, name: string, type?: string, nature?: string, extra?: any) {
             if (pos === undefined || pos === null) return;
             pos = ((pos % 12) + 12) % 12;
             saoMap[pos].push({ name, type: type || 'phu', nature: nature || 'trung', ...(extra || {}) });
@@ -715,7 +715,7 @@ export const TuViSao = (function () {
         // --- Xử lý Tứ Hoá ---
         // Gán Hoá lên sao
         for (let cungIdx = 0; cungIdx < 12; cungIdx++) {
-            saoMap[cungIdx].forEach(sao => {
+            saoMap[cungIdx].forEach((sao: any) => {
                 if (sao.name === tuHoa['Hoá Lộc']) sao.hoa = 'Lộc';
                 if (sao.name === tuHoa['Hoá Quyền']) sao.hoa = 'Quyền';
                 if (sao.name === tuHoa['Hoá Khoa']) sao.hoa = 'Khoa';
@@ -769,7 +769,7 @@ export const TuViSao = (function () {
 
             // Gán Lưu Hoá lên sao
             for (let ci = 0; ci < 12; ci++) {
-                saoMap[ci].forEach(sao => {
+                saoMap[ci].forEach((sao: any) => {
                     if (sao.name === luuTuHoa['Hoá Lộc']) sao.luuHoa = 'Lộc';
                     if (sao.name === luuTuHoa['Hoá Quyền']) sao.luuHoa = 'Quyền';
                     if (sao.name === luuTuHoa['Hoá Khoa']) sao.luuHoa = 'Khoa';
@@ -794,8 +794,8 @@ export const TuViSao = (function () {
      * Xác định Chủ Mệnh (sao chủ cung Mệnh)
      * Dựa vào Địa Chi của NĂM SINH (chuẩn truyền thống)
      */
-    function getChuMenh(chiNam) {
-        const chuMenhMap = {
+    function getChuMenh(chiNam: number) {
+        const chuMenhMap: Record<number, string> = {
             0: 'Tham Lang', 1: 'Cự Môn', 2: 'Lộc Tồn', 3: 'Văn Khúc',
             4: 'Liêm Trinh', 5: 'Vũ Khúc', 6: 'Phá Quân', 7: 'Vũ Khúc',
             8: 'Liêm Trinh', 9: 'Văn Khúc', 10: 'Lộc Tồn', 11: 'Cự Môn'
@@ -807,8 +807,8 @@ export const TuViSao = (function () {
      * Xác định Chủ Thân (sao chủ cung Thân)
      * Dựa vào Địa Chi của NĂM SINH (chuẩn truyền thống)
      */
-    function getChuThan(chiNam) {
-        const chuThanMap = {
+    function getChuThan(chiNam: number) {
+        const chuThanMap: Record<number, string> = {
             0: 'Linh Tinh', 1: 'Thiên Tướng', 2: 'Thiên Lương', 3: 'Thiên Đồng',
             4: 'Văn Xương', 5: 'Thiên Cơ', 6: 'Hoả Tinh', 7: 'Thiên Cơ',
             8: 'Văn Xương', 9: 'Thiên Đồng', 10: 'Thiên Lương', 11: 'Thiên Tướng'

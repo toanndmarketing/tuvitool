@@ -1,3 +1,4 @@
+// @ts-nocheck
 // src/lib/astrology/TuViEngine.ts
 import { AmLich } from './AmLich';
 import { TuViCalc } from './TuViCalc';

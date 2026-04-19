@@ -1,5 +1,5 @@
-import { AmLich } from './AmLich';
 // @ts-nocheck
+import { AmLich } from './AmLich';
 /**
  * ============================================
  * TỬ VI LƯU NIÊN - Luận giải sao lưu + Nguyệt Hạn

@@ -1,13 +1,13 @@
 # tu-vi-la-so — Agent Instructions
 
 Dự án: tu-vi-la-so
-Tech: Express.js + Vanilla JS + SQLite + Google Gemini AI
+Tech: Next.js 16 + React 19 + PNPM Monorepo + Prisma + Google Gemini AI
 
 ## 1. PHÁP LỆNH TỐI CAO
 - Tuân thủ nghiêm ngặt file `.agent/memory/constitution.md`.
 - Docker-First: Mọi hoạt động code và chạy app phải diễn ra trong container. KHÔNG chạy node/python trên host.
 - Ports: **8950** (local), **8900** (production). Tuân thủ lấy port từ biến môi trường (.env).
-- **KHÔNG có Next.js/React/Vue** — Frontend là Vanilla HTML/JS/CSS.
+- **Frontend/Backend**: Next.js 16 tại thư mục `apps/web` (PNPM Workspaces).
 
 ## 2. WB-AGENT PROTOCOL
 - Mọi task phải đi qua quy trình: Specify → Plan → Tasks → Implement.

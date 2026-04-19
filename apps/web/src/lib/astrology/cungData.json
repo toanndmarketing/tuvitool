@@ -1,0 +1,110 @@
+[
+  {
+    "id": 1,
+    "cung_name": "MỆNH",
+    "icon": "🏠",
+    "description": "Cung Mệnh thể hiện tính cách, phẩm chất, vận mệnh tổng quát của đương số. Đây là cung quan trọng nhất trong lá số Tử Vi.",
+    "key_aspects": "[\"Tính cách\",\"Ngoại hình\",\"Vận mệnh tổng quát\",\"Khả năng phát triển\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 2,
+    "cung_name": "HUYNH ĐỆ",
+    "icon": "👥",
+    "description": "Cung Huynh Đệ cho biết mối quan hệ anh chị em, bạn bè thân thiết, đồng nghiệp.",
+    "key_aspects": "[\"Anh chị em\",\"Bạn bè\",\"Quan hệ đồng nghiệp\",\"Hỗ trợ lẫn nhau\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 3,
+    "cung_name": "PHU THÊ",
+    "icon": "💑",
+    "description": "Cung Phu Thê xem về hôn nhân, vợ chồng, người yêu. Cho biết duyên phận tình cảm.",
+    "key_aspects": "[\"Hôn nhân\",\"Duyên phận\",\"Tính cách bạn đời\",\"Hạnh phúc gia đình\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 4,
+    "cung_name": "TỬ TỨC",
+    "icon": "👶",
+    "description": "Cung Tử Tức xem về con cái, hậu vận qua con. Cũng liên quan đến khả năng sinh sản.",
+    "key_aspects": "[\"Con cái\",\"Số con\",\"Tương lai con cái\",\"Phúc đức nối dõi\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 5,
+    "cung_name": "TÀI BẠCH",
+    "icon": "💎",
+    "description": "Cung Tài Bạch xem về tài chính, tiền bạc, cách kiếm tiền và giữ tiền.",
+    "key_aspects": "[\"Thu nhập\",\"Cách kiếm tiền\",\"Khả năng tích lũy\",\"Nguồn tài chính\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 6,
+    "cung_name": "TẬT ÁCH",
+    "icon": "🏥",
+    "description": "Cung Tật Ách xem về sức khỏe, bệnh tật, tai nạn. Cần lưu ý các sao hung đóng tại đây.",
+    "key_aspects": "[\"Sức khỏe\",\"Bệnh tật\",\"Tai nạn\",\"Thể chất\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 7,
+    "cung_name": "THIÊN DI",
+    "icon": "✈️",
+    "description": "Cung Thiên Di xem về đi xa, xuất ngoại, cuộc sống bên ngoài, quan hệ xã hội.",
+    "key_aspects": "[\"Di chuyển\",\"Xuất ngoại\",\"Quan hệ xã hội\",\"Sự nghiệp bên ngoài\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 8,
+    "cung_name": "NÔ BỘC",
+    "icon": "🤝",
+    "description": "Cung Nô Bộc (Giao Hữu) xem về người giúp việc, thuộc cấp, bạn bè phổ thông.",
+    "key_aspects": "[\"Thuộc cấp\",\"Bạn bè xã giao\",\"Mối quan hệ phục vụ\",\"Nhân sự\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 9,
+    "cung_name": "QUAN LỘC",
+    "icon": "🏢",
+    "description": "Cung Quan Lộc xem về sự nghiệp, học vấn, công danh, chức vụ.",
+    "key_aspects": "[\"Sự nghiệp\",\"Học vấn\",\"Chức vụ\",\"Thành tựu công việc\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 10,
+    "cung_name": "ĐIỀN TRẠCH",
+    "icon": "🏡",
+    "description": "Cung Điền Trạch xem về nhà cửa, bất động sản, tài sản cố định.",
+    "key_aspects": "[\"Nhà cửa\",\"Đất đai\",\"Bất động sản\",\"Tài sản thừa kế\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 11,
+    "cung_name": "PHÚC ĐỨC",
+    "icon": "🙏",
+    "description": "Cung Phúc Đức xem về phúc phần gia tộc, đạo đức, tổ tiên, sự an lạc tinh thần.",
+    "key_aspects": "[\"Phúc phần\",\"Gia tộc\",\"Đạo đức\",\"An lạc tinh thần\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 12,
+    "cung_name": "PHỤ MẪU",
+    "icon": "👨‍👩‍👧",
+    "description": "Cung Phụ Mẫu xem về cha mẹ, cấp trên, thầy cô, người bảo hộ.",
+    "key_aspects": "[\"Cha mẹ\",\"Cấp trên\",\"Thầy cô\",\"Người bảo hộ\"]",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  }
+]

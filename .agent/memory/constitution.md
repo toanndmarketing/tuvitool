@@ -11,17 +11,15 @@
 - **Production**: Server `15.235.210.4`, path `/home/tuvitool`, port **8900** (mapped qua Nginx).
 - **Domain**: `tuvi.demowebest.site` (Cloudflare Flexible SSL).
 - **Volumes**:
-  - `./data:/app/data` — SQLite DB persist
-  - `./public:/app/public` — Frontend files (hot-reload)
-  - `./server/tuvi-cli.js:/app/server/tuvi-cli.js` — CLI tool
+  - `./apps/web/.next:/app/apps/web/.next` — Volume cho build Next.js
+  - `node_modules` — Cache cho thư viện
+  - `apps_web_node_modules` — Cache cho PNPM modules con
 
 ## §2 Tech Stack (Chính xác — KHÔNG ĐỔI trừ khi được phê duyệt)
-- **Backend**: Express.js 4.21 trên Node.js 20 Alpine
-- **Database**: SQLite (better-sqlite3) — file `data/tuvi.db`
-- **Frontend**: Vanilla HTML + JavaScript + CSS — KHÔNG có React/Next.js/Vue
-- **AI**: Google Gemini API (gemini-2.0-flash-exp), prompt file tại `server/prompts/`
-- **Auth**: In-memory Bearer token (crypto.randomBytes), TTL 30 phút
-- Libs: helmet, express-rate-limit, cors, dotenv, seedrandom
+- **Framework**: Next.js 16 (App Router) + React 19 trên Node.js 20 Alpine
+- **Database**: Prisma + SQLite (`apps/web/prisma/dev.db`)
+- **Package Manager**: PNPM Workspaces (`apps/web`)
+- **AI**: Google Gemini API (AI SDK), AI streaming text/UI
 
 ## §3 Security & Production Safety
 - **CẤM**: `docker compose down -v` trên Production.
@@ -38,7 +36,7 @@
 - **Validate**:
   - Critical (`GEMINI_API_KEY`, `AUTH_USERNAME`, `AUTH_PASSWORD`): `throw new Error()`.
   - Optional (`GEMINI_MODEL`): `console.warn()`.
-- **Prefix convention**: Dự án này KHÔNG dùng `NEXT_PUBLIC_*` (không có Next.js).
+- **Prefix convention**: Dùng `NEXT_PUBLIC_*` cho các biến client-side của Next.js. Đoạn nào chạy server thì KHÔNG cần tiền tố.
 
 ## §5 Domain Accuracy (ĐẶC BIỆT QUAN TRỌNG)
 - Mọi thay đổi logic Tử Vi **PHẢI** cross-check với tài liệu chuẩn:

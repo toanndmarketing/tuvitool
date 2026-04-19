@@ -1,0 +1,43 @@
+// prisma/schema.prisma
+generator client {
+  provider = "prisma-client-js"
+}
+
+// Since Prisma 6 has experimental config in prisma.config.ts, we define datasource inside the env.
+datasource db {
+  provider = "sqlite"
+  url      = "file:./dev.db"
+}
+
+model UserContext {
+  id          String   @id @default(cuid())
+  userId      String?  // Có thể ẩn danh
+  name        String?
+  gender      String?
+  dob         DateTime?
+  birthHour   Int?
+  cungMenh    String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  sessions    ChatSession[]
+}
+
+model ChatSession {
+  id              String   @id @default(cuid())
+  userContextId   String?
+  userContext     UserContext? @relation(fields: [userContextId], references: [id])
+  topic           String?
+  astrologyData   String?  // JSON string: Lá số đã init để làm context
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  messages        ChatMessage[]
+}
+
+model ChatMessage {
+  id             String   @id @default(cuid())
+  sessionId      String
+  session        ChatSession @relation(fields: [sessionId], references: [id], onDelete: Cascade)
+  role           String   // "user", "assistant", "system"
+  content        String
+  createdAt      DateTime @default(now())
+}

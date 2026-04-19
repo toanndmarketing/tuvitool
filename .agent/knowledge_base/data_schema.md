@@ -1,72 +1,54 @@
-# 📊 Data Schema (SQLite — better-sqlite3)
+# 📊 Data Schema (V2 — Prisma + SQLite)
 
-> Database file: `data/tuvi.db`
-> WAL mode enabled, foreign keys ON
+> Database: `apps/web/prisma/dev.db` (SQLite via Prisma ORM)
+> Schema: `apps/web/prisma/schema.prisma`
 
-## Tables
+## Models
 
-### sao_interpret (Star Interpretations)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | Auto-increment |
-| sao_name | TEXT UNIQUE | Star name (e.g., "Tử Vi") |
-| icon | TEXT | Emoji icon (default '⭐') |
-| short_desc | TEXT | Short description |
-| detail | TEXT | Detailed interpretation |
-| good_aspects | TEXT | Positive aspects |
-| bad_aspects | TEXT | Negative aspects |
-| nature | TEXT | 'cat', 'hung', 'trung' (default 'trung') |
-| sao_type | TEXT | 'chinh' or 'phu' (default 'phu') |
-| created_at | DATETIME | Auto-timestamp |
-| updated_at | DATETIME | Auto-timestamp |
+### UserContext (Thông tin Đương Số)
+| Field | Type | Notes |
+|-------|------|-------|
+| id | String @id | CUID auto-gen |
+| userId | String? | Có thể ẩn danh |
+| name | String? | Tên đương số |
+| gender | String? | 'nam' / 'nữ' |
+| dob | DateTime? | Ngày sinh dương lịch |
+| birthHour | Int? | Giờ sinh (0-11, index Chi) |
+| cungMenh | String? | Tên cung Mệnh |
+| createdAt | DateTime | Auto-timestamp |
+| updatedAt | DateTime | Auto-update |
+| sessions | ChatSession[] | Relation 1-N |
 
-**Seed data**: 14 chính tinh + ~50 phụ tinh (Tứ Hóa, Lộc Tồn, Kình Đà, etc.)
+### ChatSession (Phiên trò chuyện AI)
+| Field | Type | Notes |
+|-------|------|-------|
+| id | String @id | CUID auto-gen |
+| userContextId | String? | FK → UserContext |
+| topic | String? | Chủ đề phiên (tự động hoặc user đặt) |
+| astrologyData | String? | **JSON string chứa toàn bộ ChartMatrix** |
+| createdAt | DateTime | Auto-timestamp |
+| updatedAt | DateTime | Auto-update |
+| messages | ChatMessage[] | Relation 1-N |
 
-### cung_interpret (Palace Interpretations)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | Auto-increment |
-| cung_name | TEXT UNIQUE | Palace name in CAPS (e.g., "MỆNH") |
-| icon | TEXT | Emoji icon (default '🔮') |
-| description | TEXT | Palace description |
-| key_aspects | TEXT | JSON array of aspects |
-| created_at | DATETIME | Auto-timestamp |
-| updated_at | DATETIME | Auto-timestamp |
+### ChatMessage (Tin nhắn trong phiên)
+| Field | Type | Notes |
+|-------|------|-------|
+| id | String @id | CUID auto-gen |
+| sessionId | String | FK → ChatSession |
+| role | String | 'user', 'assistant', 'system' |
+| content | String | Nội dung tin nhắn |
+| createdAt | DateTime | Auto-timestamp |
 
-**Seed data**: 12 cung (MỆNH → PHỤ MẪU)
+> **Cascade Delete**: Khi xóa ChatSession → tự động xóa tất cả ChatMessage liên quan.
 
-### special_interpret (Special Conditions)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | Auto-increment |
-| condition_key | TEXT UNIQUE | Condition identifier (e.g., "am_duong_nghich_ly") |
-| title | TEXT | Display title |
-| icon | TEXT | Emoji icon |
-| description | TEXT | Full description |
-| advice | TEXT | Advice text |
-| created_at | DATETIME | Auto-timestamp |
-| updated_at | DATETIME | Auto-timestamp |
+## Data tĩnh (JSON files — không qua DB)
+| File | Vị trí | Nội dung |
+|------|--------|----------|
+| `cungData.json` | `src/lib/astrology/` | Metadata 12 cung (icon, key aspects) |
+| `saoData.json` | `src/lib/astrology/` | Metadata 108+ sao (nature, type, mô tả) |
+| `specialData.json` | `src/lib/astrology/` | Điều kiện đặc biệt (Âm Dương Nghịch Lý, Cục Khắc Mệnh...) |
 
-**Seed data**: am_duong_nghich_ly, cuc_khac_menh, than_menh_dong_cung, tu_hoa
-
-### ai_cache (AI Response Cache)
-| Column | Type | Notes |
-|--------|------|-------|
-| id | INTEGER PK | Auto-increment |
-| cache_key | TEXT UNIQUE | MD5 hash of chart "DNA" |
-| response | TEXT | JSON stringified AI response |
-| created_at | DATETIME | Auto-timestamp |
-| expires_at | DATETIME | Expiration (default +720h = 30 days) |
-
-**Cache key**: MD5 of `{ promptVersion, gender, yearView, cuc, menh, cungMenh, vanHan, dna }`
-
-## Query Functions (db.js exports)
-- `getDb()` — Initialize/return DB instance
-- `getAllSaoInterpret()` — All star interpretations
-- `getSaoByName(name)` — Single star by name
-- `getAllCungInterpret()` — All palace interpretations
-- `getCungByName(name)` — Single palace by name
-- `getAllSpecialInterpret()` — All special conditions
-- `getSpecialByKey(key)` — Single condition by key
-- `getAiCache(key)` — Get cached AI response
-- `setAiCache(key, response, ttlHours)` — Store AI response
+## Quy tắc quan trọng
+1. `astrologyData` trong ChatSession lưu dưới dạng **JSON.stringify(ChartMatrix)** — chứa toàn bộ lá số 108 sao đã tính toán. Đây là context nền cho AI chat.
+2. Logic tính toán Tử Vi **KHÔNG** query từ DB. Tất cả chạy real-time bằng TypeScript engine (`TuViEngine.generateChart()`).
+3. DB chỉ lưu **kết quả tương tác** (sessions, messages), **KHÔNG** lưu cache kết quả tính toán.

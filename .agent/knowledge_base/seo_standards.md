@@ -1,41 +1,41 @@
-# 🔍 SEO & GEO Standards
+# 🔍 SEO & GEO Standards (V2 — Next.js App Router)
 
 ## 📋 Technical SEO Checklist (Bắt buộc)
-- [ ] Mỗi page có `<title>` unique, tối đa 60 ký tự
-- [ ] Mỗi page có `<meta description>`, tối đa 160 ký tự
+- [ ] `layout.tsx` gốc có `metadata` export (title, description, openGraph)
+- [ ] Mỗi page có `generateMetadata()` trả title + description unique
 - [ ] Chỉ 1 `<h1>` per page, heading hierarchy chuẩn (H1 → H2 → H3)
-- [ ] Canonical URL cho mọi page để tránh duplicate content
-- [ ] `sitemap.xml` tự động generate và submit lên Google Search Console
-- [ ] `robots.txt` cấu hình đúng (không block CSS/JS)
-- [ ] Image: `alt` text mô tả, lazy loading, format WebP/AVIF
+- [ ] Canonical URL cho mọi page
+- [ ] `sitemap.ts` tự động generate (Next.js App Router convention)
+- [ ] `robots.ts` cấu hình đúng
+- [ ] Image: `next/image` component với alt text, tự động WebP/AVIF
 - [ ] URL slug: lowercase, dấu gạch ngang, không dấu tiếng Việt
-- [ ] Mobile-first responsive design
+- [ ] Mobile-first responsive (Tailwind breakpoints)
 - [ ] Core Web Vitals targets: LCP < 2.5s, INP < 200ms, CLS < 0.1
+- [ ] Server Components mặc định (chỉ `'use client'` khi cần tương tác)
 
 ## 🤖 GEO (Generative Engine Optimization)
-- [ ] File `llms.txt` tại root domain
-- [ ] Structured Data (JSON-LD) cho Article, Product, FAQ, BreadcrumbList
-- [ ] E-E-A-T signals: Author bio, nguồn trích dẫn, ngày publish/update
-- [ ] Content format: short paragraphs, bullet points, numbered lists
-- [ ] Fact-density: Mỗi đoạn văn ≥1 data point hoặc trích dẫn
+- [ ] File `llms.txt` tại root `public/`
+- [ ] Structured Data (JSON-LD) cho SoftwareApplication, FAQPage
+- [ ] E-E-A-T signals: Author bio, nguồn trích dẫn
+- [ ] Content format: short paragraphs, bullet points
 - [ ] FAQ sections dạng "People Also Ask"
 - [ ] Topic clusters: Liên kết nội bộ giữa bài viết cùng chủ đề
 
-## 📊 Schema.org (JSON-LD Templates)
-
-### Article
+## 📊 Schema.org (JSON-LD) — Ưu tiên cho Tử Vi Tool
 ```json
-{"@context":"https://schema.org","@type":"Article","headline":"...","author":{"@type":"Person","name":"..."},"datePublished":"...","image":"..."}
+{
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  "name": "Tử Vi Lá Số Tool",
+  "applicationCategory": "LifestyleApplication",
+  "operatingSystem": "Web",
+  "description": "Ứng dụng lập lá số Tử Vi Đẩu Số tích hợp AI",
+  "offers": { "@type": "Offer", "price": "0", "priceCurrency": "VND" }
+}
 ```
 
-### Product
-```json
-{"@context":"https://schema.org","@type":"Product","name":"...","image":"...","offers":{"@type":"Offer","price":"...","priceCurrency":"VND"}}
-```
-
-### FAQ
-```json
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"...","acceptedAnswer":{"@type":"Answer","text":"..."}}]}
-```json
-{"@context":"https://schema.org","@type":"FAQPage","mainEntity":[{"@type":"Question","name":"...","acceptedAnswer":{"@type":"Answer","text":"..."}}]}
-```
+## Triển khai trong Next.js
+- **Metadata API**: Dùng `export const metadata` hoặc `generateMetadata()` trong `page.tsx` / `layout.tsx`.
+- **JSON-LD**: Inject qua `<script type="application/ld+json">` trong Server Component.
+- **Sitemap**: Tạo `src/app/sitemap.ts` export `default function sitemap()`.
+- **Robots**: Tạo `src/app/robots.ts` export `default function robots()`.

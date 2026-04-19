@@ -1,0 +1,14 @@
+{
+  "name": "tu-vi-la-so-monorepo",
+  "private": true,
+  "scripts": {
+    "dev": "pnpm -F web dev",
+    "build": "pnpm -F web build",
+    "start": "pnpm -F web start",
+    "lint": "pnpm -F web lint"
+  },
+  "engines": {
+    "node": ">=20.0.0",
+    "pnpm": ">=9.0.0"
+  }
+}

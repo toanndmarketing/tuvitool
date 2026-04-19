@@ -14,3 +14,4 @@ Tech: Express.js + Vanilla JS + SQLite + Google Gemini AI
 ## Build
 - `docker compose build` → `docker compose up -d`
 - Logs: `docker compose logs -f tuvi-app`
+

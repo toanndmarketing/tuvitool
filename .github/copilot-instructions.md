@@ -1,23 +1,20 @@
 # tu-vi-la-so — Copilot Instructions
 
 Dự án: tu-vi-la-so
-Tech: Express.js + Vanilla JS + SQLite + Google Gemini AI
+Tech: Next.js 16 + React 19 + PNPM Monorepo + Prisma + Google Gemini AI
 
 ## PHÁP LỆNH TỐI CAO
 - Tuân thủ `.agent/memory/constitution.md`.
 - Docker-First: KHÔNG chạy node/python trên host.
 - Ports: **8950** (local), **8900** (production).
-- **KHÔNG có Next.js/React/Vue** — Frontend là Vanilla HTML/JS/CSS.
+- **Frontend/Backend**: Next.js 16 tại `apps/web` (PNPM Workspaces).
 - Phản hồi bằng Tiếng Việt.
 - KHÔNG hard-code URLs, Tokens, Keys. Dùng `.env`.
 
 ## Architecture
-- `public/` — Static frontend (Vanilla HTML/JS/CSS)
-- `server/` — Express API backend (CommonJS)
-- `data/` — SQLite DB + test data
-- `server/prompts/` — AI prompt templates
-- Frontend: Global functions (NO import/export)
-- Backend: CommonJS require()
+- `apps/` — Chứa ứng dụng Next.js (ví dụ `apps/web`)
+- `packages/` — Chứa các package dùng chung.
+- Khuyến nghị sử dụng chuẩn TypeScript và App Router của Next.js 16. Mọi UI đều dùng Tailwind CSS.
 
 ## Domain Rules
 - Tử Vi logic changes → MUST verify accuracy

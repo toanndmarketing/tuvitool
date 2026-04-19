@@ -1,0 +1,42 @@
+[
+  {
+    "id": 1,
+    "condition_key": "am_duong_nghich_ly",
+    "title": "Âm Dương Nghịch Lý",
+    "icon": "⚠️",
+    "description": "Lá số có Âm Dương nghịch lý (Âm Nam hoặc Dương Nữ). Điều này có nghĩa vòng sao an theo chiều nghịch, tạo nên sự trái khoáy trong vận mệnh. Người có lá số nghịch lý thường phải đối mặt với nhiều thử thách để trưởng thành, nhưng nếu vượt qua sẽ có thành tựu đặc biệt.",
+    "advice": "Cần kiên trì, biến khó khăn thành động lực phát triển.",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 2,
+    "condition_key": "cuc_khac_menh",
+    "title": "Cục Khắc Mệnh",
+    "icon": "⚠️",
+    "description": "Cục khắc Mệnh. Đây là dấu hiệu cuộc đời nhiều thử thách, thường phải tự lập từ nhỏ, ít được cha mẹ hỗ trợ. Tuy nhiên, người Cục khắc Mệnh nếu kiên trì sẽ rèn được bản lĩnh vững vàng.",
+    "advice": "Cần tự lập, rèn bản lĩnh, biến nghịch cảnh thành sức mạnh.",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 3,
+    "condition_key": "than_menh_dong_cung",
+    "title": "Thân Mệnh Đồng Cung",
+    "icon": "🔄",
+    "description": "Cung Thân và cung Mệnh ở cùng một vị trí. Điều này có nghĩa số phận trước và sau trung niên không có sự thay đổi lớn. Nếu cung Mệnh tốt thì cả đời tốt, nếu xấu thì cần nỗ lực nhiều hơn để cải thiện.",
+    "advice": "Tập trung phát triển bản thân ở giai đoạn đầu đời.",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  },
+  {
+    "id": 4,
+    "condition_key": "tu_hoa",
+    "title": "Tứ Hoá (Bốn phép biến hoá)",
+    "icon": "✨",
+    "description": "Tứ Hoá là bốn phép biến hoá quan trọng nhất trong Tử Vi, gồm Hoá Lộc (tài lộc, may mắn), Hoá Quyền (quyền lực, uy tín), Hoá Khoa (học vấn, danh tiếng), và Hoá Kỵ (trở ngại, thị phi). Cung chứa Hoá Kỵ cần đặc biệt lưu ý.",
+    "advice": "Phát huy Hoá Lộc/Quyền/Khoa, cẩn trọng cung chứa Hoá Kỵ.",
+    "created_at": "2026-02-10 07:09:40",
+    "updated_at": "2026-02-10 07:09:40"
+  }
+]

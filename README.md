@@ -11,20 +11,19 @@
 - ✅ **Giao diện thân thiện** - UI hiện đại, dễ sử dụng
 - ✅ **Trường phái đa dạng** - Kết hợp Nam Phái, Bắc Phái (Tứ Hóa) và Khâm Thiên Môn ([Chi tiết](ASTROLOGY_METHODOLOGY.md))
 
-## 🛠️ Tech Stack
+### Tech Stack (V2)
 
-### Backend
-
-- **Node.js + Express** - REST API server
-- **SQLite** - Database lưu trữ người dùng và lịch sử
+- **Next.js 16 (App Router)** - Framework chính
+- **React 19** - Thư viện frontend
+- **Prisma & SQLite** - ORM / Database
+- **Tailwind CSS** - UI Styling
+- **PNPM Workspaces** - Monorepo package manager
 - **Google Gemini API** - AI phân tích chuyên sâu
-- **bcrypt** - Mã hóa mật khẩu
 
-### Frontend
+### DevOps
 
-- **HTML5 + CSS3** - Giao diện responsive
-- **Vanilla JavaScript** - Logic client-side
-- **Fetch API** - Giao tiếp với backend
+- **Docker + Docker Compose** - Containerization
+- **Port 8950** - Mặc định cho local development
 
 ### DevOps
 
@@ -129,34 +128,29 @@ Content-Type: application/json
 
 ## 🔧 Development
 
-### Cấu trúc thư mục
+### Cấu trúc thư mục Monorepo
 
 ```
 tu-vi-la-so/
-├── server/              # Backend API
-│   ├── server.js       # Express server
-│   ├── db.js           # Database setup
-│   ├── gemini.js       # Gemini AI integration
-│   └── package.json
-├── public/             # Frontend
-│   ├── index.html
-│   ├── app.js
-│   ├── auth.js
-│   ├── tu-vi-calc.js
-│   ├── tu-vi-render.js
-│   └── styles.css
-├── data/               # SQLite database
+├── apps/
+│   └── web/            # Next.js 16 Application (Mọi logic UI, API Routes)
+│       ├── prisma/     # Prisma schema và local SQLite db
+│       ├── src/        # Source code
+│       └── package.json 
+├── packages/           # Các packages dùng chung (Tương lai)
 ├── docker-compose.yml
-├── Dockerfile
-└── .env.example
+├── pnpm-workspace.yaml
+├── package.json
+└── .env
 ```
 
 ### Chạy local (không dùng Docker)
 
+Sử dụng PNPM ở thư mục gốc:
+
 ```bash
-cd server
-npm install
-node server.js
+pnpm install
+pnpm dev
 ```
 
 ## 🐛 Troubleshooting

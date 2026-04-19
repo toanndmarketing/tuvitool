@@ -1,0 +1,28 @@
+FROM node:20-alpine
+
+# Set working directory to ROOT of monorepo because of context
+WORKDIR /app
+
+# Enable hot-reload polling for Docker on Windows WSL
+ENV NEXT_TELEMETRY_DISABLED=1
+ENV CHOKIDAR_USEPOLLING=true
+ENV WATCHPACK_POLLING=true
+
+# Install pnpm 
+RUN corepack enable pnpm
+
+# Copy package config
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY apps/web/package.json ./apps/web/
+
+# Install dependencies (workspaces run)
+RUN pnpm install
+
+# Copy source
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Start dev server from root
+CMD ["pnpm", "run", "dev"]

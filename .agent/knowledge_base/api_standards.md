@@ -1,42 +1,51 @@
-# 🌐 API Standards
+# 🌐 API Standards (V2 — Next.js App Router)
 
-## Base URL
-- `/api/` (KHÔNG có /v1/ — dự án này dùng flat routing)
+## Kiến trúc API
+- **Framework**: Next.js 16 App Router (Route Handlers)
+- **Path convention**: `src/app/api/{resource}/route.ts`
+- **Response**: `NextResponse.json()` hoặc Stream (cho AI chat)
 
-## Authentication
-- **Login**: `POST /api/auth/login` → returns `{ token, expiresIn }`
-- **Protected routes**: Bearer token in `Authorization` header
-- **Auto-bypass**: Localhost requests & `SKIP_AUTH=true` skip auth
-- **TTL**: 30 phút, in-memory Map storage
+## API Routes hiện tại
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| POST | `/api/chart` | No | Tính toán lá số Tử Vi đầy đủ (ChartMatrix) |
+| POST | `/api/chat` | No | Chat AI — Stream response (Gemini SDK) |
+| GET/POST | `/api/sessions` | No | Quản lý Chat Sessions (Prisma) |
 
-## API Routes
-| Method | Path | Rate | Auth | Description |
-|--------|------|------|------|-------------|
-| GET | `/api/interpretations/sao` | 30/min | No | All star interpretations |
-| GET | `/api/interpretations/cung` | 30/min | No | All palace interpretations |
-| GET | `/api/interpretations/special` | 30/min | No | Special conditions |
-| GET | `/api/interpretations/all` | 30/min | No | Combined data |
-| POST | `/api/auth/login` | 30/min | No | Login → token |
-| POST | `/api/interpret/ai` | 5/min | **Yes** | AI deep analysis |
-| POST | `/api/iching/cast` | 30/min | No | Cast hexagram |
-| POST | `/api/soi-bai/draw` | 30/min | No | Draw cards |
-| GET | `/api/soi-bai/decode/:suit/:rank` | - | No | Decode card |
-| GET | `/api/health` | - | No | Health check |
+## Chi tiết API
 
-## Error Format
+### POST `/api/chart`
+**Input:**
 ```json
-{ "error": "Error message in Vietnamese" }
+{
+  "profileA": { "ngay": 15, "thang": 3, "nam": 1990, "gioSinh": 5, "gioiTinh": "nam", "hoTen": "..." },
+  "profileB": null,
+  "isTwin": false,
+  "namXem": 2026
+}
 ```
+**Output:** `{ success: true, data: { isTwin, chartA: ChartMatrix, chartB: null } }`
 
-## Response Format
-- Interpretation APIs: keyed objects `{ [name]: { ...data } }`
-- AI API: `{ sections: [], palaceSections: {}, raw: string }`
-- Auth: `{ success: true, token: string, expiresIn: number }`
-- Health: `{ status: "ok", timestamp: string, geminiConfigured: boolean }`
+### POST `/api/chat`
+**Input:**
+```json
+{
+  "messages": [{ "role": "user", "content": "..." }],
+  "sessionId": "cuid...",
+  "chartData": { /* ChartMatrix JSON */ }
+}
+```
+**Output:** Stream (AI SDK `toDataStreamResponse()`)
+- System prompt được đọc từ file template (`public/prompts/tuvi_master_compact.v11.prompt`)
+- `chartData` được nén qua `compactAstrologyData()` rồi inject vào prompt placeholder `{{JSON_DATA}}`
+- Message được lưu vào Prisma DB (ChatMessage model)
 
-## Rate Limiting
-- `express-rate-limit` package
-- Window: 1 phút
-- General API: 30 requests/window
-- AI endpoint: 5 requests/window (protect Gemini quota)
-- Gemini retry: 3 retries on 429 with exponential backoff
+### GET `/api/sessions`
+**Output:** Danh sách ChatSession từ Prisma.
+
+## Quy tắc chung
+1. **Error format**: `{ error: "Vietnamese message" }` + HTTP status code tương ứng.
+2. **Validation**: Kiểm tra input trước khi xử lý. Trả 400 nếu thiếu dữ liệu bắt buộc.
+3. **AI Model**: Đọc từ `process.env.GEMINI_MODEL`, fallback `gemini-1.5-flash-latest`.
+4. **Stream**: Chat API trả về Stream, KHÔNG trả JSON đầy đủ. Frontend dùng `useChat` hook (AI SDK).
+5. **No Authentication gate hiện tại**: Tất cả API đều public (V2 chưa implement auth layer).

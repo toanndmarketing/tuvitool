@@ -1,7 +1,7 @@
 ---
 trigger: always_on
 glob: "**/*"
-description: WB-Agent Workspace Rules cho tu-vi-la-so - ASF 3.3 Standard
+description: WB-Agent Workspace Rules cho tu-vi-la-so - ASF 3.3 Standard (V2)
 ---
 
 # 🛡️ WB-Agent Workspace Rules
@@ -10,9 +10,9 @@ Dự án: tu-vi-la-so
 
 ## 1. PHÁP LỆNH TỐI CAO
 - Tuân thủ nghiêm ngặt file `.agent/memory/constitution.md`.
-- Docker-First: Mọi hoạt động code và chạy app phải diễn ra trong container. KHÔNG chạy node/python trên host.
+- Docker-First: Mọi hoạt động code và chạy app phải diễn ra trong container. KHÔNG chạy node/python trực tiếp trên host.
 - Ports: **8950** (local), **8900** (production). Tuân thủ lấy port từ biến môi trường (.env).
-- Tech Stack: **Express.js + Vanilla JS + SQLite** — KHÔNG có Next.js/React/Vue.
+- Tech Stack: **Next.js 16 + React 19 + PNPM Monorepo + Prisma + TypeScript**. KHÔNG sử dụng Express/Vanilla JS cũ.
 
 ## 2. WB-AGENT PROTOCOL
 - Mọi task phải đi qua quy trình: Specify → Plan → Tasks → Implement.
@@ -24,8 +24,7 @@ Dự án: tu-vi-la-so
 - 15-Minute Rule: Mỗi task phải atomic, ≤ 15 phút, ảnh hưởng ≤ 3 files.
 - PowerShell 5.1+, ngăn cách lệnh bằng dấu `;` (KHÔNG dùng `&&`).
 - KHÔNG hard-code URLs, Tokens, Keys. Dùng ENV vars (`.env`).
-- Frontend: Vanilla JS (KHÔNG dùng import/export modules, dùng global functions).
-- Backend: CommonJS require() (KHÔNG dùng ES modules).
+- Frontend/Backend: TypeScript và React Server Components (Next.js App Router).
 
 ## 4. AN TOÀN
 - KHÔNG chạy `docker compose down -v` trên Production.

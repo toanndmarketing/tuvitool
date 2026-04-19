@@ -1,56 +1,67 @@
-# 🎨 UI/UX Standards (Pro Max)
+# 🎨 UI/UX Standards (V2 — Tailwind CSS + React 19)
 
 ## 🌈 Brand Palette
-```typescript
-colors: {
-  primary: {
-    DEFAULT: '#0048c4', // Update with brand primary
-    dark: '#003399',
-    light: '#3366ff',
-  },
-  accent: '#FFD700',
-  success: '#10B981',
-  error: '#EF4444',
-  gray: {
-    bg: '#f8fafc',
-    border: '#e2e8f0',
-  }
-}
+```css
+/* Huyền Học Theme — Dark/Mystical */
+--color-primary: #6366f1;       /* Indigo — chủ đạo */
+--color-primary-dark: #4f46e5;
+--color-primary-light: #818cf8;
+--color-accent: #f59e0b;        /* Amber — vàng kim */
+--color-surface: #0f172a;       /* Slate-900 — nền tối */
+--color-surface-card: #1e293b;  /* Slate-800 — card */
+--color-text: #f1f5f9;          /* Slate-100 — text sáng */
+--color-text-muted: #94a3b8;    /* Slate-400 */
+--color-success: #10b981;
+--color-error: #ef4444;
 ```
 
-## 🔡 Typography (Inter/Sans)
-- **H1 (Page Title)**: `text-3xl font-extrabold tracking-tight`
-- **H2 (Section)**: `text-2xl font-bold`
-- **H3 (Subtitle)**: `text-xl font-semibold`
+## 🔡 Typography
+- **Font chính**: Inter (Google Fonts) — import trong `layout.tsx`
+- **H1**: `text-3xl md:text-4xl font-extrabold tracking-tight`
+- **H2**: `text-2xl font-bold`
+- **H3**: `text-xl font-semibold`
 - **Body**: `text-base leading-relaxed`
-- **Small/Caption**: `text-sm text-gray-500`
+- **Caption**: `text-sm text-slate-400`
 
 ## 📏 Spacing & Layout
 - **Page Container**: `max-w-7xl mx-auto px-4 sm:px-6 lg:px-8`
 - **Section Spacing**: `py-12 md:py-20`
 - **Grid Gap**: `gap-6 md:gap-8`
+- **Lá Số Grid**: Ma trận 4×3 responsive (desktop) → stack (mobile)
 
-## 🧱 Core Components (Atomic)
+## 🧱 Core Components
 
-### Cards
-- **Style**: `bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden`
-- **Hover**: `hover:shadow-xl hover:-translate-y-1 transition-all duration-300`
+### Cards (Glassmorphism)
+```
+bg-slate-800/50 backdrop-blur-xl rounded-2xl
+border border-slate-700/50 shadow-xl
+hover:shadow-indigo-500/10 hover:-translate-y-1
+transition-all duration-300
+```
 
 ### Buttons
-- **Primary**: `bg-primary text-white px-6 py-3 rounded-xl font-bold hover:brightness-110 active:scale-95 transition-all`
-- **Ghost**: `bg-transparent border border-gray-200 text-gray-700 hover:bg-gray-50 rounded-xl transition-colors`
+- **Primary**: `bg-indigo-600 text-white px-6 py-3 rounded-xl font-bold hover:bg-indigo-500 active:scale-95 transition-all`
+- **Ghost**: `bg-transparent border border-slate-600 text-slate-300 hover:bg-slate-800 rounded-xl`
 
-### Inputs
-- **Style**: `w-full px-4 py-3 bg-gray-50 border-transparent focus:bg-white focus:ring-2 focus:ring-primary/20 focus:border-primary rounded-xl transition-all`
+### PalaceMatrix (Lá Số Grid)
+- Component: `src/components/PalaceMatrix.tsx`
+- Grid 4 cột × 3 hàng (desktop), stack dọc (mobile)
+- Mỗi cung hiển thị: Tên cung, Chính Tinh (kèm Miếu/Hãm badge), Phụ Tinh, Tứ Hóa tags
+- Hover effect: highlight cung + Tam Hợp / Đối Cung
 
-## ✨ Micro-animations
-- Sử dụng `framer-motion` cho các chuyển cảnh.
-- Staggered children transitions (0.1s delay).
-- Hover scale effect: `whileHover={{ scale: 1.02 }}`.
+### NumerologyContent
+- Component: `src/components/NumerologyContent.tsx`
+- Biểu đồ các chỉ số con số (Expression, Life Path, etc.)
 
-## ✅ UI/UX Checklist
-- [ ] Tailwind class-first (No inline CSS).
-- [ ] Mobile-first responsive grid.
-- [ ] Accessible color contrast.
-- [ ] Loading skeleton states cho async data.
-- [ ] Smooth transitions cho mọi tương tác hover/click.
+## ✨ Animation
+- Dùng CSS transitions (`transition-all duration-300`) cho hover/click
+- Tương lai: `framer-motion` cho page transitions và staggered children
+- Loading skeleton states cho async data (chart generation)
+
+## ✅ Checklist
+- [ ] Tailwind class-first (KHÔNG inline CSS)
+- [ ] Dark mode mặc định (Huyền Học theme)
+- [ ] Mobile-first responsive grid
+- [ ] Accessible color contrast (WCAG AA)
+- [ ] Loading/Skeleton states cho mọi async UI
+- [ ] Smooth transitions cho hover/click interactions

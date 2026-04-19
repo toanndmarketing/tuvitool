@@ -1,8 +1,52 @@
+# Dependencies
 node_modules
-data/
-.env
+.pnp
+.pnp.*
 
-# Added by Spec Kitty CLI (auto-managed)
+# PNPM
+.pnpm-store
+
+# Testing
+coverage
+
+# Next.js
+.next/
+out/
+build
+
+# Prisma & Database
+dev.db
+dev.db-journal
+
+# Misc
+.DS_Store
+*.pem
+
+# Debug
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+.pnpm-debug.log*
+
+# Env files
+.env
+.env*.local
+!.env.example
+
+# Vercel
+.vercel
+
+# TypeScript
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE and AI Agents
+.idea/
+.vscode/
+.vscode-test/
+*.code-workspace
+
+# Spec Kitty & Other AI Agents
 .claude/
 .codex/
 .opencode/
@@ -15,9 +59,8 @@ data/
 .roo/
 .amazonq/
 .github/copilot/
-.kittify/.dashboard
+.kittify/
 
-# Ignore CLI test outputs
-server/cli_result_*.md
-server/cli_output.md
-tuvi_lt_data.json
+# Project specifics
+scratch/
+.agent_bak/

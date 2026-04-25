@@ -21,11 +21,8 @@ RUN pnpm install
 # Copy source
 COPY . .
 
-# Expose port
-EXPOSE 3000
-
 # Build Next.js application before starting
-RUN pnpm run build --filter web
+RUN pnpm --filter web run build
 
 # Start production server from root
-CMD ["pnpm", "run", "start", "--filter", "web"]
+CMD ["pnpm", "--filter", "web", "run", "start"]

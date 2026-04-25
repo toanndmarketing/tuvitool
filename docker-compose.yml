@@ -14,7 +14,7 @@ services:
       - /app/node_modules
       - /app/apps/web/node_modules
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=production
       - PORT=3000
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true

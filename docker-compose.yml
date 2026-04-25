@@ -16,6 +16,7 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
+      - DATABASE_URL=file:/app/data/tuvi.db
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - GEMINI_API_KEY=${GEMINI_API_KEY}

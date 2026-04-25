@@ -61,7 +61,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && git pull origin master"
 // turbo
 
 ```bash
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose up -d --build"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml up -d --build"
 ```
 
 ### 7. Kiểm tra container status
@@ -69,7 +69,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && docker compose up -d --build"
 // turbo
 
 ```bash
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose ps"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml ps"
 ```
 
 ### 8. Xem logs
@@ -77,7 +77,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && docker compose ps"
 // turbo
 
 ```bash
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose logs --tail=30"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml logs --tail=30"
 ```
 
 ### 9. Test API health
@@ -113,7 +113,7 @@ curl -I https://tuvi.demowebest.site
 Nếu chỉ cần restart containers mà không có code changes:
 
 ```bash
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose restart"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml restart"
 ```
 
 ---
@@ -125,7 +125,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && docker compose restart"
 ```bash
 ssh root@15.235.210.4 "cd /home/tuvitool && git log --oneline -5"
 # Chọn commit hash cần rollback
-ssh root@15.235.210.4 "cd /home/tuvitool && git reset --hard <commit-hash> && docker compose up -d --build"
+ssh root@15.235.210.4 "cd /home/tuvitool && git reset --hard <commit-hash> && docker compose -f docker-compose.prod.yml up -d --build"
 ```
 
 ---
@@ -136,7 +136,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && git reset --hard <commit-hash> && do
 
 ```bash
 ssh root@15.235.210.4 "netstat -tulpn | grep 8950"
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose down"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml down"
 ```
 
 ### Lỗi: Git pull conflict
@@ -148,7 +148,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && git stash && git pull origin master"
 ### Xem logs real-time
 
 ```bash
-ssh root@15.235.210.4 "cd /home/tuvitool && docker compose logs -f"
+ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml logs -f"
 ```
 
 ---

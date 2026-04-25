@@ -4,7 +4,16 @@ import { db } from '@/lib/db';
 // POST /api/sessions — Tạo phiên chat mới
 export async function POST(req: NextRequest) {
     try {
-        const { topic, astrologyData } = await req.json();
+        const rawText = await req.text();
+        let body;
+        try {
+            body = JSON.parse(rawText);
+        } catch (parseError) {
+            console.error('[API /api/sessions] JSON Parse error. Raw body was:', rawText);
+            return NextResponse.json({ error: 'Payload không hợp lệ' }, { status: 400 });
+        }
+        
+        const { topic, astrologyData } = body;
 
         const sessionTopic = topic || 'Luận giải Tử Vi';
 

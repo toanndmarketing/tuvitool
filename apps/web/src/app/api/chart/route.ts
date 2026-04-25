@@ -3,7 +3,15 @@ import { TuViEngine } from '@/lib/astrology/TuViEngine';
 
 export async function POST(req: NextRequest) {
     try {
-        const body = await req.json();
+        const rawText = await req.text();
+        let body;
+        try {
+            body = JSON.parse(rawText);
+        } catch (parseError) {
+            console.error('[API /api/chart] JSON Parse error. Raw body was:', rawText);
+            return NextResponse.json({ error: 'Payload không hợp lệ' }, { status: 400 });
+        }
+        
         const { isTwin, profileA, profileB, namXem } = body;
 
         const currentYear = parseInt(namXem) || new Date().getFullYear();

@@ -1,0 +1,43 @@
+FROM node:20-alpine AS builder
+# Set working directory
+WORKDIR /app
+
+# Enable corepack
+RUN corepack enable pnpm
+
+# Copy package config
+COPY package.json pnpm-workspace.yaml pnpm-lock.yaml* ./
+COPY apps/web/package.json ./apps/web/
+
+# Install ALL dependencies (for build)
+RUN pnpm install --frozen-lockfile
+
+# Copy source
+COPY . .
+
+# Generate Prisma Client (if needed)
+RUN npx prisma generate --schema=./apps/web/prisma/schema.prisma || true
+
+# Build Next.js application
+ENV NEXT_TELEMETRY_DISABLED=1
+RUN pnpm run build --filter web
+
+# --- Production Runner ---
+FROM node:20-alpine AS runner
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV NEXT_TELEMETRY_DISABLED=1
+
+# Install PM2 or run directly via node
+RUN adduser -D nextjs
+RUN mkdir -p /app/apps/web/data && chown -R nextjs:nextjs /app
+USER nextjs
+
+# Copy standalone output from builder
+COPY --from=builder --chown=nextjs:nextjs /app/apps/web/.next/standalone ./
+COPY --from=builder --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/.next/static
+COPY --from=builder --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
+
+EXPOSE 3000
+CMD ["node", "apps/web/server.js"]

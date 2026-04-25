@@ -1,6 +1,7 @@
 import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
+  output: 'standalone',
   // Bật Polling cho Hot Reload trên Docker Windows
   webpack: (config, context) => {
     config.watchOptions = {

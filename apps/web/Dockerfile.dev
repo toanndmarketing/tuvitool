@@ -21,6 +21,9 @@ RUN pnpm install
 # Copy source
 COPY . .
 
+# Generate Prisma client
+RUN npx prisma generate --schema=./apps/web/prisma/schema.prisma
+
 # Build Next.js application before starting
 RUN pnpm --filter web run build
 

@@ -8,6 +8,7 @@ import dynamic from 'next/dynamic';
 import { toPng } from 'html-to-image';
 import { AmLich } from '@/lib/astrology/AmLich';
 import { Numerology, NumerologyResult } from '@/lib/astrology/Numerology';
+import { compactAstrologyData } from '@/lib/astrology/AiUtils';
 
 // Import các component con
 const PalaceMatrix = dynamic(() => import('@/components/PalaceMatrix').then(mod => mod.PalaceMatrix), { ssr: false });
@@ -74,8 +75,8 @@ function TuViMain() {
 
     // States
     const [step, setStep] = useState<'form' | 'loading' | 'chat'>('form');
-    const [isTwin, setIsTwin] = useState(true);
-    const [profileA, setProfileA] = useState<ProfileData>(DEMO_TWIN_A);
+    const [isTwin, setIsTwin] = useState(false);
+    const [profileA, setProfileA] = useState<ProfileData>(DEMO_SINGLE);
     const [profileB, setProfileB] = useState<ProfileData>(DEMO_TWIN_B);
     const [promptTemplate, setPromptTemplate] = useState('');
     const [syncMode, setSyncMode] = useState(true);
@@ -93,8 +94,55 @@ function TuViMain() {
     const [showRawModal, setShowRawModal] = useState(false);
     const [rawContent, setRawContent] = useState('');
     const [isChatExpanded, setIsChatExpanded] = useState(false);
+    const [historySessions, setHistorySessions] = useState<any[]>([]);
+    const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
-    const { messages, append: sendMessage, status, setMessages } = useChat({
+    useEffect(() => {
+        fetch('/api/sessions')
+            .then(res => res.json())
+            .then(data => {
+                if (data.success && data.sessions) {
+                    setHistorySessions(data.sessions);
+                }
+            })
+            .catch(err => console.error('Lỗi tải lịch sử:', err));
+
+        fetch('/prompts/tuvi_master.v11.prompt?t=' + Date.now())
+            .then(res => res.text())
+            .then(setPromptTemplate)
+            .catch(err => console.error('Lỗi tải prompt:', err));
+    }, []);
+
+    useEffect(() => {
+        if (sessionId && pendingPrompt && step === 'chat') {
+            triggerSend({ role: 'user', content: pendingPrompt });
+            setPendingPrompt(null);
+        }
+    }, [sessionId, pendingPrompt, step]);
+
+    useEffect(() => {
+        if (sessionId) {
+            fetch(`/api/sessions?sessionId=${sessionId}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.success && data.messages && data.messages.length > 0) {
+                        const msgs = data.messages.map((m: any, i: number) => ({
+                            id: m.id || `${sessionId}-${i}`,
+                            role: m.role,
+                            content: m.content,
+                            createdAt: m.createdAt ? new Date(m.createdAt) : undefined
+                        }));
+                        if (typeof (chatInfo as any).setMessages === 'function') {
+                            (chatInfo as any).setMessages(msgs);
+                        }
+                    }
+                })
+                .catch(err => console.error("Lỗi get chat info:", err));
+        }
+    }, [sessionId]);
+
+    const chatInfo = useChat({
+        id: sessionId || 'default-chat',
         api: '/api/chat',
         body: { 
             chartData: isTwin ? { A: chartDataA, B: chartDataB } : chartDataA, 
@@ -102,16 +150,32 @@ function TuViMain() {
         },
     });
 
+    console.log("[DEBUG] chatInfo keys:", Object.keys(chatInfo));
+    console.log("[DEBUG] messages:", chatInfo.messages);
+    if (chatInfo.error) console.error("[DEBUG] chat error:", chatInfo.error);
+
+    const messages = chatInfo.messages || [];
+    const status = chatInfo.status;
     const isLoadingChat = status === 'streaming' || status === 'submitted';
 
-    // Handlers (using function keyword for hoisting to avoid ReferenceError)
+    function triggerSend(msgData: any) {
+        if (typeof (chatInfo as any).append === 'function') {
+            (chatInfo as any).append(msgData);
+        } else if (typeof (chatInfo as any).sendMessage === 'function') {
+            (chatInfo as any).sendMessage(msgData);
+        } else {
+            console.error("AI SDK useChat provided no append or sendMessage method!", Object.keys(chatInfo));
+        }
+    }
+
+    // Handlers
     function handleSend() {
         if (!inputText.trim() || isLoadingChat) return;
-        sendMessage({ role: 'user', content: inputText.trim() });
+        triggerSend({ role: 'user', content: inputText.trim() });
         setInputText('');
     }
 
-    function generateStandardPrompt(data: any, tsh: any) {
+    function generateStandardPrompt(data: any, tsh: any, personaConfig?: any) {
         if (!data || !promptTemplate) return "";
         let p = promptTemplate;
         const gioSinhChi = AmLich.DIA_CHI[data.input?.gioSinh] || "";
@@ -131,11 +195,19 @@ function TuViMain() {
         p = p.replace(/{{namXem}}/g, String(data.input?.namXem || new Date().getFullYear()));
         p = p.replace(/{{tuoiMu}}/g, String(data.tuoi || ""));
         
+        if (personaConfig) {
+            p = p.replace(/{{aiSelfFull}}/g, personaConfig.aiSelfFull || "Anh Toàn Tử Vi AI");
+            p = p.replace(/{{aiSelfShort}}/g, personaConfig.aiSelfShort || "Anh");
+            p = p.replace(/{{userPronoun}}/g, personaConfig.userPronoun || "bạn");
+            p = p.replace(/{{namSinh}}/g, personaConfig.namSinh || "");
+        }
+        
         const jsonPayload = {
             astrology: data,
             numerology: tsh
         };
-        p = p.replace(/{{JSON_DATA}}/g, JSON.stringify(jsonPayload, null, 2));
+        // Sử dụng phiên bản NÉN (compact) thay vì in nguyên xi JSON gốc
+        p = p.replace(/{{JSON_DATA}}/g, compactAstrologyData(jsonPayload.astrology));
         return p;
     }
 
@@ -164,6 +236,7 @@ function TuViMain() {
     }
 
     function handleShowRaw() {
+        let fullPrompt = "";
         if (isTwin) {
             const olderKey = profileA.isYounger ? 'B' : 'A';
             const youngerKey = profileA.isYounger ? 'A' : 'B';
@@ -182,13 +255,58 @@ function TuViMain() {
                 twinNote += `- Khác giới tính nên giữ nguyên Mệnh gốc (Đại vận chạy nghịch nhau).\n`;
             }
 
-            const promptA = generateStandardPrompt(dataA, numerologyA);
-            const promptB = generateStandardPrompt(dataB, numerologyB);
+            let twinPronoun = "hai bạn";
+            const userNam = parseInt(profileA.nam);
+            let aiSelfFull = "Anh Toàn Tử Vi AI";
+            let aiSelfShort = "Anh";
             
-            setRawContent(`${twinNote}\n\n>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${promptA}\n\n----------------------------\n>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${promptB}`);
+            if (!isNaN(userNam)) {
+                if (userNam < 1990) {
+                    aiSelfFull = "Em Toàn Tử Vi AI";
+                    aiSelfShort = "Em";
+                    twinPronoun = profileA.gioiTinh === 'nam' ? 'hai anh' : 'hai chị'; 
+                } else if (userNam === 1990) {
+                    aiSelfFull = "Mình Toàn Tử Vi AI";
+                    aiSelfShort = "Mình";
+                    twinPronoun = "hai bạn";
+                } else {
+                    aiSelfFull = "Anh Toàn Tử Vi AI";
+                    aiSelfShort = "Anh";
+                    twinPronoun = "hai em";
+                }
+            }
+            
+            const twinHoTen = `${profileA.hoTen} và ${profileB.hoTen}`;
+            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun: twinPronoun, namSinh: profileA.nam, hoTen: twinHoTen };
+            
+            const promptA = generateStandardPrompt({ ...dataA, hoTen: twinHoTen }, numerologyA, personaConfig);
+            const promptB = generateStandardPrompt({ ...dataB, hoTen: twinHoTen }, numerologyB, personaConfig);
+            
+            fullPrompt = `${twinNote}\n\n>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${promptA}\n\n----------------------------\n>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${promptB}`;
         } else {
-            setRawContent(generateStandardPrompt(chartDataA, numerologyA));
+            const userNam = parseInt(profileA.nam);
+            let aiSelfFull = "Anh Toàn Tử Vi AI";
+            let aiSelfShort = "Anh";
+            let userPronoun = "bạn";
+            if (!isNaN(userNam)) {
+                if (userNam < 1990) {
+                    aiSelfFull = "Em Toàn Tử Vi AI";
+                    aiSelfShort = "Em";
+                    userPronoun = profileA.gioiTinh === 'nam' ? 'anh' : 'chị';
+                } else if (userNam === 1990) {
+                    aiSelfFull = "Mình Toàn Tử Vi AI";
+                    aiSelfShort = "Mình";
+                    userPronoun = "bạn";
+                } else {
+                    aiSelfFull = "Anh Toàn Tử Vi AI";
+                    aiSelfShort = "Anh";
+                    userPronoun = "em";
+                }
+            }
+            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun, namSinh: profileA.nam };
+            fullPrompt = generateStandardPrompt(chartDataA, numerologyA, personaConfig);
         }
+        setRawContent(fullPrompt);
         setShowRawModal(true);
     }
 
@@ -199,8 +317,30 @@ function TuViMain() {
         setNumerologyA(null);
         setNumerologyB(null);
         setSessionId(null);
-        setMessages([]);
+        // Clean chat messages hack
+        if (typeof (chatInfo as any).setMessages === 'function') {
+            (chatInfo as any).setMessages([]);
+        }
         setFormError('');
+        router.replace('/');
+    }
+
+    function loadSession(session: any) {
+        if (!session.astrologyData) return;
+        try {
+            const parsed = JSON.parse(session.astrologyData);
+            setProfileA(parsed.profileA);
+            setIsTwin(parsed.isTwin);
+            if (parsed.profileB) setProfileB(parsed.profileB);
+            setChartDataA(parsed.chartA);
+            setChartDataB(parsed.chartB);
+            setSessionId(session.id); // Triggers useEffect to restore history
+
+            setStep('chat');
+            setActiveTab('chat');
+        } catch (e) {
+            console.error("Lỗi khi load lịch sử:", e);
+        }
     }
 
     function updateProfileA(data: Partial<ProfileData>) {
@@ -232,6 +372,25 @@ function TuViMain() {
         setFormError('');
         setStep('loading');
 
+        const newParams = new URLSearchParams();
+        newParams.set('t', isTwin ? '1' : '0');
+        newParams.set('a_n', profileA.hoTen);
+        newParams.set('a_d', profileA.ngay);
+        newParams.set('a_m', profileA.thang);
+        newParams.set('a_y', profileA.nam);
+        newParams.set('a_g', profileA.gioiTinh);
+        newParams.set('a_h', profileA.gioSinh);
+        
+        if (isTwin) {
+            newParams.set('b_n', profileB.hoTen);
+            newParams.set('b_d', profileB.ngay);
+            newParams.set('b_m', profileB.thang);
+            newParams.set('b_y', profileB.nam);
+            newParams.set('b_g', profileB.gioiTinh);
+            newParams.set('b_h', profileB.gioSinh);
+        }
+        router.replace(`?${newParams.toString()}`);
+
         try {
             const chartRes = await fetch('/api/chart', {
                 method: 'POST',
@@ -243,23 +402,108 @@ function TuViMain() {
 
             const tshA = Numerology.calculate({ day: parseInt(profileA.ngay), month: parseInt(profileA.thang), year: parseInt(profileA.nam), fullName: profileA.hoTen });
             setNumerologyA(tshA);
+            chartJson.data.chartA.numerology = tshA;
             if (isTwin) {
                 const tshB = Numerology.calculate({ day: parseInt(profileB.ngay), month: parseInt(profileB.thang), year: parseInt(profileB.nam), fullName: profileB.hoTen });
                 setNumerologyB(tshB);
+                chartJson.data.chartB.numerology = tshB;
             }
 
             setChartDataA(chartJson.data.chartA);
             setChartDataB(chartJson.data.chartB);
+
+            try {
+                const sessionPayload = {
+                    topic: isTwin ? `${profileA.hoTen} & ${profileB.hoTen} - Sinh đôi` : `${profileA.hoTen} - ${profileA.ngay}/${profileA.thang}/${profileA.nam} - Giờ: ${AmLich.DIA_CHI[parseInt(profileA.gioSinh)]}`,
+                    astrologyData: {
+                        isTwin,
+                        profileA,
+                        profileB,
+                        chartA: chartJson.data.chartA,
+                        chartB: chartJson.data.chartB,
+                    }
+                };
+                const sessionRes = await fetch('/api/sessions', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(sessionPayload)
+                });
+                const sessionData = await sessionRes.json();
+                if (sessionData.success && sessionData.sessionId) {
+                    setSessionId(sessionData.sessionId);
+                    
+                    if (!sessionData.isExisting) {
+                        let fullPrompt = "";
+                        if (isTwin) {
+                            const pronA = profileA.gioiTinh === 'nam' ? 'Anh' : 'Chị';
+                            let twinNote = `\n====================================================\n`;
+                            twinNote += `       BÁO CÁO TỬ VI SINH ĐÔI (A VÀ B)\n`;
+                            twinNote += `====================================================\n\n`;
+                            twinNote += `[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là cặp sinh đôi. Đương số A là ${pronA} (Sinh trước), Đương số B là Em (Sinh sau).\n`;
+                            
+                            if (profileA.gioiTinh === profileB.gioiTinh) {
+                                twinNote += `- Hệ thống áp dụng Di Cung (Mượn Thiên Di làm Mệnh cho người sinh sau), giữ nguyên 108 sao gốc.\n`;
+                            } else {
+                                twinNote += `- Khác giới tính nên giữ nguyên Mệnh gốc (Đại vận chạy nghịch nhau).\n`;
+                            }
+                            let twinPronoun = "hai bạn";
+                            const userNam = parseInt(profileA.nam);
+                            let aiSelfFull = "Anh Toàn Tử Vi AI";
+                            let aiSelfShort = "Anh";
+                            if (!isNaN(userNam)) {
+                                if (userNam < 1990) {
+                                    aiSelfFull = "Em Toàn Tử Vi AI";
+                                    aiSelfShort = "Em";
+                                    twinPronoun = profileA.gioiTinh === 'nam' ? 'hai anh' : 'hai chị'; 
+                                } else if (userNam === 1990) {
+                                    aiSelfFull = "Mình Toàn Tử Vi AI";
+                                    aiSelfShort = "Mình";
+                                    twinPronoun = "hai bạn";
+                                } else {
+                                    aiSelfFull = "Anh Toàn Tử Vi AI";
+                                    aiSelfShort = "Anh";
+                                    twinPronoun = "hai em";
+                                }
+                            }
+                            
+                            const twinHoTen = `${profileA.hoTen} và ${profileB.hoTen}`;
+                            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun: twinPronoun, namSinh: profileA.nam, hoTen: twinHoTen };
+                            
+                            const promptA = generateStandardPrompt({ ...chartJson.data.chartA, hoTen: twinHoTen }, tshA, personaConfig);
+                            const promptB = generateStandardPrompt({ ...chartJson.data.chartB, hoTen: twinHoTen }, tshB, personaConfig);
+                            fullPrompt = `${twinNote}\n\n>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${promptA}\n\n----------------------------\n>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${promptB}`;
+                        } else {
+                            const userNam = parseInt(profileA.nam);
+                            let aiSelfFull = "Anh Toàn Tử Vi AI";
+                            let aiSelfShort = "Anh";
+                            let userPronoun = "bạn";
+                            if (!isNaN(userNam)) {
+                                if (userNam < 1990) {
+                                    aiSelfFull = "Em Toàn Tử Vi AI";
+                                    aiSelfShort = "Em";
+                                    userPronoun = profileA.gioiTinh === 'nam' ? 'anh' : 'chị';
+                                } else if (userNam === 1990) {
+                                    aiSelfFull = "Mình Toàn Tử Vi AI";
+                                    aiSelfShort = "Mình";
+                                    userPronoun = "bạn";
+                                } else {
+                                    aiSelfFull = "Anh Toàn Tử Vi AI";
+                                    aiSelfShort = "Anh";
+                                    userPronoun = "em";
+                                }
+                            }
+                            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun, namSinh: profileA.nam };
+                            fullPrompt = generateStandardPrompt(chartJson.data.chartA, tshA, personaConfig);
+                        }
+                        setPendingPrompt(fullPrompt);
+                    }
+                }
+            } catch (e) {
+                console.error("Lỗi tạo session:", e);
+            }
+
             setStep('chat');
             setActiveTab('chat');
-
-            setTimeout(() => {
-                const prompt = isTwin 
-                    ? `Hãy so sánh lá số của ${profileA.hoTen} và ${profileB.hoTen}.` 
-                    : `Hãy luận giải lá số của ${profileA.hoTen}.`;
-                sendMessage({ role: 'user', content: prompt });
-            }, 600);
-
         } catch (err: any) {
             setFormError(err.message);
             setStep('form');
@@ -272,6 +516,7 @@ function TuViMain() {
     }
 
     function formatMarkdown(text: string): string {
+        if (!text) return "";
         return text
             .replace(/### (.*)/g, '<h3>$1</h3>')
             .replace(/## (.*)/g, '<h2>$1</h2>')
@@ -285,7 +530,7 @@ function TuViMain() {
     }
 
     useEffect(() => {
-        fetch('/prompts/tuvi_master.v11.prompt')
+        fetch('/prompts/tuvi_master_compact.v11.prompt')
             .then(res => res.text())
             .then(setPromptTemplate)
             .catch(err => console.error('Lỗi tải prompt:', err));
@@ -392,7 +637,15 @@ function TuViMain() {
                         {messages.map((m) => (
                             <div key={m.id} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
                                 <div className={`max-w-[85%] px-4 py-2 rounded-xl text-xs ${m.role === 'user' ? 'bg-purple-600/20' : 'bg-white/5'}`}>
-                                    {m.role === 'assistant' ? <div className="prose prose-invert prose-xs" dangerouslySetInnerHTML={{ __html: formatMarkdown(m.content) }} /> : <p>{m.content}</p>}
+                                    {m.role === 'assistant' ? (
+                                        <>
+                                            <div className="prose prose-invert prose-xs" dangerouslySetInnerHTML={{ __html: formatMarkdown(m.content || '') }} />
+                                            {/* Render parts manually if they exist */}
+                                            {m.parts && m.parts.map((p: any, i: number) => (
+                                                p.type === 'text' ? <div key={i} className="mt-2 prose prose-invert prose-xs" dangerouslySetInnerHTML={{ __html: formatMarkdown(p.text || '') }} /> : null
+                                            ))}
+                                        </>
+                                    ) : <p>{m.content}</p>}
                                 </div>
                             </div>
                         ))}
@@ -451,6 +704,20 @@ function TuViMain() {
                     <h1 className="text-4xl lg:text-5xl font-black text-white">TỬ VI LÁ SỐ AI</h1>
                     <p className="text-white/30 text-xs uppercase tracking-widest mt-2">Huyền học kỷ nguyên AI</p>
                 </div>
+
+                {historySessions.length > 0 && (
+                    <div className="bg-[#0a0a0f] rounded-3xl p-6 lg:p-8 border border-white/10 max-w-4xl mx-auto shadow-2xl mb-8">
+                        <h2 className="text-lg font-bold text-white mb-4 flex items-center gap-2"><span>📜</span> Lịch Sử Đã Xem</h2>
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 max-h-[200px] overflow-y-auto pr-2 custom-scrollbar">
+                            {historySessions.map(session => (
+                                <button key={session.id} onClick={() => loadSession(session)} className="bg-white/5 hover:bg-white/10 text-left p-3 rounded-xl border border-white/5 hover:border-purple-500/50 transition-all group flex flex-col justify-center">
+                                    <h3 className="text-sm font-bold text-purple-300 group-hover:text-purple-200 line-clamp-1">{session.topic}</h3>
+                                    <div className="text-[10px] text-white/40 mt-1">{new Date(session.createdAt).toLocaleString('vi-VN')}</div>
+                                </button>
+                            ))}
+                        </div>
+                    </div>
+                )}
 
                 <div className="bg-[#0a0a0f] rounded-3xl p-6 lg:p-10 border border-white/10 max-w-4xl mx-auto shadow-2xl">
                     <form onSubmit={handleFormSubmit} className="space-y-8">

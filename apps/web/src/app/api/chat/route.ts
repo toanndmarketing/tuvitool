@@ -1,11 +1,16 @@
 // @ts-nocheck
-import { google } from '@ai-sdk/google';
+import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
 import { compactAstrologyData } from '@/lib/astrology/AiUtils';
 import fs from 'fs';
 import path from 'path';
+
+// Define Google Provider instance
+const google = createGoogleGenerativeAI({
+  apiKey: "AIzaSyA9bxoY_hV7YX8x44ITZHGbr5VbOIont7M" || process.env.GOOGLE_API_KEY,
+});
 
 export async function POST(req: NextRequest) {
     try {
@@ -31,36 +36,34 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        // Đọc System Prompt từ file template
-        let systemContent = "";
-        try {
-            const promptPath = path.join(process.cwd(), 'public/prompts/tuvi_master_compact.v11.prompt');
-            let template = fs.readFileSync(promptPath, 'utf8');
-            
-            // Nén dữ liệu lá số
-            const compressedData = chartData ? compactAstrologyData(chartData) : "{}";
-            const hoTen = chartData?.hoTen || (chartData?.A ? `${chartData.A.hoTen} & ${chartData.B.hoTen}` : "Đương Số");
-            const namXem = chartData?.input?.namXem || chartData?.A?.input?.namXem || new Date().getFullYear();
+        const aiModel = process.env.GOOGLE_MODEL || "gemini-2.5-pro";
 
-            // Thay thế placeholders
-            systemContent = template
-                .replace(/{{hoTen}}/g, hoTen)
-                .replace(/{{namXem}}/g, String(namXem))
-                .replace(/{{JSON_DATA}}/g, compressedData);
-        } catch (e) {
-            console.error('[API] Failed to read prompt file:', e);
-            // Fallback prompt đơn giản nếu lỗi file
-            systemContent = "Bạn là chuyên gia Tử Vi. Hãy trả lời dựa trên dữ liệu lá số được cung cấp.";
-        }
+        let systemContent = `Bạn là một chuyên gia Tử Vi Đẩu Số chuyên nghiệp. Hãy phân tích chuyên sâu dựa trên lá số được cung cấp. BẮT BUỘC bỏ tất cả các biểu tượng cảm xúc (emoji/icon) trong câu trả lời. Trình bày văn bản chuyên nghiệp, nghiêm túc, như một cuốn sách luận giải học thuật. Giọng văn dứt khoát, chắc chắn, không sử dụng các từ ngữ nước đôi hay mơ hồ. Tuyệt đối KHÔNG DÙNG bất kỳ loại emoji nào.`;
+
+        const validRoles = ['user', 'assistant', 'system', 'tool'];
+        const coreMessages = messages
+            .filter((m: any) => m.role !== 'system')
+            .map((m: any) => {
+            // Guard against undefined content or unexpected formats causing AI SDK schema validation errors
+            const role = validRoles.includes(m.role) ? m.role : 'user';
+            return {
+                role: role,
+                content: typeof m.content === 'string' ? m.content : (m.content ? JSON.stringify(m.content) : "")
+            };
+        });
+
+        console.log('[API] coreMessages payload length:', coreMessages.length);
 
         // AI SDK streamText
+        console.log('[API] Starting streamText for model:', aiModel);
         const result = streamText({
-            model: google(process.env.GEMINI_MODEL || 'gemini-1.5-flash-latest'),
+            model: google(aiModel),
             system: systemContent,
-            messages,
-            maxOutputTokens: 2048,
+            messages: coreMessages,
+            maxOutputTokens: 8192,
             temperature: 0.7,
             onFinish: async ({ text }) => {
+                console.log('[API] streamText onFinish trigger, text length:', text?.length);
                 if (sessionId && session) {
                     try {
                         await db.chatMessage.create({
@@ -73,13 +76,19 @@ export async function POST(req: NextRequest) {
             }
         });
 
-        // Hỗ trợ cả toDataStreamResponse (V3+) và legacy StreamingTextResponse
-        if (typeof result.toDataStreamResponse === 'function') {
-            return result.toDataStreamResponse();
+        console.log('[API] Streaming result initialized.');
+
+        if (typeof (result as any).toUIMessageStreamResponse === 'function') {
+            console.log('[API] Calling toUIMessageStreamResponse');
+            return (result as any).toUIMessageStreamResponse();
+        } else if (typeof (result as any).toTextStreamResponse === 'function') {
+            console.log('[API] Calling toTextStreamResponse');
+            return (result as any).toTextStreamResponse();
         }
-        
-        // Fallback cho các bản SDK khác
-        return new Response(result.textStream, {
+
+        // Fallback
+        console.log('[API] Falling back to textStream Response');
+        return new Response(result.textStream || "Lỗi stream", {
             headers: { 'Content-Type': 'text/plain; charset=utf-8' }
         });
     } catch (e: any) {

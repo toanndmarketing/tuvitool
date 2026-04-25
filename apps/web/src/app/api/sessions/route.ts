@@ -6,14 +6,30 @@ export async function POST(req: NextRequest) {
     try {
         const { topic, astrologyData } = await req.json();
 
+        const sessionTopic = topic || 'Luận giải Tử Vi';
+
+        const existingSession = await db.chatSession.findFirst({
+            where: { topic: sessionTopic }
+        });
+
+        if (existingSession) {
+            const session = await db.chatSession.update({
+                where: { id: existingSession.id },
+                data: {
+                    astrologyData: astrologyData ? JSON.stringify(astrologyData) : existingSession.astrologyData,
+                }
+            });
+            return NextResponse.json({ success: true, sessionId: session.id, isExisting: true });
+        }
+
         const session = await db.chatSession.create({
             data: {
-                topic: topic || 'Luận giải Tử Vi',
+                topic: sessionTopic,
                 astrologyData: astrologyData ? JSON.stringify(astrologyData) : null,
             },
         });
 
-        return NextResponse.json({ success: true, sessionId: session.id });
+        return NextResponse.json({ success: true, sessionId: session.id, isExisting: false });
     } catch (e: any) {
         console.error('[API /api/sessions] Error:', e);
         return NextResponse.json({ error: e.message }, { status: 500 });
@@ -27,13 +43,18 @@ export async function GET(req: NextRequest) {
         const sessionId = searchParams.get('sessionId');
 
         if (!sessionId) {
-            return NextResponse.json({ error: 'Missing sessionId' }, { status: 400 });
+            const sessions = await db.chatSession.findMany({
+                orderBy: { createdAt: 'desc' },
+                select: { id: true, topic: true, astrologyData: true, createdAt: true },
+                take: 50
+            });
+            return NextResponse.json({ success: true, sessions });
         }
 
         const messages = await db.chatMessage.findMany({
             where: { sessionId },
             orderBy: { createdAt: 'asc' },
-            select: { role: true, content: true, createdAt: true },
+            select: { id: true, role: true, content: true, createdAt: true },
         });
 
         return NextResponse.json({ success: true, messages });

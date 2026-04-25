@@ -154,13 +154,23 @@ export class TuViEngine {
                 6: 'Hoả', 7: 'Thổ', 8: 'Kim', 9: 'Kim', 10: 'Thổ', 11: 'Thuỷ'
             };
 
+            // Tuần Triệt
+            let tuanTriet = undefined;
+            if (raw.tuanTriet) {
+                const hasTuan = raw.tuanTriet.tuan.includes(i);
+                const hasTriet = raw.tuanTriet.triet.includes(i);
+                if (hasTuan || hasTriet) {
+                    tuanTriet = { tuan: hasTuan, triet: hasTriet };
+                }
+            }
+
             palaces.push({
                 index: i,
                 cungName,
                 chiName,
                 chinhTinh,
                 phuTinh,
-                tuanTriet: raw.tuanTrietMap ? raw.tuanTrietMap[i] : undefined,
+                tuanTriet: tuanTriet,
                 truongSinh: raw.truongSinhMap ? raw.truongSinhMap[i] : null,
                 rating: raw.palaceRating ? raw.palaceRating[i] : undefined,
                 canChi: palaceCanChi,

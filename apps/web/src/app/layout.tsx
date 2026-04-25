@@ -11,7 +11,7 @@ const k2d = K2D({
 
 export const metadata: Metadata = {
   title: "Tử Vi Lá Số | Luận Giải Bản Mệnh Chuyên Sâu AI",
-  description: "Tra cứu Tử Vi Đẩu Số, luận giải lá số bản mệnh chuyên sâu bằng AI. Phân tích 12 cung, 108 sao, Đại Vận, Tiểu Vận — phương pháp Tân Tam Hợp V11.",
+  description: "Tra cứu Tử Vi Đẩu Số, luận giải lá số bản mệnh chuyên sâu bằng AI. Phân tích 12 cung, 108 sao, Đại Vận, Tiểu Vận — phương pháp Tam Hợp Phái Hiện Đại.",
   keywords: "Tử Vi Đẩu Số, lá số tử vi, luận giải tử vi, bản mệnh, AI tử vi",
   openGraph: {
     title: "Tử Vi Lá Số AI — Luận Giải Chuyên Sâu",

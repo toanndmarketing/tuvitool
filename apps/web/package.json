@@ -3,13 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev",
-    "build": "next build",
-    "start": "next start",
+    "dev": "next dev -H 0.0.0.0 --webpack",
+    "build": "next build --webpack",
+    "start": "next start -H 0.0.0.0",
     "lint": "eslint"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.63",
+    "@ai-sdk/groq": "^3.0.35",
     "@ai-sdk/react": "^3.0.166",
     "@google/generative-ai": "^0.24.1",
     "@prisma/client": "^6.4.1",

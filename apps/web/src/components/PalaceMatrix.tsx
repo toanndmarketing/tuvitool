@@ -24,6 +24,26 @@ const HANH_BG_COLORS: Record<string, string> = {
   'Thổ': 'text-[#fbbf24]'
 };
 
+const GIO_SINH_RANGES = [
+  '23:00-00:59',
+  '01:00-02:59',
+  '03:00-04:59',
+  '05:00-06:59',
+  '07:00-08:59',
+  '09:00-10:59',
+  '11:00-12:59',
+  '13:00-14:59',
+  '15:00-16:59',
+  '17:00-18:59',
+  '19:00-20:59',
+  '21:00-22:59',
+];
+
+function shouldRenderWide(value: string): boolean {
+  if (!value) return false;
+  return value.length > 18 || value.includes('|');
+}
+
 // Cấu trúc 4x4 chuẩn truyền thống Việt Nam:
 // Top: Tị, Ngọ, Mùi, Thân
 // Phải: Dậu, Tuất, Hợi
@@ -51,6 +71,32 @@ export function PalaceMatrix({ chart }: PalaceMatrixProps) {
   const cungThan = chart.palaces.find(p => p.index === chart.cungThanPos);
   const thanCu = cungThan ? cungThan.cungName : '';
   const isNam = chart.input?.gioiTinh === 'nam';
+  const gioSinhIndex = Number(chart.input?.gioSinh);
+  const gioChi = chart.canChiGio?.full?.split(' ')[1] || '--';
+  const gioRange = Number.isFinite(gioSinhIndex) ? GIO_SINH_RANGES[gioSinhIndex] : '';
+
+  const leftRows = [
+    { label: 'Năm:', value: `${chart.input?.nam ?? '--'} (${chart.canChiNam?.full ?? '--'})` },
+    { label: 'Tháng:', value: `DL ${chart.input?.thang ?? '--'} | AL ${chart.lunarDate?.month ?? '--'} (${chart.canChiThang?.full ?? '--'})` },
+    { label: 'Ngày:', value: `DL ${chart.input?.ngay ?? '--'} | AL ${chart.lunarDate?.day ?? '--'}` },
+    { label: 'Giờ:', value: `${Number.isFinite(gioSinhIndex) ? gioSinhIndex : '--'} (${gioChi}${gioRange ? `, ${gioRange}` : ''})` },
+    { label: 'Âm Dương:', value: chart.amDuong || '--' },
+    { label: 'Mệnh:', value: chart.menhNapAm || '--', wide: true },
+    { label: 'Cục:', value: chart.cucName || '--', valueClass: 'uppercase text-red-400' },
+  ];
+
+  const rightRows = [
+    { label: 'Đương Số:', value: chart.hoTen || 'Vô Danh', valueClass: 'font-black text-emerald-400 uppercase', wide: true },
+    { label: 'Giới tính:', value: isNam ? 'Nam' : 'Nữ' },
+    { label: 'Thân cư:', value: thanCu || '--' },
+    { label: 'Mệnh chủ:', value: chart.chuMenh || '--' },
+    { label: 'Thân chủ:', value: chart.chuThan || '--' },
+  ];
+
+  const leftCompactRows = leftRows.filter((row) => !row.wide && !shouldRenderWide(row.value));
+  const rightCompactRows = rightRows.filter((row) => !row.wide && !shouldRenderWide(row.value));
+  const leftWideRows = leftRows.filter((row) => row.wide || shouldRenderWide(row.value));
+  const rightWideRows = rightRows.filter((row) => row.wide || shouldRenderWide(row.value));
 
   return (
     <div className="w-full max-w-5xl mx-auto flex flex-col gap-2 font-k2d">
@@ -163,34 +209,50 @@ export function PalaceMatrix({ chart }: PalaceMatrixProps) {
                 Hệ Thống Tử Vi Cổ Học
             </div>
             
-            <div className="grid grid-cols-2 gap-x-6 lg:gap-x-12 gap-y-2 w-full max-w-[90%] text-[12px] lg:text-[14px]">
+            <div className="grid grid-cols-2 gap-x-5 lg:gap-x-10 gap-y-2 w-full max-w-[95%] text-[12px] lg:text-[14px]">
                 {/* Cột trái */}
                 <div className="flex flex-col gap-2">
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Năm:</span> <span className="font-bold text-white/90">{chart.canChiNam?.full}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Tháng:</span> <span className="font-bold text-white/90">{chart.lunarDate?.month} ({chart.canChiThang?.full})</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Ngày:</span> <span className="font-bold text-white/90">{chart.lunarDate?.day}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Giờ:</span> <span className="font-bold text-white/90">{chart.canChiGio?.full.split(' ')[1]}</span></div>
-                    <div className="h-2"></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50 whitespace-nowrap">Âm Dương:</span> <span className="font-bold text-white/90 truncate">{chart.amDuong}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Mệnh:</span> <span className="font-bold uppercase text-white/90 truncate">{chart.menhNapAm}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Cục:</span> <span className="font-bold uppercase text-red-400">{chart.cucName}</span></div>
+                    {leftCompactRows.map((row) => (
+                      <div key={row.label} className="grid grid-cols-[78px_minmax(0,1fr)] gap-2 items-start">
+                        <span className="font-bold text-white/50">{row.label}</span>
+                        <span className={`font-bold text-white/90 break-words leading-5 ${row.valueClass || ''}`}>{row.value}</span>
+                      </div>
+                    ))}
                 </div>
 
                 {/* Cột phải */}
                 <div className="flex flex-col gap-2">
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Đương Số:</span> <span className="font-black text-emerald-400 uppercase truncate">{chart.hoTen || 'Vô Danh'}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Giới tính:</span> <span className="font-bold text-white/90">{isNam ? 'Nam' : 'Nữ'}</span></div>
-                    <div className="h-2"></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Thân cư:</span> <span className="font-bold text-white/90">{thanCu || '--'}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Mệnh chủ:</span> <span className="font-bold text-white/90">{chart.chuMenh || '--'}</span></div>
-                    <div className="flex"><span className="w-[85px] font-bold text-white/50">Thân chủ:</span> <span className="font-bold text-white/90">{chart.chuThan || '--'}</span></div>
-                    {/* Add any other elements if needed */}
+                    {rightCompactRows.map((row) => (
+                      <div key={row.label} className="grid grid-cols-[78px_minmax(0,1fr)] gap-2 items-start">
+                        <span className="font-bold text-white/50">{row.label}</span>
+                        <span className={`font-bold text-white/90 break-words leading-5 ${row.valueClass || ''}`}>{row.value}</span>
+                      </div>
+                    ))}
                 </div>
             </div>
+
+            {(leftWideRows.length > 0 || rightWideRows.length > 0) && (
+              <div className="w-full max-w-[95%] mt-4 pt-3 border-t border-white/10 flex flex-col gap-2 text-[12px] lg:text-[14px]">
+                {leftWideRows.map((row) => (
+                  <div key={`left-${row.label}`} className="grid grid-cols-[78px_minmax(0,1fr)] gap-2 items-start">
+                    <span className="font-bold text-white/50">{row.label}</span>
+                    <span className={`font-bold text-white/90 break-words leading-5 ${row.valueClass || ''}`}>{row.value}</span>
+                  </div>
+                ))}
+                {rightWideRows.map((row) => (
+                  <div key={`right-${row.label}`} className="grid grid-cols-[78px_minmax(0,1fr)] gap-2 items-start">
+                    <span className="font-bold text-white/50">{row.label}</span>
+                    <span className={`font-bold text-white/90 break-words leading-5 ${row.valueClass || ''}`}>{row.value}</span>
+                  </div>
+                ))}
+              </div>
+            )}
             
             {/* Phụ Chú Đại Vận Lục Thập Hoa Giáp */}
             <div className="mt-8 pt-4 border-t border-white/10 w-full text-center">
-              <span className="text-[10px] uppercase tracking-[0.2em] text-white/30 font-bold">Lá Số Thiên Bàn Môn Tử Vi Đẩu Số ({chart.tinhHe})</span>
+              <span className="text-[10px] lg:text-[11px] tracking-[0.08em] text-white/40 font-bold break-words">
+                Tên Tác giả: Toàn Tử Vi - Zalo: 0916867294 - Quản trị cuộc đời
+              </span>
             </div>
         </div>
       </div>

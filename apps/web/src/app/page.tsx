@@ -34,6 +34,10 @@ interface ProfileData {
     ngay: string;
     thang: string;
     nam: string;
+    ngayAm: string;
+    thangAm: string;
+    namAm: string;
+    thangNhuan: boolean;
     gioSinh: string;
     gioiTinh: 'nam' | 'nữ';
     isYounger?: boolean;
@@ -44,6 +48,10 @@ const DEMO_SINGLE: ProfileData = {
     ngay: "26",
     thang: "3",
     nam: "2019",
+    ngayAm: "",
+    thangAm: "",
+    namAm: "",
+    thangNhuan: false,
     gioiTinh: "nam",
     gioSinh: "6"
 };
@@ -53,6 +61,10 @@ const DEMO_TWIN_A: ProfileData = {
     ngay: "05",
     thang: "7",
     nam: "2021",
+    ngayAm: "",
+    thangAm: "",
+    namAm: "",
+    thangNhuan: false,
     gioiTinh: "nữ",
     gioSinh: "6"
 };
@@ -62,9 +74,75 @@ const DEMO_TWIN_B: ProfileData = {
     ngay: "05",
     thang: "7",
     nam: "2021",
+    ngayAm: "",
+    thangAm: "",
+    namAm: "",
+    thangNhuan: false,
     gioiTinh: "nam",
     gioSinh: "6"
 };
+
+function parseInputInt(value: string): number | null {
+    if (!value || !/^\d+$/.test(value.trim())) return null;
+    const num = parseInt(value, 10);
+    return Number.isNaN(num) ? null : num;
+}
+
+function isValidSolarDate(day: number, month: number, year: number): boolean {
+    if (year < 1000 || year > 3000) return false;
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 31) return false;
+    const d = new Date(year, month - 1, day);
+    return d.getFullYear() === year && d.getMonth() === month - 1 && d.getDate() === day;
+}
+
+function isValidLunarDate(day: number, month: number, year: number): boolean {
+    if (year < 1000 || year > 3000) return false;
+    if (month < 1 || month > 12) return false;
+    if (day < 1 || day > 30) return false;
+    return true;
+}
+
+function syncFromSolar(profile: ProfileData): ProfileData {
+    const day = parseInputInt(profile.ngay);
+    const month = parseInputInt(profile.thang);
+    const year = parseInputInt(profile.nam);
+    if (day === null || month === null || year === null) return profile;
+    if (!isValidSolarDate(day, month, year)) return profile;
+    try {
+        const lunar = AmLich.solarToLunar(day, month, year, 7);
+        return {
+            ...profile,
+            ngayAm: String(lunar.day),
+            thangAm: String(lunar.month),
+            namAm: String(lunar.year),
+            thangNhuan: lunar.leap === 1,
+        };
+    } catch {
+        return profile;
+    }
+}
+
+function syncFromLunar(profile: ProfileData): ProfileData {
+    const day = parseInputInt(profile.ngayAm);
+    const month = parseInputInt(profile.thangAm);
+    const year = parseInputInt(profile.namAm);
+    if (day === null || month === null || year === null) return profile;
+    if (!isValidLunarDate(day, month, year)) return profile;
+    try {
+        const jd = AmLich.lunarToSolarJd(day, month, year, profile.thangNhuan ? 1 : 0, 7);
+        const [solarDay, solarMonth, solarYear] = AmLich.jdToDate(jd);
+        if (!isValidSolarDate(solarDay, solarMonth, solarYear)) return profile;
+        return {
+            ...profile,
+            ngay: String(solarDay),
+            thang: String(solarMonth),
+            nam: String(solarYear),
+        };
+    } catch {
+        return profile;
+    }
+}
 
 function TuViMain() {
     const router = useRouter();
@@ -76,8 +154,8 @@ function TuViMain() {
     // States
     const [step, setStep] = useState<'form' | 'loading' | 'chat'>('form');
     const [isTwin, setIsTwin] = useState(false);
-    const [profileA, setProfileA] = useState<ProfileData>(DEMO_SINGLE);
-    const [profileB, setProfileB] = useState<ProfileData>(DEMO_TWIN_B);
+    const [profileA, setProfileA] = useState<ProfileData>(() => syncFromSolar(DEMO_SINGLE));
+    const [profileB, setProfileB] = useState<ProfileData>(() => syncFromSolar(DEMO_TWIN_B));
     const [promptTemplate, setPromptTemplate] = useState('');
     const [syncMode, setSyncMode] = useState(true);
     const [downloadLoading, setDownloadLoading] = useState(false);
@@ -355,6 +433,10 @@ function TuViMain() {
                     if (data.ngay !== undefined) nextB.ngay = data.ngay;
                     if (data.thang !== undefined) nextB.thang = data.thang;
                     if (data.nam !== undefined && data.nam.length === 4) nextB.nam = data.nam;
+                    if (data.ngayAm !== undefined) nextB.ngayAm = data.ngayAm;
+                    if (data.thangAm !== undefined) nextB.thangAm = data.thangAm;
+                    if (data.namAm !== undefined) nextB.namAm = data.namAm;
+                    if (data.thangNhuan !== undefined) nextB.thangNhuan = data.thangNhuan;
                     return nextB;
                 });
             }
@@ -364,6 +446,37 @@ function TuViMain() {
 
     function updateProfileB(data: Partial<ProfileData>) {
         setProfileB(prev => ({ ...prev, ...data }));
+        if (Object.keys(data).length > 0) setSyncMode(false);
+    }
+
+    function updateProfileASolar(data: Partial<ProfileData>) {
+        setProfileA(prev => {
+            const next = syncFromSolar({ ...prev, ...data });
+            if (syncMode && isTwin) {
+                setProfileB(prevB => ({ ...syncFromSolar({ ...prevB, ...data }), hoTen: prevB.hoTen }));
+            }
+            return next;
+        });
+    }
+
+    function updateProfileALunar(data: Partial<ProfileData>) {
+        setProfileA(prev => {
+            const lunarNext = { ...prev, ...data };
+            const next = syncFromLunar(lunarNext);
+            if (syncMode && isTwin) {
+                setProfileB(prevB => ({ ...syncFromLunar({ ...prevB, ...data }), hoTen: prevB.hoTen }));
+            }
+            return next;
+        });
+    }
+
+    function updateProfileBSolar(data: Partial<ProfileData>) {
+        setProfileB(prev => syncFromSolar({ ...prev, ...data }));
+        if (Object.keys(data).length > 0) setSyncMode(false);
+    }
+
+    function updateProfileBLunar(data: Partial<ProfileData>) {
+        setProfileB(prev => syncFromLunar({ ...prev, ...data }));
         if (Object.keys(data).length > 0) setSyncMode(false);
     }
 
@@ -546,23 +659,31 @@ function TuViMain() {
         if (t !== null) {
             const twinState = t === '1';
             setIsTwin(twinState);
-            setProfileA({
+            setProfileA(syncFromSolar({
                 hoTen: getParam(searchParams, 'a_n', twinState ? DEMO_TWIN_A.hoTen : DEMO_SINGLE.hoTen),
                 ngay: getParam(searchParams, 'a_d', twinState ? DEMO_TWIN_A.ngay : DEMO_SINGLE.ngay),
                 thang: getParam(searchParams, 'a_m', twinState ? DEMO_TWIN_A.thang : DEMO_SINGLE.thang),
                 nam: getParam(searchParams, 'a_y', twinState ? DEMO_TWIN_A.nam : DEMO_SINGLE.nam),
+                ngayAm: "",
+                thangAm: "",
+                namAm: "",
+                thangNhuan: false,
                 gioiTinh: getParam(searchParams, 'a_g', twinState ? DEMO_TWIN_A.gioiTinh : DEMO_SINGLE.gioiTinh) as any,
                 gioSinh: getParam(searchParams, 'a_h', twinState ? DEMO_TWIN_A.gioSinh : DEMO_SINGLE.gioSinh),
-            });
+            }));
             if (twinState) {
-                setProfileB({
+                setProfileB(syncFromSolar({
                     hoTen: getParam(searchParams, 'b_n', DEMO_TWIN_B.hoTen),
                     ngay: getParam(searchParams, 'b_d', DEMO_TWIN_B.ngay),
                     thang: getParam(searchParams, 'b_m', DEMO_TWIN_B.thang),
                     nam: getParam(searchParams, 'b_y', DEMO_TWIN_B.nam),
+                    ngayAm: "",
+                    thangAm: "",
+                    namAm: "",
+                    thangNhuan: false,
                     gioiTinh: getParam(searchParams, 'b_g', DEMO_TWIN_B.gioiTinh) as any,
                     gioSinh: getParam(searchParams, 'b_h', DEMO_TWIN_B.gioSinh),
-                });
+                }));
                 setSyncMode(false);
             }
         }
@@ -736,10 +857,26 @@ function TuViMain() {
                                     <button type="button" onClick={()=>updateProfileA({gioiTinh:'nam'})} className={`py-3 rounded-xl border text-xs font-bold ${profileA.gioiTinh==='nam'?'bg-purple-600':'opacity-30'}`}>♂ Nam</button>
                                     <button type="button" onClick={()=>updateProfileA({gioiTinh:'nữ'})} className={`py-3 rounded-xl border text-xs font-bold ${profileA.gioiTinh==='nữ'?'bg-purple-600':'opacity-30'}`}>♀ Nữ</button>
                                 </div>
-                                <div className="grid grid-cols-3 gap-2">
-                                    <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày" value={profileA.ngay} onChange={e=>updateProfileA({ngay:e.target.value})} required/>
-                                    <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng" value={profileA.thang} onChange={e=>updateProfileA({thang:e.target.value})} required/>
-                                    <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm" value={profileA.nam} onChange={e=>updateProfileA({nam:e.target.value})} required/>
+                                <div className="space-y-2">
+                                    <div className="text-[11px] uppercase tracking-wider text-white/50">Ngày Dương Lịch</div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày" value={profileA.ngay} onChange={e=>updateProfileASolar({ngay:e.target.value})} required/>
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng" value={profileA.thang} onChange={e=>updateProfileASolar({thang:e.target.value})} required/>
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm" value={profileA.nam} onChange={e=>updateProfileASolar({nam:e.target.value})} required/>
+                                    </div>
+                                </div>
+                                <div className="space-y-2">
+                                    <div className="flex items-center justify-between">
+                                        <div className="text-[11px] uppercase tracking-wider text-white/50">Ngày Âm Lịch</div>
+                                        <button type="button" onClick={() => updateProfileALunar({ thangNhuan: !profileA.thangNhuan })} className={`px-3 py-1 rounded-lg border text-[10px] font-bold ${profileA.thangNhuan ? 'bg-amber-600/40 border-amber-300/40' : 'bg-white/5 border-white/10'}`}>
+                                            Tháng nhuận: {profileA.thangNhuan ? 'Có' : 'Không'}
+                                        </button>
+                                    </div>
+                                    <div className="grid grid-cols-3 gap-2">
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày âm" value={profileA.ngayAm} onChange={e=>updateProfileALunar({ngayAm:e.target.value})}/>
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng âm" value={profileA.thangAm} onChange={e=>updateProfileALunar({thangAm:e.target.value})}/>
+                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm âm" value={profileA.namAm} onChange={e=>updateProfileALunar({namAm:e.target.value})}/>
+                                    </div>
                                 </div>
                                 <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center outline-none" value={profileA.gioSinh} onChange={e=>updateProfileA({gioSinh:e.target.value})}>
                                     {CHIGIO_LIST.map(g=><option key={g.value} value={g.value} className="bg-[#111122]">{g.label}</option>)}
@@ -753,10 +890,26 @@ function TuViMain() {
                                         <button type="button" onClick={()=>updateProfileB({gioiTinh:'nam'})} className={`py-3 rounded-xl border text-xs font-bold ${profileB.gioiTinh==='nam'?'bg-pink-600':'opacity-30'}`}>♂ Nam</button>
                                         <button type="button" onClick={()=>updateProfileB({gioiTinh:'nữ'})} className={`py-3 rounded-xl border text-xs font-bold ${profileB.gioiTinh==='nữ'?'bg-pink-600':'opacity-30'}`}>♀ Nữ</button>
                                     </div>
-                                    <div className="grid grid-cols-3 gap-2">
-                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày" value={profileB.ngay} onChange={e=>updateProfileB({ngay:e.target.value})} required/>
-                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng" value={profileB.thang} onChange={e=>updateProfileB({thang:e.target.value})} required/>
-                                        <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm" value={profileB.nam} onChange={e=>updateProfileB({nam:e.target.value})} required/>
+                                    <div className="space-y-2">
+                                        <div className="text-[11px] uppercase tracking-wider text-white/50">Ngày Dương Lịch</div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày" value={profileB.ngay} onChange={e=>updateProfileBSolar({ngay:e.target.value})} required/>
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng" value={profileB.thang} onChange={e=>updateProfileBSolar({thang:e.target.value})} required/>
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm" value={profileB.nam} onChange={e=>updateProfileBSolar({nam:e.target.value})} required/>
+                                        </div>
+                                    </div>
+                                    <div className="space-y-2">
+                                        <div className="flex items-center justify-between">
+                                            <div className="text-[11px] uppercase tracking-wider text-white/50">Ngày Âm Lịch</div>
+                                            <button type="button" onClick={() => updateProfileBLunar({ thangNhuan: !profileB.thangNhuan })} className={`px-3 py-1 rounded-lg border text-[10px] font-bold ${profileB.thangNhuan ? 'bg-amber-600/40 border-amber-300/40' : 'bg-white/5 border-white/10'}`}>
+                                                Tháng nhuận: {profileB.thangNhuan ? 'Có' : 'Không'}
+                                            </button>
+                                        </div>
+                                        <div className="grid grid-cols-3 gap-2">
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Ngày âm" value={profileB.ngayAm} onChange={e=>updateProfileBLunar({ngayAm:e.target.value})}/>
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Tháng âm" value={profileB.thangAm} onChange={e=>updateProfileBLunar({thangAm:e.target.value})}/>
+                                            <input className="bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center" placeholder="Năm âm" value={profileB.namAm} onChange={e=>updateProfileBLunar({namAm:e.target.value})}/>
+                                        </div>
                                     </div>
                                     <select className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-center outline-none" value={profileB.gioSinh} onChange={e=>updateProfileB({gioSinh:e.target.value})}>
                                         {CHIGIO_LIST.map(g=><option key={g.value} value={g.value} className="bg-[#111122]">{g.label}</option>)}

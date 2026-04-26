@@ -1,5 +1,6 @@
 // @ts-nocheck
 import { createGoogleGenerativeAI } from '@ai-sdk/google';
+import { createGroq } from '@ai-sdk/groq';
 import { streamText } from 'ai';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
@@ -14,6 +15,20 @@ function getGoogleApiKey() {
     }
 
     return apiKey;
+}
+
+function getGroqApiKey() {
+    const apiKey = process.env.GROQ_API_KEY;
+    if (!apiKey) {
+        throw new Error('Missing GROQ_API_KEY');
+    }
+    return apiKey;
+}
+
+function getProviderMode() {
+    const raw = (process.env.AI_PROVIDER || process.env.LLM_PROVIDER || 'gemini').toLowerCase().trim();
+    if (raw === 'groq' || raw === 'grog') return 'groq';
+    return 'gemini';
 }
 
 export async function POST(req: NextRequest) {
@@ -40,9 +55,16 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const aiModel = process.env.GEMINI_MODEL || process.env.GOOGLE_MODEL || "gemini-2.5-pro";
+        const providerMode = getProviderMode();
+        const aiModel = providerMode === 'groq'
+            ? (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile')
+            : (process.env.GEMINI_MODEL || process.env.GOOGLE_MODEL || 'gemini-2.5-pro');
+
         const google = createGoogleGenerativeAI({
             apiKey: getGoogleApiKey(),
+        });
+        const groq = createGroq({
+            apiKey: getGroqApiKey(),
         });
 
         let systemContent = `Bạn là một chuyên gia Tử Vi Đẩu Số chuyên nghiệp. Hãy phân tích chuyên sâu dựa trên lá số được cung cấp. BẮT BUỘC bỏ tất cả các biểu tượng cảm xúc (emoji/icon) trong câu trả lời. Trình bày văn bản chuyên nghiệp, nghiêm túc, như một cuốn sách luận giải học thuật. Giọng văn dứt khoát, chắc chắn, không sử dụng các từ ngữ nước đôi hay mơ hồ. Tuyệt đối KHÔNG DÙNG bất kỳ loại emoji nào.`;
@@ -62,9 +84,9 @@ export async function POST(req: NextRequest) {
         console.log('[API] coreMessages payload length:', coreMessages.length);
 
         // AI SDK streamText
-        console.log('[API] Starting streamText for model:', aiModel);
+        console.log('[API] Starting streamText provider/model:', providerMode, aiModel);
         const result = streamText({
-            model: google(aiModel),
+            model: providerMode === 'groq' ? groq(aiModel) : google(aiModel),
             system: systemContent,
             messages: coreMessages,
             maxOutputTokens: 8192,

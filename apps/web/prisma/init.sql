@@ -1,0 +1,30 @@
+CREATE TABLE IF NOT EXISTS "UserContext" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "userId" TEXT,
+  "name" TEXT,
+  "gender" TEXT,
+  "dob" DATETIME,
+  "birthHour" INTEGER,
+  "cungMenh" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS "ChatSession" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "userContextId" TEXT,
+  "topic" TEXT,
+  "astrologyData" TEXT,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  "updatedAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ChatSession_userContextId_fkey" FOREIGN KEY ("userContextId") REFERENCES "UserContext" ("id") ON DELETE SET NULL ON UPDATE CASCADE
+);
+
+CREATE TABLE IF NOT EXISTS "ChatMessage" (
+  "id" TEXT NOT NULL PRIMARY KEY,
+  "sessionId" TEXT NOT NULL,
+  "role" TEXT NOT NULL,
+  "content" TEXT NOT NULL,
+  "createdAt" DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT "ChatMessage_sessionId_fkey" FOREIGN KEY ("sessionId") REFERENCES "ChatSession" ("id") ON DELETE CASCADE ON UPDATE CASCADE
+);

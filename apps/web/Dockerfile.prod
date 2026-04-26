@@ -52,4 +52,4 @@ COPY --from=builder --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/
 COPY --from=builder --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
-CMD ["sh", "-c", "pnpm --filter web exec prisma db push && node apps/web/server.js"]
+CMD ["sh", "-c", "pnpm --filter web exec prisma db execute --schema prisma/schema.prisma --file prisma/init.sql && node apps/web/server.js"]

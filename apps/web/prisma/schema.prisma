@@ -3,10 +3,9 @@ generator client {
   provider = "prisma-client-js"
 }
 
-// Since Prisma 6 has experimental config in prisma.config.ts, we define datasource inside the env.
 datasource db {
   provider = "sqlite"
-  url      = "file:./dev.db"
+  url      = env("DATABASE_URL")
 }
 
 model UserContext {

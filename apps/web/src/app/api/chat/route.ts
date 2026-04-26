@@ -3,14 +3,18 @@ import { createGoogleGenerativeAI } from '@ai-sdk/google';
 import { streamText } from 'ai';
 import { NextRequest } from 'next/server';
 import { db } from '@/lib/db';
-import { compactAstrologyData } from '@/lib/astrology/AiUtils';
-import fs from 'fs';
-import path from 'path';
 
-// Define Google Provider instance
-const google = createGoogleGenerativeAI({
-  apiKey: "AIzaSyA9bxoY_hV7YX8x44ITZHGbr5VbOIont7M" || process.env.GOOGLE_API_KEY,
-});
+function getGoogleApiKey() {
+    const apiKey = process.env.GEMINI_API_KEY
+        || process.env.GOOGLE_GENERATIVE_AI_API_KEY
+        || process.env.GOOGLE_API_KEY;
+
+    if (!apiKey) {
+        throw new Error('Missing GEMINI_API_KEY');
+    }
+
+    return apiKey;
+}
 
 export async function POST(req: NextRequest) {
     try {
@@ -36,7 +40,10 @@ export async function POST(req: NextRequest) {
             }
         }
 
-        const aiModel = process.env.GOOGLE_MODEL || "gemini-2.5-pro";
+        const aiModel = process.env.GEMINI_MODEL || process.env.GOOGLE_MODEL || "gemini-2.5-pro";
+        const google = createGoogleGenerativeAI({
+            apiKey: getGoogleApiKey(),
+        });
 
         let systemContent = `Bạn là một chuyên gia Tử Vi Đẩu Số chuyên nghiệp. Hãy phân tích chuyên sâu dựa trên lá số được cung cấp. BẮT BUỘC bỏ tất cả các biểu tượng cảm xúc (emoji/icon) trong câu trả lời. Trình bày văn bản chuyên nghiệp, nghiêm túc, như một cuốn sách luận giải học thuật. Giọng văn dứt khoát, chắc chắn, không sử dụng các từ ngữ nước đôi hay mơ hồ. Tuyệt đối KHÔNG DÙNG bất kỳ loại emoji nào.`;
 
@@ -99,4 +106,3 @@ export async function POST(req: NextRequest) {
         });
     }
 }
-

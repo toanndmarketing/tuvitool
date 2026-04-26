@@ -14,7 +14,7 @@ Deploy ứng dụng Tử Vi lên server production tại `tuvi.demowebest.site`.
 - **Domain**: tuvi.demowebest.site
 - **SSL**: Cloudflare Flexible (đã bật)
 - **Path**: /home/tuvitool
-- **Port**: 8950
+- **Port**: 8900
 
 ---
 
@@ -85,7 +85,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.pro
 // turbo
 
 ```bash
-ssh root@15.235.210.4 "curl -s http://localhost:8950/api/health"
+ssh root@15.235.210.4 "curl -I http://localhost:8900/"
 ```
 
 ### 10. Verify domain
@@ -132,10 +132,10 @@ ssh root@15.235.210.4 "cd /home/tuvitool && git reset --hard <commit-hash> && do
 
 ## Troubleshooting
 
-### Lỗi: Port 8950 đã được sử dụng
+### Lỗi: Port 8900 đã được sử dụng
 
 ```bash
-ssh root@15.235.210.4 "netstat -tulpn | grep 8950"
+ssh root@15.235.210.4 "netstat -tulpn | grep 8900"
 ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.prod.yml down"
 ```
 
@@ -155,7 +155,7 @@ ssh root@15.235.210.4 "cd /home/tuvitool && docker compose -f docker-compose.pro
 
 ## Notes
 
-- **Port**: Container chạy trên port 8950 (không phải 8900)
+- **Port**: Host production chạy trên port 8900, container chạy nội bộ port 3000
 - **Nginx**: Đã được setup sẵn, không cần config lại
 - **Database**: SQLite file được mount từ `./data` volume
 - **Environment**: File `.env` không được commit vào Git

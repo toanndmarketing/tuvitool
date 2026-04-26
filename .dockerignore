@@ -5,3 +5,7 @@ apps/web/.next
 .npm
 .pnpm-store
 dist
+**/.env
+**/.env.*
+!**/.env.example
+logs.txt

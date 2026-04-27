@@ -31,6 +31,17 @@ function getProviderMode() {
     return 'gemini';
 }
 
+function getTemperature(providerMode: 'gemini' | 'groq') {
+    const raw = process.env.AI_TEMPERATURE;
+    if (raw !== undefined && raw !== null && raw !== '') {
+        const parsed = Number(raw);
+        if (!Number.isNaN(parsed)) {
+            return Math.max(0, Math.min(1, parsed));
+        }
+    }
+    return providerMode === 'gemini' ? 0.25 : 0.4;
+}
+
 export async function POST(req: NextRequest) {
     try {
         const { messages, sessionId, chartData } = await req.json();
@@ -60,14 +71,22 @@ export async function POST(req: NextRequest) {
             ? (process.env.GROQ_MODEL || 'llama-3.3-70b-versatile')
             : (process.env.GEMINI_MODEL || process.env.GOOGLE_MODEL || 'gemini-2.5-pro');
 
-        const google = createGoogleGenerativeAI({
-            apiKey: getGoogleApiKey(),
-        });
-        const groq = createGroq({
-            apiKey: getGroqApiKey(),
-        });
+        const model =
+            providerMode === 'groq'
+                ? createGroq({ apiKey: getGroqApiKey() })(aiModel)
+                : createGoogleGenerativeAI({ apiKey: getGoogleApiKey() })(aiModel);
 
-        let systemContent = `Bạn là một chuyên gia Tử Vi Đẩu Số chuyên nghiệp. Hãy phân tích chuyên sâu dựa trên lá số được cung cấp. BẮT BUỘC bỏ tất cả các biểu tượng cảm xúc (emoji/icon) trong câu trả lời. Trình bày văn bản chuyên nghiệp, nghiêm túc, như một cuốn sách luận giải học thuật. Giọng văn dứt khoát, chắc chắn, không sử dụng các từ ngữ nước đôi hay mơ hồ. Tuyệt đối KHÔNG DÙNG bất kỳ loại emoji nào.`;
+        const systemContent = [
+            'Bạn là chuyên gia Tử Vi Đẩu Số, luận giải theo dữ liệu JSON được cung cấp.',
+            'BẮT BUỘC dùng tiếng Việt UTF-8, không emoji, không icon.',
+            'BẮT BUỘC trình bày theo markdown, tách dòng rõ, không viết thành 1 đoạn dài.',
+            'CẤM mơ hồ: không dùng các cụm kiểu "có thể sẽ", "khả năng cao thấp" nếu không gắn mức độ và điều kiện.',
+            'Mỗi kết luận quan trọng phải có đủ: Năm cụ thể | Cửa sổ ±1 năm | Mức độ | Căn cứ sao+cung | Neo hạn (Đại vận/Tiểu hạn/Lưu niên) | Hành động.',
+            'Nếu dữ liệu yếu hoặc xung đột: ghi rõ "độ chắc chắn: thấp/trung bình/cao" + điều kiện kích hoạt; không kết luận tuyệt đối.',
+            'Khi có EVENT SIGNALS và TOP_EVENTS_TABLE: phải ưu tiên bám đúng dữ liệu này khi kết luận sự kiện.',
+            'Khi luận giải 12 cung: mỗi cung phải có điểm tốt, điểm xấu, mức độ tác động, chiến lược và vận hạn năm xem.',
+            'Tuyệt đối không thêm dữ liệu ngoài JSON đầu vào.',
+        ].join(' ');
 
         const validRoles = ['user', 'assistant', 'system', 'tool'];
         const coreMessages = messages
@@ -85,12 +104,13 @@ export async function POST(req: NextRequest) {
 
         // AI SDK streamText
         console.log('[API] Starting streamText provider/model:', providerMode, aiModel);
+        const temperature = getTemperature(providerMode);
         const result = streamText({
-            model: providerMode === 'groq' ? groq(aiModel) : google(aiModel),
+            model,
             system: systemContent,
             messages: coreMessages,
             maxOutputTokens: 8192,
-            temperature: 0.7,
+            temperature,
             onFinish: async ({ text }) => {
                 console.log('[API] streamText onFinish trigger, text length:', text?.length);
                 if (sessionId && session) {

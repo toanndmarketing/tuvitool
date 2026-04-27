@@ -8,7 +8,8 @@ import dynamic from 'next/dynamic';
 import { toPng } from 'html-to-image';
 import { AmLich } from '@/lib/astrology/AmLich';
 import { Numerology, NumerologyResult } from '@/lib/astrology/Numerology';
-import { compactAstrologyData } from '@/lib/astrology/AiUtils';
+import { compactAstrologyData, createEventSignals, buildTopEventsTable, compactEventSignalsForPrompt } from '@/lib/astrology/AiUtils';
+import HeaderNav from '@/components/HeaderNav';
 
 // Import các component con
 const PalaceMatrix = dynamic(() => import('@/components/PalaceMatrix').then(mod => mod.PalaceMatrix), { ssr: false });
@@ -284,8 +285,13 @@ function TuViMain() {
             astrology: data,
             numerology: tsh
         };
+        const eventSignals = createEventSignals(data);
+        const eventSignalsPrompt = compactEventSignalsForPrompt(eventSignals);
+        const topEventsTable = buildTopEventsTable(eventSignals);
         // Sử dụng phiên bản NÉN (compact) thay vì in nguyên xi JSON gốc
         p = p.replace(/{{JSON_DATA}}/g, compactAstrologyData(jsonPayload.astrology));
+        p = p.replace(/{{EVENT_SIGNALS_JSON}}/g, JSON.stringify(eventSignalsPrompt || {}));
+        p = p.replace(/{{TOP_EVENTS_TABLE}}/g, topEventsTable || "- Sự kiện trọng tâm: Kiểm chứng Chưa rõ | Dự báo Chưa rõ (±1 năm) | low (score 0) | Căn cứ: Thiếu dữ liệu hội tụ | Neo hạn: Chưa hội tụ đủ 3 lớp hạn | Hành động: Theo dõi thêm");
         return p;
     }
 
@@ -696,16 +702,21 @@ function TuViMain() {
 
     if (step === 'loading') {
         return (
-            <div className="min-h-screen bg-[#050510] flex flex-col items-center justify-center p-4">
+            <div className="min-h-screen bg-[#050510] flex flex-col">
+                <HeaderNav />
+            <div className="flex-1 flex flex-col items-center justify-center p-4">
                 <span className="text-5xl animate-pulse">🔮</span>
                 <h2 className="text-xl font-bold text-white mt-6">Đang lập lá số...</h2>
+            </div>
             </div>
         );
     }
 
     if (step === 'chat' && chartDataA) {
         return (
-            <div className="flex flex-col lg:flex-row h-screen bg-[#0a0a0f] text-white">
+            <div className="flex flex-col h-screen bg-[#0a0a0f] text-white">
+                <HeaderNav />
+            <div className="flex-1 flex flex-col lg:flex-row">
                 <div className="flex-1 flex flex-col">
                     <header className="p-3 border-b border-white/5 bg-[#111118] flex justify-between items-center">
                         <div className="flex gap-1">
@@ -815,11 +826,14 @@ function TuViMain() {
                     </div>
                 )}
             </div>
+            </div>
         );
     }
 
     return (
-        <div className="min-h-screen bg-[#050510] flex flex-col items-center py-10 px-4">
+        <div className="min-h-screen bg-[#050510] flex flex-col">
+            <HeaderNav />
+        <div className="flex-1 flex flex-col items-center py-10 px-4">
             <div className="max-w-[1600px] w-full">
                 <div className="text-center mb-10">
                     <h1 className="text-4xl lg:text-5xl font-black text-white">TỬ VI LÁ SỐ AI</h1>
@@ -923,6 +937,7 @@ function TuViMain() {
                     </form>
                 </div>
             </div>
+        </div>
         </div>
     );
 }

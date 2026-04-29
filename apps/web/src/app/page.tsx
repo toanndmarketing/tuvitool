@@ -185,7 +185,7 @@ function TuViMain() {
             })
             .catch(err => console.error('Lỗi tải lịch sử:', err));
 
-        fetch('/prompts/tuvi_master.v11.prompt?t=' + Date.now())
+        fetch('/prompts/tuvi_master.v12.prompt?v=12&t=' + Date.now())
             .then(res => res.text())
             .then(setPromptTemplate)
             .catch(err => console.error('Lỗi tải prompt:', err));
@@ -525,7 +525,7 @@ function TuViMain() {
     }
 
     useEffect(() => {
-        fetch('/prompts/tuvi_master_compact.v11.prompt')
+        fetch('/prompts/tuvi_master_compact.v12.prompt?v=12&t=' + Date.now())
             .then(res => res.text())
             .then(setPromptTemplate)
             .catch(err => console.error('Lỗi tải prompt:', err));

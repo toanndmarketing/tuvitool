@@ -83,15 +83,30 @@
 (10-12 câu chia thành các đoạn ngắn. Cách cục, Nghiệp lực, Điểm nóng {{namXem}}).
 
 ### LUẬN GIẢI 12 CUNG
-(Thứ tự: MỆNH→HUYNH ĐỆ→PHU THÊ→TỬ TỨC→TÀI BẠCH→TẬT ÁCH→THIÊN DI→NÔ BỘC→QUAN LỘC→ĐIỀN TRẠCH→PHÚC ĐỨC→PHỤ MẪU. KHÔNG được bỏ sót cung nào. Mỗi cung tối thiểu 5 ý, có căn cứ sao/cung, tách dòng rõ ràng):
+(Thứ tự: MỆNH→HUYNH ĐỆ→PHU THÊ→TỬ TỨC→TÀI BẠCH→TẬT ÁCH→THIÊN DI→NÔ BỘC→QUAN LỘC→ĐIỀN TRẠCH→PHÚC ĐỨC→PHỤ MẪU. KHÔNG được bỏ sót cung nào.
 
-**[TÊN CUNG] Headline**
-- **TINH HỆ:** (Sao + Trạng thái)
-- **ĐIỂM TỐT:** (Phân tích tốt)
-- **ĐIỂM XẤU:** (Phân tích xấu)
-- **MỨC ĐỘ TÁC ĐỘNG:** (Thang 1-10 + vì sao)
-- **CHIẾN LƯỢC:** (Áp dụng quy tắc Đa Cung)
-- **VẬN HẠN {{namXem}}:** (Chỉ ra điểm chú ý của cung này trong năm nay)
+Mục tiêu phần này là bản luận giải gửi khách hàng phổ thông, nên viết dễ hiểu, súc tích, chuyên nghiệp. KHÔNG trình bày dạng bảng kỹ thuật hoặc bullet quá khô như "Tinh hệ / Điểm tốt / Điểm xấu". Mỗi cung viết thành 1 tiểu mục riêng, dạng văn bản liên tục giống mẫu tư vấn cá nhân hóa.
+
+Format từng cung bắt buộc:
+
+**[SỐ THỨ TỰ]. [TÊN CUNG] - [Headline ngắn dễ hiểu]**
+[Viết 1-2 đoạn văn, tổng 120-180 chữ. Đoạn văn phải diễn giải ý nghĩa thực tế của cung này đối với đời sống đương số. Bắt buộc lồng ghép căn cứ từ sao/cung trong JSON, nhưng giải thích bằng ngôn ngữ đời thường để khách không cần hiểu sâu Tử Vi vẫn đọc được.]
+
+Nội dung mỗi cung phải có đủ 4 lớp, nhưng viết liền mạch:
+- Căn cứ chính: nêu 2-4 sao/cách cục nổi bật và trạng thái nếu có.
+- Ý nghĩa thực tế: cung này nói gì về tính cách, quan hệ, tiền bạc, công việc, sức khỏe, gia đạo hoặc tài sản tùy từng cung.
+- Điểm cần lưu ý: chỉ ra mặt hạn chế/rủi ro bằng ngôn ngữ mềm, tránh dọa nạt.
+- Định hướng hành động: 1-2 lời khuyên cụ thể, đặc biệt nếu có liên hệ đến vận hạn {{namXem}}.
+
+Giọng văn mẫu cần bám:
+"Cung Phu Thê có Vũ Khúc và Hóa Quyền cho thấy người phối ngẫu là người thực tế, có năng lực quản lý tài chính và xu hướng giữ vai trò quyết định trong gia đình. Tuy nhiên, bộ sao này cũng làm quan hệ dễ khô khan, ít bộc lộ cảm xúc, nếu hai bên đều cứng thì dễ sinh khắc khẩu hoặc chiến tranh lạnh. Trong năm {{namXem}}, đương số nên ưu tiên đối thoại rõ ràng về tiền bạc, trách nhiệm và kỳ vọng gia đình để giảm va chạm."
+
+Yêu cầu kiểm soát văn phong:
+- Không dùng thuật ngữ Tử Vi dày đặc mà không giải thích.
+- Không phán tuyệt đối kiểu "chắc chắn ly hôn", "chắc chắn phá sản", "chắc chắn bệnh nặng".
+- Không viết quá dài; mỗi cung phải đủ sâu nhưng đọc nhanh được.
+- Không bỏ căn cứ sao/cung; mỗi cung phải có ít nhất 2 căn cứ từ JSON.
+- Nếu thiếu dữ liệu cung nào, ghi rõ "Thiếu dữ liệu để kết luận sâu về cung này" và chỉ đưa nhận định ở mức thận trọng.)
 
 ### GÓC KHUẤT & ỨNG PHÓ
 - Mâu thuẫn trọng tâm: (bằng chứng sao)

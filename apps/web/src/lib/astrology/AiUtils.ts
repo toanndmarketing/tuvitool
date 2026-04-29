@@ -34,6 +34,12 @@ type EventRule = {
     stars: string[];
     riskStars: string[];
     action: string;
+    scan?: {
+        minAge?: number;
+        maxAge?: number;
+        yearsBack?: number;
+        yearsForward?: number;
+    };
 };
 
 const EVENT_RULES: Record<EventType, EventRule> = {
@@ -50,6 +56,7 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         stars: ['Thiên Hỷ', 'Hỷ Thần', 'Hồng Loan', 'Đào Hoa', 'Lưu Thiên Hỷ', 'Lưu Hồng Loan', 'Long Trì', 'Phượng Các'],
         riskStars: ['Tang Môn', 'Lưu Tang Môn', 'Kình Dương', 'Đà La', 'Hóa Kỵ', 'Lưu Hóa Kỵ', 'Cự Môn', 'Thiên Hư'],
         action: 'Năm điểm cao phù hợp chốt cam kết; năm xung mạnh cần tách bạch tiền - quyền - ranh giới cảm xúc.',
+        scan: { minAge: 16, yearsForward: 3 },
     },
     duongSoCoCon: {
         label: 'Đương số có con / biến cố con cái',
@@ -57,6 +64,7 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         stars: ['Thiên Hỷ', 'Hỷ Thần', 'Thai Phụ', 'Phong Cáo', 'Long Đức', 'Thiên Phúc'],
         riskStars: ['Tang Môn', 'Lưu Tang Môn', 'Địa Không', 'Địa Kiếp', 'Kình Dương', 'Đà La', 'Hóa Kỵ'],
         action: 'Ưu tiên theo dõi sức khỏe sinh sản, canh cửa sổ thuận và chủ động kế hoạch tài chính gia đình.',
+        scan: { minAge: 16, yearsForward: 3 },
     },
     suNghiepPhatPha: {
         label: 'Sự nghiệp phất mạnh hoặc phá sản',
@@ -64,6 +72,7 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         stars: ['Tử Vi', 'Thiên Phủ', 'Vũ Khúc', 'Lộc Tồn', 'Hóa Lộc', 'Hóa Quyền', 'Lưu Lộc Tồn', 'Quốc Ấn'],
         riskStars: ['Hóa Kỵ', 'Lưu Hóa Kỵ', 'Kình Dương', 'Đà La', 'Lưu Kình Dương', 'Lưu Đà La', 'Địa Không', 'Địa Kiếp', 'Đại Hao', 'Tiểu Hao'],
         action: 'Năm điểm cao có thể bứt phá lớn; năm xấu phải bảo toàn dòng tiền và giới hạn đòn bẩy.',
+        scan: { minAge: 18, yearsForward: 3 },
     },
     sucKhoeNguyCap: {
         label: 'Sức khỏe chết hụt, biến cố suýt chết',
@@ -78,6 +87,7 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         stars: ['Lộc Tồn', 'Hóa Lộc', 'Hóa Quyền', 'Thiên Phủ', 'Vũ Khúc', 'Long Trì', 'Phượng Các'],
         riskStars: ['Đại Hao', 'Tiểu Hao', 'Hóa Kỵ', 'Lưu Hóa Kỵ', 'Kình Dương', 'Đà La', 'Địa Không', 'Địa Kiếp'],
         action: 'Năm tốt có thể tối ưu tài sản; năm xấu cần khóa rủi ro pháp lý và tránh all-in.',
+        scan: { minAge: 18, yearsForward: 3 },
     },
     phapLyThiPhi: {
         label: 'Pháp lý, kiện tụng, thị phi',
@@ -85,6 +95,7 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         stars: ['Giải Thần', 'Thiên Quan', 'Thiên Phúc', 'Văn Xương', 'Văn Khúc'],
         riskStars: ['Quan Phủ', 'Thiên Hình', 'Kình Dương', 'Đà La', 'Hóa Kỵ', 'Lưu Hóa Kỵ', 'Cự Môn', 'Thiên Hư'],
         action: 'Siết hợp đồng và bằng chứng pháp lý; tránh phát ngôn nóng trong năm có điểm xung cao.',
+        scan: { minAge: 16, yearsForward: 3 },
     },
     bienDongDiChuyen: {
         label: 'Biến động di chuyển (xuất ngoại/chuyển chỗ ở/tai nạn đường xa)',
@@ -159,6 +170,29 @@ function getDaiVanPosByYear(chart: any, year: number) {
     return byAge ? byAge.cungPos : null;
 }
 
+function getEventScanWindow(chart: any, rule: EventRule, defaultYearsBack: number, defaultYearsForward: number) {
+    const namXem = chart?.input?.namXem;
+    const tuoiNow = chart?.tuoi;
+    if (typeof namXem !== 'number' || typeof tuoiNow !== 'number') {
+        return { startYear: null, endYear: null };
+    }
+
+    const yearsForward = rule.scan?.yearsForward ?? defaultYearsForward;
+    const endYearByForward = namXem + yearsForward;
+    const maxAge = rule.scan?.maxAge;
+    const endYearByAge = typeof maxAge === 'number'
+        ? namXem + (maxAge - tuoiNow)
+        : endYearByForward;
+
+    let startYear = namXem - (rule.scan?.yearsBack ?? defaultYearsBack);
+    if (typeof rule.scan?.minAge === 'number') {
+        startYear = namXem - (tuoiNow - rule.scan.minAge);
+    }
+
+    const endYear = Math.min(endYearByForward, endYearByAge);
+    return { startYear, endYear };
+}
+
 function buildPastWindow(chart: any, yearsBack = 15) {
     const namXem = chart?.input?.namXem;
     const tuoiNow = chart?.tuoi;
@@ -194,6 +228,39 @@ function getStarNames(palace: any) {
     return stars.map((s: any) => s?.name).filter(Boolean);
 }
 
+function getAgeAtYear(chart: any, year: number) {
+    const namXem = chart?.input?.namXem;
+    const tuoiNow = chart?.tuoi;
+    if (typeof namXem !== 'number' || typeof tuoiNow !== 'number') return null;
+    return tuoiNow - (namXem - year);
+}
+
+function selectEventTopYears(chart: any, rule: EventRule, scored: Array<{
+    year: number;
+    score: number;
+    level: string;
+    reasons: string[];
+    anchors: { daiVan: boolean; tieuHan: boolean; luuNien: boolean };
+    stars: { positive: string[]; risk: string[] };
+}>) {
+    const byScore = [...scored].sort((a, b) => b.score - a.score).slice(0, 5);
+    const earlyAdult = typeof rule.scan?.minAge === 'number'
+        ? [...scored]
+            .filter((x) => {
+                const age = getAgeAtYear(chart, x.year);
+                return age !== null && age >= rule.scan!.minAge! && age <= 25;
+            })
+            .sort((a, b) => b.score - a.score || a.year - b.year)
+            .slice(0, 2)
+        : [];
+
+    const selected = [...byScore, ...earlyAdult];
+    const uniqueByYear = Array.from(new Map(selected.map((x) => [x.year, x])).values());
+    return uniqueByYear
+        .sort((a, b) => b.score - a.score || Math.abs(a.year - (chart?.input?.namXem || a.year)) - Math.abs(b.year - (chart?.input?.namXem || b.year)))
+        .slice(0, 5);
+}
+
 function analyzeEvent(chart: any, type: EventType, yearsBack = 15, yearsForward = 3) {
     const namXem = chart?.input?.namXem;
     const tuoiNow = chart?.tuoi;
@@ -204,6 +271,7 @@ function analyzeEvent(chart: any, type: EventType, yearsBack = 15, yearsForward 
     }
 
     const rule = EVENT_RULES[type];
+    const scanWindow = getEventScanWindow(chart, rule, yearsBack, yearsForward);
     const palaceMap = getPalaceMap(chart);
     const targetPalaces = rule.palaces.map((name) => palaceMap[name]).filter(Boolean);
     const targetPos = uniqueStrings(targetPalaces.map((p: any) => String(p.index))).map((v) => parseInt(v, 10));
@@ -230,8 +298,8 @@ function analyzeEvent(chart: any, type: EventType, yearsBack = 15, yearsForward 
         anchors: { daiVan: boolean; tieuHan: boolean; luuNien: boolean };
         stars: { positive: string[]; risk: string[] };
     }> = [];
-    const startYear = namXem - yearsBack;
-    const endYear = namXem + yearsForward;
+    const startYear = scanWindow.startYear ?? (namXem - yearsBack);
+    const endYear = scanWindow.endYear ?? (namXem + yearsForward);
 
     for (let year = startYear; year <= endYear; year++) {
         const tuoi = tuoiNow - (namXem - year);
@@ -280,7 +348,7 @@ function analyzeEvent(chart: any, type: EventType, yearsBack = 15, yearsForward 
     }
 
     scored.sort((a, b) => b.score - a.score || Math.abs(a.year - namXem) - Math.abs(b.year - namXem));
-    const top = scored.slice(0, 5);
+    const top = selectEventTopYears(chart, rule, scored);
     const yearCandidates = top.map((x) => x.year);
 
     const reasons = uniqueStrings([

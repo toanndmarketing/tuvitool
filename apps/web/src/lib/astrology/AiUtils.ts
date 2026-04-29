@@ -44,11 +44,11 @@ type EventRule = {
 
 const EVENT_RULES: Record<EventType, EventRule> = {
     tangSuGiaDinh: {
-        label: 'Tang sự gần nhất (ông bà, bố mẹ, vợ/chồng, con cái)',
+        label: 'Biến động gia đạo và sức khỏe người thân',
         palaces: ['PHỤ MẪU', 'PHÚC ĐỨC', 'PHU THÊ', 'TỬ TỨC'],
         stars: ['Thiên Đức', 'Phúc Đức', 'Long Đức', 'Giải Thần', 'Thiên Quan', 'Thiên Phúc'],
         riskStars: ['Tang Môn', 'Lưu Tang Môn', 'Bạch Hổ', 'Lưu Bạch Hổ', 'Thiên Hình', 'Địa Không', 'Địa Kiếp', 'Kình Dương', 'Đà La'],
-        action: 'Ưu tiên phòng tang chế bằng quản trị rủi ro gia đình, chú trọng sức khỏe người thân lớn tuổi.',
+        action: 'Ưu tiên quan tâm sức khỏe người thân, chủ động lịch khám định kỳ và chuẩn bị phương án hỗ trợ gia đình.',
     },
     honNhanDuongSo: {
         label: 'Đám cưới / biến cố hôn nhân của đương số',
@@ -67,26 +67,26 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         scan: { minAge: 16, yearsForward: 3 },
     },
     suNghiepPhatPha: {
-        label: 'Sự nghiệp phất mạnh hoặc phá sản',
+        label: 'Biến động sự nghiệp lớn',
         palaces: ['QUAN LỘC', 'TÀI BẠCH', 'THIÊN DI', 'ĐIỀN TRẠCH'],
         stars: ['Tử Vi', 'Thiên Phủ', 'Vũ Khúc', 'Lộc Tồn', 'Hóa Lộc', 'Hóa Quyền', 'Lưu Lộc Tồn', 'Quốc Ấn'],
         riskStars: ['Hóa Kỵ', 'Lưu Hóa Kỵ', 'Kình Dương', 'Đà La', 'Lưu Kình Dương', 'Lưu Đà La', 'Địa Không', 'Địa Kiếp', 'Đại Hao', 'Tiểu Hao'],
-        action: 'Năm điểm cao có thể bứt phá lớn; năm xấu phải bảo toàn dòng tiền và giới hạn đòn bẩy.',
+        action: 'Năm điểm cao nên tận dụng cơ hội nghề nghiệp; khi tín hiệu xung mạnh cần bảo toàn dòng tiền và hạn chế mở rộng nóng.',
         scan: { minAge: 18, yearsForward: 3 },
     },
     sucKhoeNguyCap: {
-        label: 'Sức khỏe chết hụt, biến cố suýt chết',
+        label: 'Rủi ro sức khỏe lớn cần lưu ý',
         palaces: ['TẬT ÁCH', 'MỆNH', 'THIÊN DI', 'PHÚC ĐỨC'],
         stars: ['Thiên Lương', 'Thiên Đồng', 'Thiên Việt', 'Thiên Y', 'Thiếu Âm', 'Thiếu Dương'],
         riskStars: ['Kình Dương', 'Đà La', 'Bạch Hổ', 'Thiên Hình', 'Địa Không', 'Địa Kiếp', 'Linh Tinh', 'Hỏa Tinh', 'Tang Môn', 'Hóa Kỵ'],
-        action: 'Năm nguy cấp phải khám chuyên sâu, hạn chế di chuyển rủi ro cao và tuyệt đối tránh quá sức.',
+        action: 'Ưu tiên kiểm tra sức khỏe định kỳ, giảm quá tải và thận trọng khi di chuyển hoặc làm việc cường độ cao.',
     },
     taiSanLon: {
-        label: 'Biến động tài sản lớn (mua/bán/mất mát)',
+        label: 'Biến động tài sản lớn',
         palaces: ['TÀI BẠCH', 'ĐIỀN TRẠCH', 'QUAN LỘC'],
         stars: ['Lộc Tồn', 'Hóa Lộc', 'Hóa Quyền', 'Thiên Phủ', 'Vũ Khúc', 'Long Trì', 'Phượng Các'],
         riskStars: ['Đại Hao', 'Tiểu Hao', 'Hóa Kỵ', 'Lưu Hóa Kỵ', 'Kình Dương', 'Đà La', 'Địa Không', 'Địa Kiếp'],
-        action: 'Năm tốt có thể tối ưu tài sản; năm xấu cần khóa rủi ro pháp lý và tránh all-in.',
+        action: 'Năm thuận có thể tối ưu tài sản; năm xung cần kiểm tra pháp lý kỹ và tránh dồn toàn bộ nguồn lực vào một quyết định.',
         scan: { minAge: 18, yearsForward: 3 },
     },
     phapLyThiPhi: {
@@ -98,11 +98,11 @@ const EVENT_RULES: Record<EventType, EventRule> = {
         scan: { minAge: 16, yearsForward: 3 },
     },
     bienDongDiChuyen: {
-        label: 'Biến động di chuyển (xuất ngoại/chuyển chỗ ở/tai nạn đường xa)',
+        label: 'Biến động di chuyển và thay đổi môi trường sống',
         palaces: ['THIÊN DI', 'MỆNH', 'QUAN LỘC'],
         stars: ['Thiên Mã', 'Lưu Thiên Mã', 'Thiên Khôi', 'Thiên Việt', 'Long Đức'],
         riskStars: ['Đà La', 'Lưu Đà La', 'Kình Dương', 'Lưu Kình Dương', 'Bạch Hổ', 'Thiên Hình', 'Địa Không', 'Địa Kiếp'],
-        action: 'Năm dịch chuyển mạnh cần quản trị lịch trình, bảo hiểm và kịch bản an toàn khi đi xa.',
+        action: 'Khi tín hiệu dịch chuyển mạnh, cần quản trị lịch trình, giấy tờ, bảo hiểm và phương án dự phòng khi đi xa.',
     },
 };
 
@@ -431,16 +431,19 @@ export function buildTopEventsTable(eventSignals: any): string {
         const futureText = futureYears.length ? futureYears.join(', ') : 'Chưa rõ';
         const confidence = payload.confidence || 'low';
         const maxScore = typeof payload.maxScore === 'number' ? payload.maxScore : 0;
-        const reason = Array.isArray(payload.topReasons) && payload.topReasons.length
-            ? payload.topReasons[0]
-            : 'Thiếu tín hiệu hội tụ';
-        const anchors = payload?.anchors || {};
+        const topYear = Array.isArray(payload.yearlyScan) && payload.yearlyScan.length
+            ? payload.yearlyScan[0]
+            : null;
+        const reason = Array.isArray(payload.reasons) && payload.reasons.length
+            ? payload.reasons[0]
+            : (Array.isArray(topYear?.reasons) && topYear.reasons.length ? topYear.reasons[0] : 'Chưa có căn cứ nổi bật');
+        const anchors = topYear?.anchors || {};
         const anchorTokens = [
             anchors.daiVan ? 'Đại vận' : '',
             anchors.tieuHan ? 'Tiểu hạn' : '',
             anchors.luuNien ? 'Lưu niên' : '',
         ].filter(Boolean);
-        const anchorText = anchorTokens.length ? anchorTokens.join(' + ') : 'Chưa hội tụ đủ 3 lớp hạn';
+        const anchorText = anchorTokens.length ? anchorTokens.join(' + ') : 'Chưa có neo hạn mạnh';
         return `- ${rule.label}: Kiểm chứng ${pastText} | Dự báo ${futureText} (±1 năm) | ${confidence} (score ${maxScore}) | Căn cứ: ${reason} | Neo hạn: ${anchorText} | Hành động: ${rule.action}`;
     });
 

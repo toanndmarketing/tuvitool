@@ -1,11 +1,28 @@
-version: '3.8'
-
 services:
+  tuvi-db:
+    image: postgres:16-alpine
+    container_name: tuvi-db
+    environment:
+      - POSTGRES_DB=${POSTGRES_DB:-tuvi}
+      - POSTGRES_USER=${POSTGRES_USER:-tuvi}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD:-tuvi_password}
+    volumes:
+      - tuvi-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-tuvi} -d ${POSTGRES_DB:-tuvi}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
   tuvi-app:
     build:
       context: .
       dockerfile: apps/web/Dockerfile.dev
     container_name: tuvi-app
+    depends_on:
+      tuvi-db:
+        condition: service_healthy
     ports:
       - "8950:3000"
     volumes:
@@ -16,8 +33,11 @@ services:
     environment:
       - NODE_ENV=production
       - PORT=3000
-      - DATABASE_URL=file:/app/data/tuvi.db
+      - DATABASE_URL=postgresql://${POSTGRES_USER:-tuvi}:${POSTGRES_PASSWORD:-tuvi_password}@tuvi-db:5432/${POSTGRES_DB:-tuvi}?schema=public
       - CHOKIDAR_USEPOLLING=true
       - WATCHPACK_POLLING=true
       - GEMINI_API_KEY=${GEMINI_API_KEY}
     restart: unless-stopped
+
+volumes:
+  tuvi-postgres-data:

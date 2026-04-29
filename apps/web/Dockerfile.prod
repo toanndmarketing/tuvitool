@@ -16,7 +16,7 @@ RUN pnpm install --frozen-lockfile
 COPY . .
 
 # Generate Prisma Client
-ENV DATABASE_URL=file:/app/apps/web/data/tuvi.db
+ENV DATABASE_URL=postgresql://tuvi:tuvi_password@tuvi-db:5432/tuvi?schema=public
 RUN pnpm --filter web exec prisma generate
 
 # Build Next.js application
@@ -29,14 +29,14 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 ENV NEXT_TELEMETRY_DISABLED=1
-ENV DATABASE_URL=file:/app/apps/web/data/tuvi.db
+ENV DATABASE_URL=postgresql://tuvi:tuvi_password@tuvi-db:5432/tuvi?schema=public
 ENV COREPACK_ENABLE_DOWNLOAD_PROMPT=0
 
 RUN corepack enable pnpm && corepack prepare pnpm@10.33.2 --activate
 
 # Create unprivileged user
 RUN adduser -D nextjs
-RUN mkdir -p /app/apps/web/data && chown -R nextjs:nextjs /app
+RUN chown -R nextjs:nextjs /app
 
 COPY --from=builder --chown=nextjs:nextjs /app/package.json /app/pnpm-workspace.yaml /app/pnpm-lock.yaml ./
 COPY --from=builder --chown=nextjs:nextjs /app/apps/web/package.json ./apps/web/package.json
@@ -52,4 +52,4 @@ COPY --from=builder --chown=nextjs:nextjs /app/apps/web/.next/static ./apps/web/
 COPY --from=builder --chown=nextjs:nextjs /app/apps/web/public ./apps/web/public
 
 EXPOSE 3000
-CMD ["sh", "-c", "pnpm --filter web exec prisma db execute --schema prisma/schema.prisma --file prisma/init.sql && node apps/web/server.js"]
+CMD ["sh", "-c", "pnpm --filter web exec prisma migrate deploy --schema prisma/schema.prisma && node apps/web/server.js"]

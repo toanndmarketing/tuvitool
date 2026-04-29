@@ -17,20 +17,6 @@ export async function POST(req: NextRequest) {
 
         const sessionTopic = topic || 'Luận giải Tử Vi';
 
-        const existingSession = await db.chatSession.findFirst({
-            where: { topic: sessionTopic }
-        });
-
-        if (existingSession) {
-            const session = await db.chatSession.update({
-                where: { id: existingSession.id },
-                data: {
-                    astrologyData: astrologyData ? JSON.stringify(astrologyData) : existingSession.astrologyData,
-                }
-            });
-            return NextResponse.json({ success: true, sessionId: session.id, isExisting: true });
-        }
-
         const session = await db.chatSession.create({
             data: {
                 topic: sessionTopic,

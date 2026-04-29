@@ -246,7 +246,7 @@ function TuViMain() {
         setInputText('');
     }
 
-    function generateStandardPrompt(data: any, tsh: any, personaConfig?: any) {
+    function generateStandardPrompt(data: any, tsh: any) {
         if (!data || !promptTemplate) return "";
         let p = promptTemplate;
         const gioSinhChi = AmLich.DIA_CHI[data.input?.gioSinh] || "";
@@ -265,13 +265,6 @@ function TuViMain() {
         p = p.replace(/{{luuNienChi}}/g, luuNienChi);
         p = p.replace(/{{namXem}}/g, String(data.input?.namXem || new Date().getFullYear()));
         p = p.replace(/{{tuoiMu}}/g, String(data.tuoi || ""));
-        
-        if (personaConfig) {
-            p = p.replace(/{{aiSelfFull}}/g, personaConfig.aiSelfFull || "Anh Toàn Tử Vi AI");
-            p = p.replace(/{{aiSelfShort}}/g, personaConfig.aiSelfShort || "Anh");
-            p = p.replace(/{{userPronoun}}/g, personaConfig.userPronoun || "bạn");
-            p = p.replace(/{{namSinh}}/g, personaConfig.namSinh || "");
-        }
         
         const jsonPayload = {
             astrology: data,
@@ -318,69 +311,26 @@ function TuViMain() {
             const youngerKey = profileA.isYounger ? 'A' : 'B';
             const dataA = olderKey === 'A' ? chartDataA : chartDataB;
             const dataB = youngerKey === 'A' ? chartDataA : chartDataB;
-            
-            const pronA = profileA.gioiTinh === 'nam' ? 'Anh' : 'Chị';
+
             let twinNote = `\n====================================================\n`;
             twinNote += `       BÁO CÁO TỬ VI SINH ĐÔI (A VÀ B)\n`;
             twinNote += `====================================================\n\n`;
-            twinNote += `[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là cặp sinh đôi. Đương số A là ${pronA} (Sinh trước), Đương số B là Em (Sinh sau).\n`;
+            twinNote += `[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là cặp sinh đôi. Đương số A là người sinh trước, đương số B là người sinh sau.\n`;
             
             if (profileA.gioiTinh === profileB.gioiTinh) {
                 twinNote += `- Hệ thống áp dụng Di Cung (Mượn Thiên Di làm Mệnh cho người sinh sau), giữ nguyên 108 sao gốc.\n`;
             } else {
                 twinNote += `- Khác giới tính nên giữ nguyên Mệnh gốc (Đại vận chạy nghịch nhau).\n`;
             }
-
-            let twinPronoun = "hai bạn";
-            const userNam = parseInt(profileA.nam);
-            let aiSelfFull = "Anh Toàn Tử Vi AI";
-            let aiSelfShort = "Anh";
-            
-            if (!isNaN(userNam)) {
-                if (userNam < 1990) {
-                    aiSelfFull = "Em Toàn Tử Vi AI";
-                    aiSelfShort = "Em";
-                    twinPronoun = profileA.gioiTinh === 'nam' ? 'hai anh' : 'hai chị'; 
-                } else if (userNam === 1990) {
-                    aiSelfFull = "Mình Toàn Tử Vi AI";
-                    aiSelfShort = "Mình";
-                    twinPronoun = "hai bạn";
-                } else {
-                    aiSelfFull = "Anh Toàn Tử Vi AI";
-                    aiSelfShort = "Anh";
-                    twinPronoun = "hai em";
-                }
-            }
             
             const twinHoTen = `${profileA.hoTen} và ${profileB.hoTen}`;
-            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun: twinPronoun, namSinh: profileA.nam, hoTen: twinHoTen };
             
-            const promptA = generateStandardPrompt({ ...dataA, hoTen: twinHoTen }, numerologyA, personaConfig);
-            const promptB = generateStandardPrompt({ ...dataB, hoTen: twinHoTen }, numerologyB, personaConfig);
+            const promptA = generateStandardPrompt({ ...dataA, hoTen: twinHoTen }, numerologyA);
+            const promptB = generateStandardPrompt({ ...dataB, hoTen: twinHoTen }, numerologyB);
             
             fullPrompt = `${twinNote}\n\n>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${promptA}\n\n----------------------------\n>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${promptB}`;
         } else {
-            const userNam = parseInt(profileA.nam);
-            let aiSelfFull = "Anh Toàn Tử Vi AI";
-            let aiSelfShort = "Anh";
-            let userPronoun = "bạn";
-            if (!isNaN(userNam)) {
-                if (userNam < 1990) {
-                    aiSelfFull = "Em Toàn Tử Vi AI";
-                    aiSelfShort = "Em";
-                    userPronoun = profileA.gioiTinh === 'nam' ? 'anh' : 'chị';
-                } else if (userNam === 1990) {
-                    aiSelfFull = "Mình Toàn Tử Vi AI";
-                    aiSelfShort = "Mình";
-                    userPronoun = "bạn";
-                } else {
-                    aiSelfFull = "Anh Toàn Tử Vi AI";
-                    aiSelfShort = "Anh";
-                    userPronoun = "em";
-                }
-            }
-            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun, namSinh: profileA.nam };
-            fullPrompt = generateStandardPrompt(chartDataA, numerologyA, personaConfig);
+            fullPrompt = generateStandardPrompt(chartDataA, numerologyA);
         }
         setRawContent(fullPrompt);
         setShowRawModal(true);

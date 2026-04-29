@@ -518,9 +518,6 @@ export function compactEventSignalsForPrompt(eventSignals: any) {
 function _compress(chart: any) {
     if (!chart || !chart.palaces) return chart;
 
-    const eventSignals = createEventSignals(chart);
-    const eventSignalsCompact = compactEventSignalsForPrompt(eventSignals);
-
     const compressedPalaces = chart.palaces.map((p: any) => {
         let ttStr = "";
         if (p.tuanTriet) {
@@ -556,9 +553,6 @@ function _compress(chart: any) {
         },
         p: compressedPalaces,
         dv: chart.daiVan?.map((d: any) => `${d.tuoiFrom}-${d.tuoiTo}(${d.cungPos})`).join("|"),
-        dvh: eventSignalsCompact?.currentDaiVan || null,
-        pw: eventSignalsCompact?.pastWindow || [],
-        es: eventSignalsCompact?.priorityEvents || {},
         ln: chart.luuNienPos,
         age: chart.tuoi
     };

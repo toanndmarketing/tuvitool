@@ -174,7 +174,6 @@ function TuViMain() {
     const [rawContent, setRawContent] = useState('');
     const [isChatExpanded, setIsChatExpanded] = useState(false);
     const [historySessions, setHistorySessions] = useState<any[]>([]);
-    const [pendingPrompt, setPendingPrompt] = useState<string | null>(null);
 
     useEffect(() => {
         fetch('/api/sessions')
@@ -192,12 +191,14 @@ function TuViMain() {
             .catch(err => console.error('Lỗi tải prompt:', err));
     }, []);
 
-    useEffect(() => {
-        if (sessionId && pendingPrompt && step === 'chat') {
-            triggerSend({ role: 'user', content: pendingPrompt });
-            setPendingPrompt(null);
-        }
-    }, [sessionId, pendingPrompt, step]);
+    const chatInfo = useChat({
+        id: sessionId || 'default-chat',
+        api: '/api/chat',
+        body: { 
+            chartData: isTwin ? { A: chartDataA, B: chartDataB } : chartDataA, 
+            sessionId 
+        },
+    });
 
     useEffect(() => {
         if (sessionId) {
@@ -219,15 +220,6 @@ function TuViMain() {
                 .catch(err => console.error("Lỗi get chat info:", err));
         }
     }, [sessionId]);
-
-    const chatInfo = useChat({
-        id: sessionId || 'default-chat',
-        api: '/api/chat',
-        body: { 
-            chartData: isTwin ? { A: chartDataA, B: chartDataB } : chartDataA, 
-            sessionId 
-        },
-    });
 
     console.log("[DEBUG] chatInfo keys:", Object.keys(chatInfo));
     console.log("[DEBUG] messages:", chatInfo.messages);
@@ -550,72 +542,6 @@ function TuViMain() {
                 const sessionData = await sessionRes.json();
                 if (sessionData.success && sessionData.sessionId) {
                     setSessionId(sessionData.sessionId);
-                    
-                    if (!sessionData.isExisting) {
-                        let fullPrompt = "";
-                        if (isTwin) {
-                            const pronA = profileA.gioiTinh === 'nam' ? 'Anh' : 'Chị';
-                            let twinNote = `\n====================================================\n`;
-                            twinNote += `       BÁO CÁO TỬ VI SINH ĐÔI (A VÀ B)\n`;
-                            twinNote += `====================================================\n\n`;
-                            twinNote += `[HỆ THỐNG LƯU Ý CHO AI]:\nĐây là cặp sinh đôi. Đương số A là ${pronA} (Sinh trước), Đương số B là Em (Sinh sau).\n`;
-                            
-                            if (profileA.gioiTinh === profileB.gioiTinh) {
-                                twinNote += `- Hệ thống áp dụng Di Cung (Mượn Thiên Di làm Mệnh cho người sinh sau), giữ nguyên 108 sao gốc.\n`;
-                            } else {
-                                twinNote += `- Khác giới tính nên giữ nguyên Mệnh gốc (Đại vận chạy nghịch nhau).\n`;
-                            }
-                            let twinPronoun = "hai bạn";
-                            const userNam = parseInt(profileA.nam);
-                            let aiSelfFull = "Anh Toàn Tử Vi AI";
-                            let aiSelfShort = "Anh";
-                            if (!isNaN(userNam)) {
-                                if (userNam < 1990) {
-                                    aiSelfFull = "Em Toàn Tử Vi AI";
-                                    aiSelfShort = "Em";
-                                    twinPronoun = profileA.gioiTinh === 'nam' ? 'hai anh' : 'hai chị'; 
-                                } else if (userNam === 1990) {
-                                    aiSelfFull = "Mình Toàn Tử Vi AI";
-                                    aiSelfShort = "Mình";
-                                    twinPronoun = "hai bạn";
-                                } else {
-                                    aiSelfFull = "Anh Toàn Tử Vi AI";
-                                    aiSelfShort = "Anh";
-                                    twinPronoun = "hai em";
-                                }
-                            }
-                            
-                            const twinHoTen = `${profileA.hoTen} và ${profileB.hoTen}`;
-                            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun: twinPronoun, namSinh: profileA.nam, hoTen: twinHoTen };
-                            
-                            const promptA = generateStandardPrompt({ ...chartJson.data.chartA, hoTen: twinHoTen }, tshA, personaConfig);
-                            const promptB = generateStandardPrompt({ ...chartJson.data.chartB, hoTen: twinHoTen }, tshB, personaConfig);
-                            fullPrompt = `${twinNote}\n\n>>> [PHẦN 1: ĐƯƠNG SỐ A] <<<\n${promptA}\n\n----------------------------\n>>> [PHẦN 2: ĐƯƠNG SỐ B] <<<\n${promptB}`;
-                        } else {
-                            const userNam = parseInt(profileA.nam);
-                            let aiSelfFull = "Anh Toàn Tử Vi AI";
-                            let aiSelfShort = "Anh";
-                            let userPronoun = "bạn";
-                            if (!isNaN(userNam)) {
-                                if (userNam < 1990) {
-                                    aiSelfFull = "Em Toàn Tử Vi AI";
-                                    aiSelfShort = "Em";
-                                    userPronoun = profileA.gioiTinh === 'nam' ? 'anh' : 'chị';
-                                } else if (userNam === 1990) {
-                                    aiSelfFull = "Mình Toàn Tử Vi AI";
-                                    aiSelfShort = "Mình";
-                                    userPronoun = "bạn";
-                                } else {
-                                    aiSelfFull = "Anh Toàn Tử Vi AI";
-                                    aiSelfShort = "Anh";
-                                    userPronoun = "em";
-                                }
-                            }
-                            const personaConfig = { aiSelfFull, aiSelfShort, userPronoun, namSinh: profileA.nam };
-                            fullPrompt = generateStandardPrompt(chartJson.data.chartA, tshA, personaConfig);
-                        }
-                        setPendingPrompt(fullPrompt);
-                    }
                 }
             } catch (e) {
                 console.error("Lỗi tạo session:", e);
